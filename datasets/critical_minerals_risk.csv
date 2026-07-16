@@ -1,0 +1,13 @@
+material,country,production_share,global_supply_percentage,dependency_score,political_risk_score,export_dependency,risk_level
+lithium,China,0.65,65.0,85.0,72.0,0.80,High
+cobalt,Congo,0.70,70.0,90.0,88.0,0.95,High
+nickel,Russia,0.20,20.0,60.0,91.0,0.40,High
+lithium,Australia,0.45,45.0,15.0,15.0,0.90,Low
+lithium,Chile,0.30,30.0,35.0,28.0,0.85,Low
+cobalt,Belgium,0.10,10.0,30.0,10.0,0.20,Low
+nickel,Belgium,0.05,5.0,25.0,10.0,0.15,Low
+NMC,South Korea,0.35,35.0,40.0,18.0,0.75,Low
+nickel,South Korea,0.10,10.0,30.0,18.0,0.50,Low
+LFP,China,0.85,85.0,95.0,72.0,0.90,High
+NMC,China,0.75,75.0,90.0,72.0,0.85,High
+graphite,China,0.70,70.0,88.0,72.0,0.80,High

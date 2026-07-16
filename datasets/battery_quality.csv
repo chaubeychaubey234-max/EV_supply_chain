@@ -1,0 +1,9 @@
+batch_id,supplier_id,inspection_count,defects_found,defect_rate,defect_type
+BAT-2024-001,SUP-001,500,5,0.010,micro-short circuit
+BAT-2024-002,SUP-003,200,6,0.030,impurity contamination
+BAT-2024-003,SUP-006,350,15,0.043,delamination
+BAT-2024-004,SUP-005,800,8,0.010,weld defect
+BAT-2024-005,SUP-002,400,2,0.005,tab misalignment
+BAT-2024-006,SUP-004,300,1,0.0033,electrolyte leakage
+BAT-2024-007,SUP-007,250,4,0.016,casing deformation
+BAT-2024-008,SUP-008,600,3,0.005,particle contamination

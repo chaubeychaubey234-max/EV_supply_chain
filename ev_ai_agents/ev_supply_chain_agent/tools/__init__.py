@@ -11,20 +11,20 @@ class ToolError(Exception):
     pass
 
 
-from supply_chain_tools.supplier_tools import (
+from .supplier_tools import (
     get_supplier_profile,
     get_supplier_tier,
     get_supplier_geography,
 )
 
-from supply_chain_tools.risk_tools import (
+from .risk_tools import (
     calculate_supplier_risk_score,
     detect_geopolitical_risk,
     detect_supplier_concentration,
     detect_quality_deviation,
 )
 
-from supply_chain_tools.traceability_tools import (
+from .traceability_tools import (
     trace_material_batch,
     map_cell_to_pack,
     map_pack_to_vehicle,

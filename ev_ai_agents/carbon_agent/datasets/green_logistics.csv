@@ -1,0 +1,11 @@
+route_id,start_location,end_location,start_lat,start_lon,end_lat,end_lon,distance_km,vehicle_type,fuel_consumed_liters,electricity_consumed_kwh,traffic_conditions,carbon_emissions_kg,annual_trips,eco_friendly_vehicle_info
+R-101,Los Angeles,San Francisco,34.0522,-118.2437,37.7749,-122.4194,610.0,Diesel Truck,183.0,0.0,High,490.44,180,Standard Diesel
+R-102,San Francisco,Sacramento,37.7749,-122.4194,38.5816,-121.4944,140.0,EV Van,0.0,35.0,Moderate,14.0,220,Zero Emission EV
+R-103,Seattle,Portland,47.6062,-122.3321,45.5152,-122.6784,280.0,Diesel Van,56.0,0.0,Low,150.08,150,Eco-Diesel
+R-104,San Diego,Los Angeles,32.7157,-117.1611,34.0522,-118.2437,190.0,Diesel Truck,57.0,0.0,High,152.76,300,Standard Diesel
+R-105,San Jose,Oakland,37.3382,-121.8863,37.8044,-122.2712,70.0,EV Truck,0.0,28.0,High,11.2,400,Zero Emission EV
+R-106,Phoenix,Tucson,33.4484,-112.0740,32.2226,-110.9747,185.0,Diesel Truck,55.5,0.0,Low,148.74,90,Standard Diesel
+R-107,Las Vegas,Los Angeles,36.1716,-115.1398,34.0522,-118.2437,430.0,Diesel Truck,129.0,0.0,Moderate,345.72,120,Standard Diesel
+R-108,Sacramento,Reno,38.5816,-121.4944,39.5296,-119.8138,215.0,Diesel Van,43.0,0.0,Moderate,115.24,80,Standard Diesel
+R-109,Bakersfield,Fresno,35.3733,-119.0187,36.7378,-119.7871,175.0,EV Van,0.0,43.75,Low,17.5,140,Zero Emission EV
+R-110,San Francisco,San Jose,37.7749,-122.4194,37.3382,-121.8863,75.0,Diesel Van,15.0,0.0,High,40.2,350,Eco-Diesel

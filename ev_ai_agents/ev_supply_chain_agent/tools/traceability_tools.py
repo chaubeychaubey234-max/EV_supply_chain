@@ -1,6 +1,6 @@
 import random
 from langchain.tools import tool
-from supply_chain_tools import ToolError
+from . import ToolError
 
 
 # ---------------------------------------------------------------------------
