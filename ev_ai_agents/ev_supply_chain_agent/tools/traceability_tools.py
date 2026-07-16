@@ -1,113 +1,53 @@
-import random
+import os
+import pandas as pd
 from langchain.tools import tool
 from . import ToolError
 
 
 # ---------------------------------------------------------------------------
-# Mock traceability data – Cell → Pack → Vehicle lineage
+# Load actual datasets
 # ---------------------------------------------------------------------------
-_BATCH_DB = {
-    "BAT-2024-001": {
-        "material": "lithium",
-        "supplier_id": "SUP-001",
-        "supplier_name": "Ganfeng Lithium Co.",
-        "origin_country": "China",
-        "extraction_date": "2024-01-15",
-        "purity_grade": "99.5%",
-        "weight_kg": 500,
-        "cell_ids": ["CELL-A100", "CELL-A101", "CELL-A102"],
-    },
-    "BAT-2024-002": {
-        "material": "cobalt",
-        "supplier_id": "SUP-003",
-        "supplier_name": "Glencore Congo SARL",
-        "origin_country": "Congo",
-        "extraction_date": "2024-02-20",
-        "purity_grade": "99.2%",
-        "weight_kg": 120,
-        "cell_ids": ["CELL-B200", "CELL-B201"],
-    },
-    "BAT-2024-003": {
-        "material": "nickel",
-        "supplier_id": "SUP-006",
-        "supplier_name": "Norilsk Nickel",
-        "origin_country": "Russia",
-        "extraction_date": "2024-03-10",
-        "purity_grade": "99.8%",
-        "weight_kg": 350,
-        "cell_ids": ["CELL-C300", "CELL-C301", "CELL-C302", "CELL-C303"],
-    },
-    "BAT-2024-004": {
-        "material": "LFP",
-        "supplier_id": "SUP-005",
-        "supplier_name": "CATL Battery Co.",
-        "origin_country": "China",
-        "extraction_date": "2024-04-05",
-        "purity_grade": "99.6%",
-        "weight_kg": 800,
-        "cell_ids": ["CELL-D400", "CELL-D401", "CELL-D402"],
-    },
-}
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_DATASETS_DIR = os.path.join(_BASE_DIR, "..", "..", "..", "datasets")
 
-_CELL_TO_PACK = {
-    "CELL-A100": "PACK-001",
-    "CELL-A101": "PACK-001",
-    "CELL-A102": "PACK-002",
-    "CELL-B200": "PACK-002",
-    "CELL-B201": "PACK-003",
-    "CELL-C300": "PACK-003",
-    "CELL-C301": "PACK-004",
-    "CELL-C302": "PACK-004",
-    "CELL-C303": "PACK-005",
-    "CELL-D400": "PACK-005",
-    "CELL-D401": "PACK-006",
-    "CELL-D402": "PACK-006",
-}
+_supply_chain_df = pd.read_csv(os.path.join(_DATASETS_DIR, "ev_supply_chain.csv"))
 
-_PACK_TO_VEHICLE = {
-    "PACK-001": {
-        "vehicle_id": "VIN-EV-20240001",
-        "model": "Model E Pro",
-        "manufacturer": "NovaDrive Motors",
-        "assembly_plant": "Shanghai, China",
-        "assembly_date": "2024-06-15",
-    },
-    "PACK-002": {
-        "vehicle_id": "VIN-EV-20240002",
-        "model": "Model E Pro",
-        "manufacturer": "NovaDrive Motors",
-        "assembly_plant": "Shanghai, China",
-        "assembly_date": "2024-06-18",
-    },
-    "PACK-003": {
-        "vehicle_id": "VIN-EV-20240003",
-        "model": "Volt X",
-        "manufacturer": "ElectraAuto",
-        "assembly_plant": "Munich, Germany",
-        "assembly_date": "2024-07-01",
-    },
-    "PACK-004": {
-        "vehicle_id": "VIN-EV-20240004",
-        "model": "Volt X",
-        "manufacturer": "ElectraAuto",
-        "assembly_plant": "Munich, Germany",
-        "assembly_date": "2024-07-05",
-    },
-    "PACK-005": {
-        "vehicle_id": "VIN-EV-20240005",
-        "model": "ZeroKm S",
-        "manufacturer": "ZeroKm Mobility",
-        "assembly_plant": "Fremont, USA",
-        "assembly_date": "2024-07-20",
-    },
-    "PACK-006": {
-        "vehicle_id": "VIN-EV-20240006",
-        "model": "ZeroKm S",
-        "manufacturer": "ZeroKm Mobility",
-        "assembly_plant": "Fremont, USA",
-        "assembly_date": "2024-07-22",
-    },
-}
+
+def _build_batch_db() -> dict:
+    """Build batch traceability data from ev_supply_chain.csv."""
+    db = {}
+    for batch_id, group in _supply_chain_df.groupby("batch_id"):
+        row = group.iloc[0]
+        db[batch_id] = {
+            "material": row["material"],
+            "supplier_id": row["supplier_id"],
+            "supplier_name": row["supplier_name"],
+            "origin_country": row["country"],
+            "battery_type": row["battery_type"],
+            "cell_ids": group["cell_id"].unique().tolist(),
+        }
+    return db
+
+
+def _build_cell_to_pack() -> dict:
+    """Build cell-to-pack mapping from ev_supply_chain.csv."""
+    return dict(zip(_supply_chain_df["cell_id"], _supply_chain_df["pack_id"]))
+
+
+def _build_pack_to_vehicle() -> dict:
+    """Build pack-to-vehicle mapping from ev_supply_chain.csv."""
+    db = {}
+    for pack_id, group in _supply_chain_df.groupby("pack_id"):
+        row = group.iloc[0]
+        db[pack_id] = {
+            "vehicle_id": row["vehicle_id"],
+        }
+    return db
+
+
+_BATCH_DB = _build_batch_db()
+_CELL_TO_PACK = _build_cell_to_pack()
+_PACK_TO_VEHICLE = _build_pack_to_vehicle()
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +88,6 @@ def trace_material_batch(batch_id: str) -> dict:
                 "cell_id": cell_id,
                 "pack_id": pack_id or "UNASSIGNED",
                 "vehicle_id": vehicle_info.get("vehicle_id", "UNASSIGNED"),
-                "vehicle_model": vehicle_info.get("model", "N/A"),
             })
 
         return {
@@ -157,9 +96,7 @@ def trace_material_batch(batch_id: str) -> dict:
             "supplier_id": batch["supplier_id"],
             "supplier_name": batch["supplier_name"],
             "origin_country": batch["origin_country"],
-            "extraction_date": batch["extraction_date"],
-            "purity_grade": batch["purity_grade"],
-            "weight_kg": batch["weight_kg"],
+            "battery_type": batch["battery_type"],
             "trace_paths": trace_paths,
             "traceability_status": "Complete",
             "total_cells": len(batch["cell_ids"]),
@@ -212,7 +149,6 @@ def map_cell_to_pack(cell_id: str) -> dict:
             "sibling_cells": sibling_cells,
             "cells_in_pack": len(sibling_cells),
             "vehicle_id": vehicle_info.get("vehicle_id", "UNASSIGNED"),
-            "vehicle_model": vehicle_info.get("model", "N/A"),
             "mapping_status": "Verified",
         }
     except ToolError:
@@ -226,8 +162,8 @@ def map_pack_to_vehicle(pack_id: str) -> dict:
     """Map a battery pack to the vehicle it was installed in.
 
     Given a pack ID (e.g. 'PACK-001'), returns the vehicle details
-    including VIN, model, manufacturer, assembly plant, and assembly date.
-    Also returns all cells contained in the pack for downward traceability.
+    including VIN. Also returns all cells contained in the pack for
+    downward traceability.
 
     Use this when tracing a pack-level issue to the affected vehicle,
     or for recall scope analysis.
@@ -258,10 +194,6 @@ def map_pack_to_vehicle(pack_id: str) -> dict:
         return {
             "pack_id": pack_id.upper(),
             "vehicle_id": vehicle_info["vehicle_id"],
-            "vehicle_model": vehicle_info["model"],
-            "manufacturer": vehicle_info["manufacturer"],
-            "assembly_plant": vehicle_info["assembly_plant"],
-            "assembly_date": vehicle_info["assembly_date"],
             "cells_in_pack": cells_in_pack,
             "total_cells": len(cells_in_pack),
             "source_batches": list(batch_sources),
@@ -279,7 +211,6 @@ def verify_traceability_completeness(batch_data: dict) -> dict:
 
     Expects a dict with keys:
       - batch_id (str): The batch to verify
-      - or any output from trace_material_batch
 
     Checks that every link in the chain (Supplier → Cell → Pack → Vehicle)
     is present and accounted for. Identifies missing links that break the
@@ -296,7 +227,6 @@ def verify_traceability_completeness(batch_data: dict) -> dict:
         if not batch_id:
             raise ToolError("batch_data must contain a 'batch_id' key")
 
-        # If we only have the batch_id, look up the full trace
         batch = _BATCH_DB.get(batch_id.upper())
         if batch is None:
             raise ToolError(f"Batch '{batch_id}' not found in traceability system")

@@ -1,76 +1,57 @@
-import random
+import os
+import pandas as pd
 from langchain.tools import tool
 from . import ToolError
 
 
 # ---------------------------------------------------------------------------
-# Mock supplier database – realistic EV battery supply chain actors
+# Load actual datasets from the datasets/ directory
 # ---------------------------------------------------------------------------
-_SUPPLIER_DB = {
-    "SUP-001": {
-        "supplier_name": "Ganfeng Lithium Co.",
-        "country": "China",
-        "tier": 1,
-        "materials_supplied": ["lithium", "LFP"],
-        "certifications": ["ISO 9001", "IATF 16949"],
-        "capacity_gwh": 25.0,
-    },
-    "SUP-002": {
-        "supplier_name": "Umicore NV",
-        "country": "Belgium",
-        "tier": 1,
-        "materials_supplied": ["cobalt", "nickel", "NMC"],
-        "certifications": ["ISO 14001", "IATF 16949"],
-        "capacity_gwh": 18.5,
-    },
-    "SUP-003": {
-        "supplier_name": "Glencore Congo SARL",
-        "country": "Congo",
-        "tier": 2,
-        "materials_supplied": ["cobalt"],
-        "certifications": ["RMI"],
-        "capacity_gwh": 8.0,
-    },
-    "SUP-004": {
-        "supplier_name": "Pilbara Minerals Ltd",
-        "country": "Australia",
-        "tier": 2,
-        "materials_supplied": ["lithium"],
-        "certifications": ["ISO 9001"],
-        "capacity_gwh": 12.0,
-    },
-    "SUP-005": {
-        "supplier_name": "CATL Battery Co.",
-        "country": "China",
-        "tier": 1,
-        "materials_supplied": ["LFP", "NMC"],
-        "certifications": ["ISO 9001", "IATF 16949", "ISO 14001"],
-        "capacity_gwh": 100.0,
-    },
-    "SUP-006": {
-        "supplier_name": "Norilsk Nickel",
-        "country": "Russia",
-        "tier": 2,
-        "materials_supplied": ["nickel", "cobalt"],
-        "certifications": ["ISO 9001"],
-        "capacity_gwh": 15.0,
-    },
-    "SUP-007": {
-        "supplier_name": "SQM Chile",
-        "country": "Chile",
-        "tier": 2,
-        "materials_supplied": ["lithium"],
-        "certifications": ["ISO 9001", "ISO 14001"],
-        "capacity_gwh": 10.0,
-    },
-    "SUP-008": {
-        "supplier_name": "LG Energy Solution",
-        "country": "South Korea",
-        "tier": 1,
-        "materials_supplied": ["NMC", "nickel"],
-        "certifications": ["ISO 9001", "IATF 16949", "ISO 14001"],
-        "capacity_gwh": 60.0,
-    },
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_DATASETS_DIR = os.path.join(_BASE_DIR, "..", "..", "..", "datasets")
+
+_supply_chain_df = pd.read_csv(os.path.join(_DATASETS_DIR, "ev_supply_chain.csv"))
+_minerals_risk_df = pd.read_csv(os.path.join(_DATASETS_DIR, "critical_minerals_risk.csv"))
+_battery_quality_df = pd.read_csv(os.path.join(_DATASETS_DIR, "battery_quality.csv"))
+
+
+def _build_supplier_db() -> dict:
+    """Build supplier profiles from ev_supply_chain.csv."""
+    db = {}
+    for sup_id, group in _supply_chain_df.groupby("supplier_id"):
+        row = group.iloc[0]
+        materials = group["material"].unique().tolist()
+        db[sup_id] = {
+            "supplier_name": row["supplier_name"],
+            "country": row["country"],
+            "tier": int(row["supplier_tier"]),
+            "materials_supplied": materials,
+            "battery_types": group["battery_type"].unique().tolist(),
+        }
+    return db
+
+
+_SUPPLIER_DB = _build_supplier_db()
+
+
+# ---------------------------------------------------------------------------
+# Region mapping for geography tool
+# ---------------------------------------------------------------------------
+_REGION_MAP = {
+    "China": "Asia-Pacific",
+    "South Korea": "Asia-Pacific",
+    "Japan": "Asia-Pacific",
+    "Australia": "Asia-Pacific",
+    "Belgium": "Europe",
+    "Germany": "Europe",
+    "Finland": "Europe",
+    "Russia": "Europe",
+    "Congo": "Africa",
+    "South Africa": "Africa",
+    "Chile": "South America",
+    "Argentina": "South America",
+    "USA": "North America",
+    "Canada": "North America",
 }
 
 
@@ -80,7 +61,7 @@ def get_supplier_profile(supplier_id: str) -> dict:
 
     Given a supplier ID (e.g. 'SUP-001'), returns structured data including
     the supplier's name, country of operation, supply-chain tier, materials
-    supplied, certifications, and manufacturing capacity in GWh.
+    supplied, and battery types produced.
 
     Use this tool when you need comprehensive supplier information for
     due-diligence, onboarding checks, or risk assessment inputs.
@@ -102,8 +83,7 @@ def get_supplier_profile(supplier_id: str) -> dict:
             "country": profile["country"],
             "tier": profile["tier"],
             "materials_supplied": profile["materials_supplied"],
-            "certifications": profile["certifications"],
-            "capacity_gwh": profile["capacity_gwh"],
+            "battery_types": profile["battery_types"],
             "status": "active",
         }
     except ToolError:
@@ -176,28 +156,12 @@ def get_supplier_geography(supplier_id: str) -> dict:
             )
 
         country = profile["country"]
-        region_map = {
-            "China": "Asia-Pacific",
-            "South Korea": "Asia-Pacific",
-            "Japan": "Asia-Pacific",
-            "Australia": "Asia-Pacific",
-            "Belgium": "Europe",
-            "Germany": "Europe",
-            "Finland": "Europe",
-            "Russia": "Europe",
-            "Congo": "Africa",
-            "South Africa": "Africa",
-            "Chile": "South America",
-            "Argentina": "South America",
-            "USA": "North America",
-            "Canada": "North America",
-        }
 
         return {
             "supplier_id": supplier_id.upper(),
             "supplier_name": profile["supplier_name"],
             "country": country,
-            "region": region_map.get(country, "Unknown"),
+            "region": _REGION_MAP.get(country, "Unknown"),
             "materials_supplied": profile["materials_supplied"],
             "tier": profile["tier"],
         }

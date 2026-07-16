@@ -1,86 +1,18 @@
-import random
+import os
+import pandas as pd
 from langchain.tools import tool
 from . import ToolError
 
 
 # ---------------------------------------------------------------------------
-# Geopolitical risk profiles – realistic EV supply chain context
+# Load actual datasets
 # ---------------------------------------------------------------------------
-_GEO_RISK_PROFILES = {
-    "China": {
-        "risk_score": 72,
-        "factors": [
-            "Export controls on critical minerals",
-            "US-China trade tensions",
-            "Dominance in lithium refining (60%+ global share)",
-            "Regulatory opacity",
-        ],
-        "sanctions_active": False,
-        "trade_restrictions": True,
-    },
-    "Congo": {
-        "risk_score": 88,
-        "factors": [
-            "Artisanal mining & child labor concerns",
-            "Political instability in Katanga province",
-            "Conflict mineral designation",
-            "Limited infrastructure & logistics risk",
-        ],
-        "sanctions_active": False,
-        "trade_restrictions": False,
-    },
-    "Russia": {
-        "risk_score": 91,
-        "factors": [
-            "Active international sanctions",
-            "Supply disruption due to conflict",
-            "Nickel & palladium export restrictions",
-            "Banking and payment channel risks",
-        ],
-        "sanctions_active": True,
-        "trade_restrictions": True,
-    },
-    "Australia": {
-        "risk_score": 15,
-        "factors": [
-            "Stable democratic governance",
-            "Strong mining regulation",
-            "Long lead times for permitting",
-        ],
-        "sanctions_active": False,
-        "trade_restrictions": False,
-    },
-    "Chile": {
-        "risk_score": 28,
-        "factors": [
-            "Nationalization debates on lithium",
-            "Water scarcity in Atacama region",
-            "Stable trade partnerships",
-        ],
-        "sanctions_active": False,
-        "trade_restrictions": False,
-    },
-    "Belgium": {
-        "risk_score": 10,
-        "factors": [
-            "EU regulatory compliance",
-            "Strong IP protection",
-            "High labor cost",
-        ],
-        "sanctions_active": False,
-        "trade_restrictions": False,
-    },
-    "South Korea": {
-        "risk_score": 18,
-        "factors": [
-            "Geopolitical tension with North Korea",
-            "Strong semiconductor & battery ecosystem",
-            "Favorable trade agreements",
-        ],
-        "sanctions_active": False,
-        "trade_restrictions": False,
-    },
-}
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_DATASETS_DIR = os.path.join(_BASE_DIR, "..", "..", "..", "datasets")
+
+_supply_chain_df = pd.read_csv(os.path.join(_DATASETS_DIR, "ev_supply_chain.csv"))
+_minerals_risk_df = pd.read_csv(os.path.join(_DATASETS_DIR, "critical_minerals_risk.csv"))
+_battery_quality_df = pd.read_csv(os.path.join(_DATASETS_DIR, "battery_quality.csv"))
 
 
 def _classify_risk(score: float) -> str:
@@ -90,6 +22,41 @@ def _classify_risk(score: float) -> str:
     elif score <= 65:
         return "Medium"
     return "High"
+
+
+def _get_geo_risk(country: str) -> dict:
+    """Look up geopolitical risk from critical_minerals_risk.csv for a country."""
+    rows = _minerals_risk_df[_minerals_risk_df["country"] == country]
+    if rows.empty:
+        return {
+            "risk_score": 50,
+            "risk_level": "Medium",
+            "dependency_score": 50.0,
+            "political_risk_score": 50.0,
+            "factors": ["No detailed profile available – estimated risk"],
+            "data_confidence": "Low",
+        }
+    # Use the max political_risk_score across all materials for the country
+    row = rows.loc[rows["political_risk_score"].idxmax()]
+    factors = []
+    if float(row["production_share"]) > 0.5:
+        factors.append(f"Dominant production share ({row['production_share']:.0%})")
+    if float(row["dependency_score"]) > 70:
+        factors.append(f"High dependency score ({row['dependency_score']})")
+    if float(row["export_dependency"]) > 0.7:
+        factors.append(f"High export dependency ({row['export_dependency']:.0%})")
+    high_risk_rows = rows[rows["risk_level"] == "High"]
+    if not high_risk_rows.empty:
+        factors.append(f"High-risk materials: {', '.join(high_risk_rows['material'].tolist())}")
+
+    return {
+        "risk_score": float(row["political_risk_score"]),
+        "risk_level": row["risk_level"],
+        "dependency_score": float(row["dependency_score"]),
+        "political_risk_score": float(row["political_risk_score"]),
+        "factors": factors if factors else ["Stable sourcing environment"],
+        "data_confidence": "High",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -107,9 +74,9 @@ def calculate_supplier_risk_score(supplier_data: dict) -> dict:
       - materials_supplied (list[str]): e.g. ['lithium', 'cobalt']
 
     The score blends three components:
-      1. Geographic risk – derived from geopolitical profiles
-      2. Dependency risk – higher for critical single-source materials
-      3. Quality risk – random variance simulating inspection outcomes
+      1. Geographic risk – derived from critical_minerals_risk.csv
+      2. Dependency risk – from dependency_score in the dataset
+      3. Quality risk – from actual battery_quality.csv defect rates
 
     Use this tool to evaluate whether a supplier poses acceptable risk
     for procurement decisions.
@@ -121,26 +88,40 @@ def calculate_supplier_risk_score(supplier_data: dict) -> dict:
         country = supplier_data.get("country", "Unknown")
         tier = supplier_data.get("tier", 1)
         materials = supplier_data.get("materials_supplied", [])
+        supplier_id = supplier_data.get("supplier_id", "")
 
-        # --- Geographic risk component (0-40) ---
-        geo_profile = _GEO_RISK_PROFILES.get(country, {})
-        geo_base = geo_profile.get("risk_score", 50)
+        # --- Geographic risk component (0-40) from critical_minerals_risk.csv ---
+        geo_info = _get_geo_risk(country)
+        geo_base = geo_info["risk_score"]
         geo_component = (geo_base / 100) * 40
 
-        # --- Dependency risk component (0-35) ---
-        critical_materials = {"cobalt", "lithium", "nickel"}
-        critical_count = len(set(materials) & critical_materials)
-        dependency_base = min(critical_count * 30, 100)
+        # --- Dependency risk component (0-35) from critical_minerals_risk.csv ---
+        dep_scores = []
+        for mat in materials:
+            mat_rows = _minerals_risk_df[
+                (_minerals_risk_df["material"] == mat) &
+                (_minerals_risk_df["country"] == country)
+            ]
+            if not mat_rows.empty:
+                dep_scores.append(float(mat_rows.iloc[0]["dependency_score"]))
+        dependency_base = max(dep_scores) if dep_scores else 30.0
         tier_multiplier = 1.0 if tier == 1 else 0.75
         dependency_component = (dependency_base / 100) * 35 * tier_multiplier
 
-        # --- Quality risk component (0-25) – simulated ---
-        quality_component = random.uniform(2, 25)
+        # --- Quality risk component (0-25) from battery_quality.csv ---
+        quality_component = 10.0  # default
+        if supplier_id:
+            q_rows = _battery_quality_df[_battery_quality_df["supplier_id"] == supplier_id]
+            if not q_rows.empty:
+                avg_defect_rate = q_rows["defect_rate"].mean()
+                # Scale defect rate (0-0.05 range) to 0-25 score
+                quality_component = min(round((avg_defect_rate / 0.05) * 25, 1), 25.0)
 
         composite = round(geo_component + dependency_component + quality_component, 1)
         composite = min(composite, 100.0)
 
         return {
+            "supplier_id": supplier_id,
             "supplier_country": country,
             "risk_score": composite,
             "risk_level": _classify_risk(composite),
@@ -149,7 +130,6 @@ def calculate_supplier_risk_score(supplier_data: dict) -> dict:
                 "dependency_risk": round(dependency_component, 1),
                 "quality_risk": round(quality_component, 1),
             },
-            "sanctions_flag": geo_profile.get("sanctions_active", False),
             "recommendation": (
                 "Immediate review required"
                 if composite > 70
@@ -166,9 +146,8 @@ def calculate_supplier_risk_score(supplier_data: dict) -> dict:
 def detect_geopolitical_risk(country: str) -> dict:
     """Assess the geopolitical risk profile for a given country.
 
-    Returns a risk score (0-100), contributing risk factors, and flags
-    for active sanctions or trade restrictions. Covers key EV supply chain
-    geographies: China, Congo, Russia, Australia, Chile, Belgium, South Korea.
+    Returns a risk score (0-100), contributing risk factors, and dependency
+    metrics. Data is sourced from the critical_minerals_risk.csv dataset.
 
     Use this when evaluating sourcing decisions or diversification strategy
     across different supplier geographies.
@@ -177,28 +156,22 @@ def detect_geopolitical_risk(country: str) -> dict:
         if not country or not isinstance(country, str):
             raise ToolError("country must be a non-empty string")
 
-        profile = _GEO_RISK_PROFILES.get(country)
-        if profile is None:
-            # Generate a plausible default for unlisted countries
-            score = random.randint(20, 60)
-            return {
-                "country": country,
-                "risk_score": score,
-                "risk_level": _classify_risk(score),
-                "factors": ["No detailed profile available – estimated risk"],
-                "sanctions_active": False,
-                "trade_restrictions": False,
-                "data_confidence": "Low",
-            }
+        geo_info = _get_geo_risk(country)
+
+        # Get all materials sourced from this country
+        country_rows = _minerals_risk_df[_minerals_risk_df["country"] == country]
+        materials_from_country = country_rows["material"].tolist() if not country_rows.empty else []
+        risk_levels = country_rows["risk_level"].tolist() if not country_rows.empty else []
 
         return {
             "country": country,
-            "risk_score": profile["risk_score"],
-            "risk_level": _classify_risk(profile["risk_score"]),
-            "factors": profile["factors"],
-            "sanctions_active": profile["sanctions_active"],
-            "trade_restrictions": profile["trade_restrictions"],
-            "data_confidence": "High",
+            "risk_score": geo_info["risk_score"],
+            "risk_level": geo_info["risk_level"],
+            "dependency_score": geo_info["dependency_score"],
+            "factors": geo_info["factors"],
+            "materials_sourced": materials_from_country,
+            "material_risk_levels": dict(zip(materials_from_country, risk_levels)),
+            "data_confidence": geo_info["data_confidence"],
         }
     except ToolError:
         raise
@@ -271,17 +244,14 @@ def detect_supplier_concentration(suppliers_list: list) -> dict:
 
 @tool
 def detect_quality_deviation(inspection_data: dict) -> dict:
-    """Detect quality deviations from incoming inspection data.
+    """Detect quality deviations using actual battery_quality.csv data.
 
     Expects a dict with optional keys:
       - batch_id (str): The batch being inspected
       - supplier_id (str): Supplier under inspection
-      - inspection_type (str): e.g. 'incoming', 'in-process', 'final'
-      - sample_size (int): Number of units inspected
 
-    Simulates a defect rate and compares against industry thresholds to
-    determine whether a deviation has occurred. Returns severity level
-    and recommended corrective action.
+    Looks up real defect data from battery_quality.csv and compares against
+    industry thresholds to determine whether a deviation has occurred.
 
     Use this when checking incoming material quality or evaluating supplier
     quality performance.
@@ -290,21 +260,26 @@ def detect_quality_deviation(inspection_data: dict) -> dict:
         if not isinstance(inspection_data, dict):
             raise ToolError("inspection_data must be a dictionary")
 
-        batch_id = inspection_data.get("batch_id", f"BATCH-{random.randint(1000,9999)}")
-        supplier_id = inspection_data.get("supplier_id", "UNKNOWN")
-        inspection_type = inspection_data.get("inspection_type", "incoming")
-        sample_size = inspection_data.get("sample_size", random.randint(50, 500))
+        batch_id = inspection_data.get("batch_id", "")
+        supplier_id = inspection_data.get("supplier_id", "")
 
-        # Simulate defect rate (realistic: 0.1% – 8%)
-        defect_rate = round(random.uniform(0.1, 8.0), 2)
+        # Look up actual data from battery_quality.csv
+        if batch_id:
+            rows = _battery_quality_df[_battery_quality_df["batch_id"] == batch_id]
+        elif supplier_id:
+            rows = _battery_quality_df[_battery_quality_df["supplier_id"] == supplier_id]
+        else:
+            raise ToolError("Must provide either batch_id or supplier_id")
 
-        # Threshold logic by inspection type
-        thresholds = {
-            "incoming": 2.0,
-            "in-process": 1.5,
-            "final": 0.5,
-        }
-        threshold = thresholds.get(inspection_type, 2.0)
+        if rows.empty:
+            raise ToolError(
+                f"No quality data found. "
+                f"Valid batch IDs: {', '.join(_battery_quality_df['batch_id'].tolist())}"
+            )
+
+        row = rows.iloc[0]
+        defect_rate = float(row["defect_rate"]) * 100  # Convert to percentage
+        threshold = 2.0  # Industry standard threshold percentage
 
         deviation_flag = defect_rate > threshold
 
@@ -319,11 +294,12 @@ def detect_quality_deviation(inspection_data: dict) -> dict:
             action = "No action required – within acceptable limits"
 
         return {
-            "batch_id": batch_id,
-            "supplier_id": supplier_id,
-            "inspection_type": inspection_type,
-            "sample_size": sample_size,
-            "defect_rate_percent": defect_rate,
+            "batch_id": row["batch_id"],
+            "supplier_id": row["supplier_id"],
+            "inspection_count": int(row["inspection_count"]),
+            "defects_found": int(row["defects_found"]),
+            "defect_rate_percent": round(defect_rate, 3),
+            "defect_type": row["defect_type"],
             "threshold_percent": threshold,
             "deviation_flag": deviation_flag,
             "severity_level": severity,
