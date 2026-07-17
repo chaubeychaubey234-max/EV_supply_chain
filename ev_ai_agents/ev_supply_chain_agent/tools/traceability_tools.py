@@ -8,7 +8,7 @@ from . import ToolError
 # Load actual datasets
 # ---------------------------------------------------------------------------
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_DATASETS_DIR = os.path.join(_BASE_DIR, "..", "..", "..", "datasets")
+_DATASETS_DIR = os.path.join(_BASE_DIR, "..", "..", "datasets")
 
 _supply_chain_df = pd.read_csv(os.path.join(_DATASETS_DIR, "ev_supply_chain.csv"))
 
