@@ -4,7 +4,7 @@ import pandas as pd
 # Resolve paths relative to this file's location
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
-DATASETS_DIR = os.path.join(PROJECT_ROOT, "datasets")
+DATASETS_DIR = "/Users/alex-ankush/Desktop/EV/EV_supply_chain/ev_ai_agents/datasets"
 
 def get_csv_path(filename: str) -> str:
     """Return the absolute path for a dataset file."""

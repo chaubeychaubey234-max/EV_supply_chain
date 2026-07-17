@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from langchain.tools import tool
 
-DATASET_PATH = "/Users/alex-ankush/Desktop/EV/datasets/qms_dataset.csv"
+DATASET_PATH = "/Users/alex-ankush/Desktop/EV/EV_supply_chain/ev_ai_agents/datasets/qms_dataset.csv"
 
 @tool
 def fetch_process_data(batch_id: str) -> dict:

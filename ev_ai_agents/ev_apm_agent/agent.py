@@ -1,6 +1,6 @@
 import os
 from langgraph.graph import StateGraph, END
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import List
@@ -32,7 +32,7 @@ def fetch_data_node(state: APMState):
 
 def analyze_health_node(state: APMState):
     """Uses LLM to analyze the data and generate recommendations and triggers."""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
     structured_llm = llm.with_structured_output(APMAnalysisOutput)
     
     prompt = ChatPromptTemplate.from_messages([

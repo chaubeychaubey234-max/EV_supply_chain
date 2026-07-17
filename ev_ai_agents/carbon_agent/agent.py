@@ -8,7 +8,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
 
 from ev_ai_agents.carbon_agent.tools import (
@@ -81,17 +81,18 @@ class SimpleAgentExecutor:
 
 def get_agent_executor() -> SimpleAgentExecutor:
     """Instantiate the Gemini LLM, bind tools, and return a SimpleAgentExecutor."""
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY")
+
     if not api_key:
         raise ValueError(
-            "GEMINI_API_KEY or GOOGLE_API_KEY environment variable is required to run the agent."
+            "GROQ_API_KEY environment variable is required to run the agent."
         )
 
     # Initialize Gemini model
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",  # Robust flash model for tool calling
+    llm = ChatGroq(
+        model="llama-3.3-70b-versatile",
         temperature=0.2,
-        google_api_key=api_key
+        api_key=os.getenv("GROQ_API_KEY")
     )
 
     # Compile the list of tools

@@ -1,6 +1,6 @@
 import os
 from langgraph.graph import StateGraph, END
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import List
@@ -32,7 +32,7 @@ def fetch_qms_data_node(state: QMSState):
 
 def analyze_drift_node(state: QMSState):
     """Uses LLM to detect quality drift and find root causes."""
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
     structured_llm = llm.with_structured_output(QMSAnalysisOutput)
     
     prompt = ChatPromptTemplate.from_messages([

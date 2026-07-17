@@ -11,7 +11,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from langgraph.graph import StateGraph, END
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 
@@ -56,12 +56,12 @@ class QueryParameters(BaseModel):
 
 def get_llm():
     """Helper to instantiate Google Gemini LLM if API key is present."""
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY")
     if api_key:
-        return ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash", 
+        return ChatGroq(
+            model="llama-3.3-70b-versatile", 
             temperature=0.2, 
-            google_api_key=api_key
+            api_key=os.getenv("GROQ_API_KEY")
         )
     return None
 

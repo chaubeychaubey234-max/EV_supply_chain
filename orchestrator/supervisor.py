@@ -3,7 +3,7 @@ import json
 import re
 from typing import Literal, List
 from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, END
 from langgraph.constants import Send
 from pydantic import BaseModel, Field
@@ -18,7 +18,7 @@ from ev_ai_agents.ev_fleet_electrification_agent.agent import run_agent as run_f
 from ev_ai_agents.ev_maintenance_operations_agent.agent import run_agent as run_maintenance_agent
 from ev_ai_agents.carbon_agent.agent import get_agent_executor as get_carbon_agent
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
 class RouterOutput(BaseModel):
     next_agents: List[Literal["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon"]] = Field(
@@ -84,7 +84,7 @@ def call_qms_agent(state: OrchestratorState) -> dict:
     return {"agent_responses": {"qms": {"quality_drift_analysis": result.get("quality_drift_analysis", "")}}}
 
 def call_supply_chain_agent(state: OrchestratorState) -> dict:
-    result = supply_chain_app.invoke({"user_input": state["user_query"]})
+    result = supply_chain_app.invoke({"query": state["user_query"]})
     return {"agent_responses": {"supply_chain": result.get("final_response", "")}}
 
 def call_fleet_agent(state: OrchestratorState) -> dict:

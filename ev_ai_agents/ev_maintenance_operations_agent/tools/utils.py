@@ -2,8 +2,8 @@
 utils.py — Shared utilities for Maintenance Operations Optimiser tools.
 
 Provides:
-- Project path resolution (BASE_DIR, dataset paths)
-- Lazy-loading, cached dataset loaders
+- Project path resolution (BASE_DIR, datasets paths)
+- Lazy-loading, cached datasets loaders
 - Common validation helpers reused across the three tools
 """
 
@@ -30,19 +30,18 @@ DATASETS_DIR = os.path.join(BASE_DIR, "datasets")
 LOCAL_DATASET_DIR = os.path.join(_MOO_DIR, "datasets")
 
 
-
-def _dataset_path(filename: str) -> str:
-    """Return absolute path to a raw dataset file."""
+def _datasets_path(filename: str) -> str:
+    """Return absolute path to a raw datasets file."""
     return os.path.join(DATASETS_DIR, filename)
 
 
-def _local_dataset_path(filename: str) -> str:
-    """Return absolute path to a maintenance-optimised dataset file."""
+def _local_datasets_path(filename: str) -> str:
+    """Return absolute path to a maintenance-optimised datasets file."""
     return os.path.join(LOCAL_DATASET_DIR, filename)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Lazy-loading cached dataset loaders
+# Lazy-loading cached datasets loaders
 # ─────────────────────────────────────────────────────────────────────────────
 
 @functools.lru_cache(maxsize=None)
@@ -53,14 +52,14 @@ def load_maintenance_history() -> pd.DataFrame:
         DataFrame with one row per vehicle maintenance record.
 
     Raises:
-        FileNotFoundError: If the dataset file does not exist.
+        FileNotFoundError: If the datasets file does not exist.
         RuntimeError: If the file cannot be parsed as CSV.
     """
-    path = _local_dataset_path("vehicle_maintenance_history.csv")
+    path = _local_datasets_path("vehicle_maintenance_history.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"vehicle_maintenance_history.csv not found at: {path}\n"
-            "Generate the dataset or place it in the local dataset/ directory."
+            "Generate the datasets or place it in the local datasets/ directory."
         )
     try:
         df = pd.read_csv(path, parse_dates=["last_service_date"])
@@ -77,14 +76,14 @@ def load_workshop_capacity() -> pd.DataFrame:
         DataFrame with one row per workshop.
 
     Raises:
-        FileNotFoundError: If the dataset file does not exist.
+        FileNotFoundError: If the datasets file does not exist.
         RuntimeError: If the file cannot be parsed as CSV.
     """
-    path = _local_dataset_path("workshop_capacity.csv")
+    path = _local_datasets_path("workshop_capacity.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"workshop_capacity.csv not found at: {path}\n"
-            "Generate the dataset or place it in the local dataset/ directory."
+            "Generate the datasets or place it in the local datasets/ directory."
         )
     try:
         df = pd.read_csv(path)
@@ -107,10 +106,10 @@ def load_fleet_operations() -> pd.DataFrame:
         DataFrame with one row per fleet vehicle.
 
     Raises:
-        FileNotFoundError: If the dataset file does not exist.
+        FileNotFoundError: If the datasets file does not exist.
         RuntimeError: If the file cannot be parsed as CSV.
     """
-    path = _local_dataset_path("fleet_operations_maintenance.csv")
+    path = _local_datasets_path("fleet_operations_maintenance.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"fleet_operations_maintenance.csv not found at: {path}\n"
@@ -130,10 +129,10 @@ def load_charging_stations() -> pd.DataFrame:
         DataFrame with one row per charging station.
 
     Raises:
-        FileNotFoundError: If the dataset file does not exist.
+        FileNotFoundError: If the datasets file does not exist.
         RuntimeError: If the file cannot be parsed as CSV.
     """
-    path = _local_dataset_path("charging_station_maint.csv")
+    path = _local_datasets_path("charging_station_maint.csv")
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"charging_station_maint.csv not found at: {path}\n"
