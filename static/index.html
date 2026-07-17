@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoltGrid AI - Enterprise EV Fleet & Supply Chain Intelligence</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Icon sets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-charging-station logo-icon"></i>
+                    <span class="logo-text">VoltGrid <span class="logo-badge">AI</span></span>
+                </div>
+                <div class="brand-tagline">Enterprise Operations Control</div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-section="command-center" id="nav-command-center">
+                    <i class="fa-solid fa-solar-panel"></i> Executive Deck
+                </a>
+                <div class="nav-section-title">AI Agents Directory</div>
+                <a href="#" class="nav-item" data-section="fleet-electrification" id="nav-fleet-electrification">
+                    <i class="fa-solid fa-bolt"></i> Fleet Readiness
+                </a>
+                <a href="#" class="nav-item" data-section="maintenance-operations" id="nav-maintenance-operations">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Optimiser
+                </a>
+                <a href="#" class="nav-item" data-section="ev-apm" id="nav-ev-apm">
+                    <i class="fa-solid fa-battery-three-quarters"></i> Battery Health APM
+                </a>
+                <a href="#" class="nav-item" data-section="ev-qms" id="nav-ev-qms">
+                    <i class="fa-solid fa-microscope"></i> Cell Quality QMS
+                </a>
+                <a href="#" class="nav-item" data-section="supply-chain" id="nav-supply-chain">
+                    <i class="fa-solid fa-cubes"></i> Supply Traceability
+                </a>
+                <a href="#" class="nav-item" data-section="carbon-tracker" id="nav-carbon-tracker">
+                    <i class="fa-solid fa-leaf"></i> Carbon Net Zero
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">All AI Agents Online</span>
+                </div>
+                <div class="platform-ver">v1.4.0 (Enterprise)</div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="top-header">
+                <div class="header-breadcrumbs">
+                    <span class="breadcrumb-root">VoltGrid Control</span>
+                    <i class="fa-solid fa-angle-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current" id="active-breadcrumb">Executive Deck</span>
+                </div>
+                <div class="header-actions">
+                    <div class="system-health-badge">
+                        <i class="fa-solid fa-shield-halved text-success"></i>
+                        <span>System Secure</span>
+                    </div>
+                    <div class="profile-dropdown">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Avatar" class="avatar">
+                        <span class="username">Operations Director</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content Container -->
+            <div class="content-body">
+                
+                <!-- SECTION 1: Executive Command Center -->
+                <section id="command-center" class="content-section active">
+                    <div class="welcome-banner">
+                        <div class="welcome-text">
+                            <h2>Enterprise Operational Overview</h2>
+                            <p>VoltGrid AI unifies fleet telemetry, battery manufacturing logistics, cell quality control, and emissions tracker into a single dashboard.</p>
+                        </div>
+                        <div class="live-pulse">
+                            <span class="pulse-dot"></span>
+                            <span>Live Control Stream</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span class="kpi-label">Active Electrification</span>
+                                <div class="kpi-icon-wrapper blue"><i class="fa-solid fa-plug"></i></div>
+                            </div>
+                            <div class="kpi-value">55.0%</div>
+                            <p class="kpi-description">Percentage of organizational delivery fleet converted to active EV drivetrains.</p>
+                            <div class="kpi-footer text-success">
+                                <i class="fa-solid fa-arrow-trend-up"></i> +15% over baseline year
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span class="kpi-label">Net Zero Target Progress</span>
+                                <div class="kpi-icon-wrapper green"><i class="fa-solid fa-leaf"></i></div>
+                            </div>
+                            <div class="kpi-value">-42.2%</div>
+                            <p class="kpi-description">Total Scope 1-3 greenhouse gas reductions verified against our net zero goal.</p>
+                            <div class="kpi-footer text-success">
+                                <i class="fa-solid fa-circle-check"></i> On track for FY2026 targets
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span class="kpi-label">Battery SOH Average</span>
+                                <div class="kpi-icon-wrapper purple"><i class="fa-solid fa-battery-three-quarters"></i></div>
+                            </div>
+                            <div class="kpi-value">91.8%</div>
+                            <p class="kpi-description">State of health average across all battery packs actively monitored in fleet vehicles.</p>
+                            <div class="kpi-footer text-neutral">
+                                <i class="fa-solid fa-circle-check"></i> Standard Operating Limits
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span class="kpi-label">Cell Quality Scrap Rate</span>
+                                <div class="kpi-icon-wrapper orange"><i class="fa-solid fa-circle-xmark"></i></div>
+                            </div>
+                            <div class="kpi-value">1.2%</div>
+                            <p class="kpi-description">The current ratio of rejected battery cells in the gigafactory manufacturing lines.</p>
+                            <div class="kpi-footer text-danger">
+                                <i class="fa-solid fa-arrow-trend-up"></i> Anomaly detected in Line 3
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Sub-Grid -->
+                    <div class="dashboard-grid">
+                        <!-- Left Column: Central Supervisor Chatbot (span-2) -->
+                        <div class="dashboard-card flex-col supervisor-chat-card span-2">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-user-tie text-blue"></i> Central AI Supervisor</h3>
+                                <span class="badge status-success">Connected</span>
+                            </div>
+                            
+                            <div class="chat-wrapper flex-grow mt-3">
+                                <!-- Message log box -->
+                                <div id="supervisor-chat-box" class="chat-message-log">
+                                    <div class="chat-bubble assistant">
+                                        <div class="chat-meta"><strong>AI Supervisor</strong> <span>System Online</span></div>
+                                        <p>Hello! I coordinate all 6 sub-agents (APM, QMS, Supply Chain, Fleet, Maintenance, Carbon) to run audits in parallel. Send me a complex question or click a preset query below:</p>
+                                    </div>
+                                </div>
+
+                                <!-- Predefined presets -->
+                                <div class="chat-presets mt-2">
+                                    <button class="preset-btn" data-query="Check the APM health for EV-9001 and trace the supplier risk.">
+                                        <i class="fa-solid fa-magnifying-glass"></i> Check EV-9001 SOH & Trace Risk
+                                    </button>
+                                    <button class="preset-btn" data-query="Identify high-risk vehicles for maintenance and trace carbon footprint progress.">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Plan & Carbon Progress
+                                    </button>
+                                    <button class="preset-btn" data-query="Check BTH-0001 scrap defects and evaluate fleet electrification readiness.">
+                                        <i class="fa-solid fa-microscope"></i> BTH-0001 Defects & Fleet Savings
+                                    </button>
+                                </div>
+                                
+                                <!-- Loading overlay -->
+                                <div id="supervisor-chat-loader" class="chat-loader hidden mt-2">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-blue"></i>
+                                    <span id="chat-loader-msg">Orchestrating agents in parallel...</span>
+                                </div>
+
+                                <!-- Message Input -->
+                                <div class="chat-input-bar mt-2">
+                                    <input type="text" id="supervisor-chat-input" placeholder="Ask supervisor a multi-intent query..." class="form-select" />
+                                    <button id="supervisor-chat-send" class="primary-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Operations status & active warnings -->
+                        <div class="dashboard-card flex-col">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-bell text-orange"></i> Live Operations Stream</h3>
+                            </div>
+                            <div class="log-stream flex-grow mt-3">
+                                <div class="log-item critical">
+                                    <div class="log-meta">
+                                        <span class="log-agent">Maintenance Agent</span>
+                                        <span class="log-time">Just Now</span>
+                                    </div>
+                                    <p class="log-msg">EV_2001 flagged as CRITICAL risk. Battery cell imbalance detected.</p>
+                                </div>
+                                <div class="log-item warning">
+                                    <div class="log-meta">
+                                        <span class="log-agent">QMS Agent</span>
+                                        <span class="log-time">12m ago</span>
+                                    </div>
+                                    <p class="log-msg">Line 3 drift detected in BTH-0001. Internal resistance anomaly.</p>
+                                </div>
+                                <div class="log-item info">
+                                    <div class="log-meta">
+                                        <span class="log-agent">Fleet Electrification</span>
+                                        <span class="log-time">1h ago</span>
+                                    </div>
+                                    <p class="log-msg">VEH-002 model matched: Ford E-Transit 350. ROI computed.</p>
+                                </div>
+                                <div class="log-item success">
+                                    <div class="log-meta">
+                                        <span class="log-agent">Carbon Intelligence</span>
+                                        <span class="log-time">3h ago</span>
+                                    </div>
+                                    <p class="log-msg">Scope 3 emission report generated for lithium carbonate shipment.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 2: Fleet Electrification Readiness -->
+                <section id="fleet-electrification" class="content-section">
+                    <div class="wizard-header">
+                        <h2>Fleet Electrification & Procurement Readiness</h2>
+                        <p>Analyze range feasibility, models availability, ROI, and procurement windows for target ICE vehicles.</p>
+                    </div>
+
+                    <div class="agent-interaction-grid">
+                        <!-- Control panel -->
+                        <div class="dashboard-card control-panel">
+                            <div class="wizard-steps-timeline">
+                                <div class="step-indicator done"><span>1</span> Select ICE Vehicle</div>
+                                <div class="step-indicator done"><span>2</span> Operational Query</div>
+                                <div class="step-indicator active"><span>3</span> AI Optimization Run</div>
+                            </div>
+
+                            <div class="input-group mt-4">
+                                <label for="fleet-vehicle-select">Target Vehicle</label>
+                                <select id="fleet-vehicle-select" class="form-select">
+                                    <!-- Options filled dynamically -->
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="fleet-query-input">Instruction for AI Agent</label>
+                                <textarea id="fleet-query-input" class="form-textarea" rows="3">Evaluate my delivery fleet for electrification and estimate annual savings.</textarea>
+                            </div>
+
+                            <button id="run-fleet-agent-btn" class="primary-btn glow-btn">
+                                <i class="fa-solid fa-circle-play"></i> Run Agent Analysis
+                            </button>
+                        </div>
+
+                        <!-- Results display -->
+                        <div class="dashboard-card results-panel">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-clipboard-list text-blue"></i> Platform Analysis Output</h3>
+                                <span id="fleet-status-badge" class="badge">Awaiting Input</span>
+                            </div>
+                            <div id="fleet-results-content" class="results-content-box">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon"><i class="fa-solid fa-bolt"></i></div>
+                                    <h3>Operational Profile Analysis</h3>
+                                    <p>Select a vehicle and click 'Run Agent Analysis' to fetch the feasibility study.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 3: Maintenance Operations -->
+                <section id="maintenance-operations" class="content-section">
+                    <div class="wizard-header">
+                        <h2>Maintenance Operations Optimiser</h2>
+                        <p>Evaluate fleet risk profiles, assign workshops slots, and plan vehicle charging logistics post-service.</p>
+                    </div>
+
+                    <div class="agent-interaction-grid">
+                        <div class="dashboard-card control-panel">
+                            <div class="wizard-steps-timeline">
+                                <div class="step-indicator done"><span>1</span> Setup Target Query</div>
+                                <div class="step-indicator active"><span>2</span> Execute Optimization Plan</div>
+                            </div>
+
+                            <div class="input-group mt-4">
+                                <label for="maint-query-select">Presets Analysis Goals</label>
+                                <select id="maint-query-select" class="form-select">
+                                    <option value="Identify high-risk vehicles and prepare a maintenance plan.">Identify high-risk vehicles and prepare a plan.</option>
+                                    <option value="Which vehicles need maintenance this week?">Which vehicles need maintenance this week?</option>
+                                    <option value="Generate an optimized maintenance schedule.">Generate an optimized maintenance schedule.</option>
+                                    <option value="Which charging stations should be used after maintenance?">Which charging stations should be used after maintenance?</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="maint-query-input">Instruction for AI Agent</label>
+                                <textarea id="maint-query-input" class="form-textarea" rows="3">Identify high-risk vehicles and prepare a maintenance plan.</textarea>
+                            </div>
+
+                            <button id="run-maint-agent-btn" class="primary-btn glow-btn">
+                                <i class="fa-solid fa-wrench"></i> Run Maintenance Agent
+                            </button>
+                        </div>
+
+                        <div class="dashboard-card results-panel">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-calendar-check text-purple"></i> Operations Schedule</h3>
+                                <span id="maint-status-badge" class="badge">Awaiting Input</span>
+                            </div>
+                            <div id="maint-results-content" class="results-content-box">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                                    <h3>Optimized Fleet Scheduling Control</h3>
+                                    <p>Run the maintenance agent to coordinate charging logs and workshops timelines.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 4: Battery Health APM -->
+                <section id="ev-apm" class="content-section">
+                    <div class="wizard-header">
+                        <h2>Battery Asset Performance Management (APM)</h2>
+                        <p>Analyze state of health, operating temperatures, and detect degradation patterns using live telemetry logs.</p>
+                    </div>
+
+                    <div class="agent-interaction-grid">
+                        <div class="dashboard-card control-panel">
+                            <div class="wizard-steps-timeline">
+                                <div class="step-indicator done"><span>1</span> Select EV ID</div>
+                                <div class="step-indicator active"><span>2</span> Run Safety Analysis</div>
+                            </div>
+
+                            <div class="input-group mt-4">
+                                <label for="apm-ev-select">Target EV ID</label>
+                                <select id="apm-ev-select" class="form-select">
+                                    <!-- Options filled dynamically -->
+                                </select>
+                            </div>
+
+                            <button id="run-apm-agent-btn" class="primary-btn glow-btn">
+                                <i class="fa-solid fa-magnifying-glass-chart"></i> Analyze Battery Sensor Data
+                            </button>
+                        </div>
+
+                        <div class="dashboard-card results-panel">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-battery-empty text-green"></i> Live Battery Diagnostics</h3>
+                                <span id="apm-status-badge" class="badge">Awaiting Input</span>
+                            </div>
+                            <div id="apm-results-content" class="results-content-box">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon"><i class="fa-solid fa-battery-half"></i></div>
+                                    <h3>Live Battery Sensor Tracking</h3>
+                                    <p>Select a battery ID to run state of health analysis and compile safety warnings.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 5: Cell Quality QMS -->
+                <section id="ev-qms" class="content-section">
+                    <div class="wizard-header">
+                        <h2>EV Manufacturing Cell Quality (QMS)</h2>
+                        <p>Monitor chemical electrolyte filling anomalies and internal resistance deviations inside production lines.</p>
+                    </div>
+
+                    <div class="agent-interaction-grid">
+                        <div class="dashboard-card control-panel">
+                            <div class="wizard-steps-timeline">
+                                <div class="step-indicator done"><span>1</span> Select Manufacturing Batch</div>
+                                <div class="step-indicator active"><span>2</span> Analyze Quality Drift</div>
+                            </div>
+
+                            <div class="input-group mt-4">
+                                <label for="qms-batch-select">Target Batch ID</label>
+                                <select id="qms-batch-select" class="form-select">
+                                    <!-- Options filled dynamically -->
+                                </select>
+                            </div>
+
+                            <button id="run-qms-agent-btn" class="primary-btn glow-btn">
+                                <i class="fa-solid fa-chart-bar"></i> Audit Quality Control
+                            </button>
+                        </div>
+
+                        <div class="dashboard-card results-panel">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-circle-nodes text-orange"></i> QC Inspection Deck</h3>
+                                <span id="qms-status-badge" class="badge">Awaiting Input</span>
+                            </div>
+                            <div id="qms-results-content" class="results-content-box">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon"><i class="fa-solid fa-microscope"></i></div>
+                                    <h3>Gigafactory Cell Batch Quality Diagnostics</h3>
+                                    <p>Load production statistics to audit defect rates and production line variances.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 6: Supply Chain Risk -->
+                <section id="supply-chain" class="content-section">
+                    <div class="wizard-header">
+                        <h2>Supply Chain Risk & Material Traceability</h2>
+                        <p>Verify mining origins of lithium, cobalt, and nickel minerals against global ESG risk metrics.</p>
+                    </div>
+
+                    <div class="agent-interaction-grid">
+                        <div class="dashboard-card control-panel">
+                            <div class="wizard-steps-timeline">
+                                <div class="step-indicator done"><span>1</span> Choose Supplier / Query</div>
+                                <div class="step-indicator active"><span>2</span> Perform Blockchain Trace</div>
+                            </div>
+
+                            <div class="input-group mt-4">
+                                <label for="sc-query-select">Predefined Trace Audits</label>
+                                <select id="sc-query-select" class="form-select">
+                                    <option value="Audit supplier SUP-001 (Ganfeng Lithium Co.) and review geopolitical risk and quality deviations.">Audit supplier SUP-001 (Ganfeng Lithium Co.)</option>
+                                    <option value="Run a traceability and risk review for cobalt batch BAT-2024-002 from Glencore Congo.">Trace Glencore Congo Cobalt (BAT-2024-002)</option>
+                                    <option value="Audit supplier SUP-003 and review nickel supply constraints.">Audit supplier SUP-003 (Vale Indonesia)</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="sc-query-input">Instruction for Traceability Agent</label>
+                                <textarea id="sc-query-input" class="form-textarea" rows="3">Audit supplier SUP-001 (Ganfeng Lithium Co.) and review geopolitical risk and quality deviations.</textarea>
+                            </div>
+
+                            <button id="run-sc-agent-btn" class="primary-btn glow-btn">
+                                <i class="fa-solid fa-route"></i> Audit Supply Chain
+                            </button>
+                        </div>
+
+                        <div class="dashboard-card results-panel">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-industry text-blue"></i> Blockchain Traceability Node Map</h3>
+                                <span id="sc-status-badge" class="badge">Awaiting Input</span>
+                            </div>
+                            <div id="sc-results-content" class="results-content-box">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon"><i class="fa-solid fa-industry"></i></div>
+                                    <h3>Mineral ESG Origin Audit</h3>
+                                    <p>Initiate a supplier risk review to compile carbon and quality metrics chain logs.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 7: Carbon Tracker -->
+                <section id="carbon-tracker" class="content-section">
+                    <div class="wizard-header">
+                        <h2>Net Zero Target Tracker & Carbon Intelligence</h2>
+                        <p>Forecast and verify reduction metrics across scope 1-3 categories against organizational target thresholds.</p>
+                    </div>
+
+                    <div class="agent-interaction-grid">
+                        <div class="dashboard-card control-panel">
+                            <div class="wizard-steps-timeline">
+                                <div class="step-indicator done"><span>1</span> Configure Scope Criteria</div>
+                                <div class="step-indicator active"><span>2</span> Draw Emissions Trend</div>
+                            </div>
+
+                            <div class="input-group mt-4">
+                                <label for="carbon-query-input">Instruction for Carbon Agent</label>
+                                <textarea id="carbon-query-input" class="form-textarea" rows="3">What is our net zero target progress and Scope 3 emission projection?</textarea>
+                            </div>
+
+                            <button id="run-carbon-agent-btn" class="primary-btn glow-btn">
+                                <i class="fa-solid fa-seedling"></i> Run Carbon Footprint Audit
+                            </button>
+                        </div>
+
+                        <div class="dashboard-card results-panel">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title"><i class="fa-solid fa-chart-line text-green"></i> Emissions Trends vs Net Zero Target</h3>
+                                <span id="carbon-status-badge" class="badge">Awaiting Input</span>
+                            </div>
+                            <div id="carbon-results-content" class="results-content-box">
+                                <div class="results-placeholder">
+                                    <div class="placeholder-icon"><i class="fa-solid fa-leaf"></i></div>
+                                    <h3>Carbon Reductions Tracker</h3>
+                                    <p>Execute the footprint agent to view scope emission factors and logistics green routes.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- UI Core Routing and Data Handling script -->
+    <script src="app.js"></script>
+</body>
+</html>

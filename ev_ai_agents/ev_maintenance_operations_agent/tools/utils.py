@@ -27,7 +27,8 @@ _FEAT_DIR  = os.path.dirname(_MOO_DIR)                         # …/features/
 BASE_DIR   = os.path.dirname(_FEAT_DIR)                        # project root
 
 DATASETS_DIR = os.path.join(BASE_DIR, "datasets")
-LOCAL_DATASET_DIR = os.path.join(_MOO_DIR, "dataset")
+LOCAL_DATASET_DIR = os.path.join(_MOO_DIR, "datasets")
+
 
 
 def _dataset_path(filename: str) -> str:
