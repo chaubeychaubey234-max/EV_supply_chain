@@ -6,8 +6,8 @@ from ev_qms_agent.agent import qms_app
 def main():
     load_dotenv()
     
-    if "OPENAI_API_KEY" not in os.environ:
-        print("WARNING: OPENAI_API_KEY not found in environment. Please set it or add to a .env file.")
+    if "GROQ_API_KEY" not in os.environ:
+        print("WARNING: GROQ_API_KEY not found in environment. Please set it or add to a .env file.")
         return
 
     print("Starting EV Manufacturing Quality Intelligence (QMS) Agent...")
