@@ -2,7 +2,8 @@ import pandas as pd
 import os
 from langchain.tools import tool
 
-DATASET_PATH = "/Users/alex-ankush/Desktop/EV/EV_supply_chain/ev_ai_agents/datasets/apm_dataset.csv"
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(_BASE_DIR, "..", "..", "datasets", "apm_dataset.csv")
 
 @tool
 def fetch_charging_patterns(ev_id: str) -> dict:
@@ -13,7 +14,7 @@ def fetch_charging_patterns(ev_id: str) -> dict:
     df = pd.read_csv(DATASET_PATH)
     row = df[df['EV_ID'] == ev_id]
     if row.empty:
-        row = df.sample(1)
+        return {"error": f"No record found for {ev_id}."}
         
     fast_charge_percentage = float(row['Fast_Charge_Ratio_Pct'].values[0])
     deep_discharge_cycles = int(row['Deep_Discharge_Cycles'].values[0])

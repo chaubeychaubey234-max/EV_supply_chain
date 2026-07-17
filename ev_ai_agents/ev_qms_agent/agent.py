@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 from .state import QMSState
-from .tools.material_tools import fetch_material_data
+from .tools.material_tools import fetch_material_data, predict_quality_drift
 from .tools.process_tools import fetch_process_data
 from .tools.inspection_tools import fetch_inspection_data
 
@@ -16,13 +16,26 @@ class QMSAnalysisOutput(BaseModel):
     alerts: List[str] = Field(description="Actionable alerts or warnings for operators.")
 
 def fetch_qms_data_node(state: QMSState):
-    """Fetches all manufacturing data for the batch."""
-    batch_id = state["batch_id"]
+    """Fetches all manufacturing data for the batch or runs ML prediction."""
     
-    # We call the underlying function of the tool directly
-    material = fetch_material_data.invoke({"batch_id": batch_id})
-    process = fetch_process_data.invoke({"batch_id": batch_id})
-    inspection = fetch_inspection_data.invoke({"batch_id": batch_id})
+    if state.get("ambient_temp_c") is not None:
+        # Live ML prediction pathway
+        inspection = predict_quality_drift.invoke({
+            "ambient_temp_c": state["ambient_temp_c"],
+            "anode_overhang_mm": state["anode_overhang_mm"],
+            "electrolyte_volume_ml": state["electrolyte_volume_ml"],
+            "internal_resistance_mohm": state["internal_resistance_mohm"],
+            "capacity_mah": state["capacity_mah"],
+            "retention_50cycle_pct": state["retention_50cycle_pct"]
+        })
+        material = {"anode_overhang_mm": state["anode_overhang_mm"], "electrolyte_volume_ml": state["electrolyte_volume_ml"]}
+        process = {"ambient_temperature_celsius": state["ambient_temp_c"]}
+    else:
+        # Historical lookup pathway
+        batch_id = state.get("batch_id", "Unknown")
+        material = fetch_material_data.invoke({"batch_id": batch_id})
+        process = fetch_process_data.invoke({"batch_id": batch_id})
+        inspection = fetch_inspection_data.invoke({"batch_id": batch_id})
     
     return {
         "material_data": material,

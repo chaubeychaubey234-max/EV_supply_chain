@@ -1,179 +1,109 @@
 from langchain_core.tools import tool
 
+def _calculate_readiness_score(daily_distance_km: float, available_charging_window_hours: float, avg_idle_minutes: float, 
+                              stops_per_day: int, route_type: str, route_consistency_score: float, vehicle_age_years: float, 
+                              fuel_efficiency_kmpl: float, operating_hours_per_day: float, utilization_rate: float, payload_kg: float) -> dict:
+    """Calculates a deterministic readiness score based on operational profile."""
+    
+    score = 0.0
+    reasons = []
+    
+    # 1. Range Viability (Weight: 35%)
+    # Assuming average heavy EV range is ~300km
+    max_range = 300.0
+    range_ratio = daily_distance_km / max_range
+    if range_ratio <= 0.6:
+        score += 35
+        reasons.append(f"Daily distance ({daily_distance_km}km) is well within average EV range, providing great buffer.")
+    elif range_ratio <= 0.85:
+        score += 25
+        reasons.append(f"Daily distance ({daily_distance_km}km) is viable but requires consistent overnight charging.")
+    elif range_ratio <= 1.0:
+        score += 15
+        reasons.append(f"Daily distance ({daily_distance_km}km) is at the boundary of EV range; opportunity charging needed.")
+    else:
+        score += 0
+        reasons.append(f"Daily distance ({daily_distance_km}km) exceeds standard EV range; mid-route fast charging mandatory.")
+        
+    # 2. Charging Window (Weight: 25%)
+    if available_charging_window_hours >= 10:
+        score += 25
+        reasons.append(f"Excellent charging window ({available_charging_window_hours}h).")
+    elif available_charging_window_hours >= 6:
+        score += 15
+        reasons.append(f"Adequate charging window ({available_charging_window_hours}h) for Level 2 or DC Fast charging.")
+    else:
+        score += 5
+        reasons.append(f"Tight charging window ({available_charging_window_hours}h) requires high-power DC infrastructure.")
+        
+    # 3. Predictability & Route (Weight: 20%)
+    if route_consistency_score > 0.8:
+        score += 20
+        reasons.append(f"High route consistency ({route_consistency_score}) makes energy planning highly predictable.")
+    elif route_consistency_score > 0.5:
+        score += 10
+        reasons.append(f"Moderate route consistency ({route_consistency_score}).")
+    else:
+        score += 0
+        reasons.append(f"Low route consistency ({route_consistency_score}) increases range anxiety risk.")
+        
+    # 4. Financial & Urgency (Weight: 20%)
+    # Older vehicles with worse fuel economy give better ROI
+    if vehicle_age_years >= 5:
+        score += 10
+        reasons.append(f"Vehicle age ({vehicle_age_years} yrs) makes it a prime candidate for replacement.")
+    else:
+        score += 5
+        
+    if fuel_efficiency_kmpl < 5.0:
+        score += 10
+        reasons.append(f"Low fuel efficiency ({fuel_efficiency_kmpl} kmpl) amplifies electrification ROI.")
+    else:
+        score += 5
 
-_READINESS_PROFILES: dict[str, dict] = {
-    "VEH-001": {
-        "vehicle_id": "VEH-001",
-        "readiness_score": 64,
-        "confidence": "medium",
-        "classification": "Conditionally Ready",
-        "reason": (
-            "VEH-001 operates 430 km daily, which is close to the upper boundary "
-            "of current heavy EV range (400 km). While overnight charging (7.5 h) "
-            "is available and payload is covered, the daily distance exceeds the "
-            "estimated EV range, requiring route optimisation or mid-route "
-            "opportunity charging to be viable. Idle time of 110 min/day and "
-            "highway route type support charging feasibility. Vehicle age of 4 "
-            "years and moderate fuel efficiency (3.2 kmpl) indicate urgency for "
-            "transition planning. Score reflects operational risk from range "
-            "boundary proximity."
-        ),
-    },
-    "VEH-002": {
-        "vehicle_id": "VEH-002",
-        "readiness_score": 91,
-        "confidence": "high",
-        "classification": "Highly Ready",
-        "reason": (
-            "VEH-002 is an ideal EV conversion candidate. Daily distance of "
-            "175 km is well within the 317 km E-Transit range, providing an "
-            "81% buffer. The 9-hour overnight charging window fully supports a "
-            "complete charge cycle. Urban route type with 22 stops per day "
-            "enables opportunity charging and minimises idle energy waste. "
-            "Vehicle age of 2 years and good fuel efficiency (9.5 kmpl) reduce "
-            "immediate financial pressure, but early conversion locks in savings "
-            "across the vehicle's full EV service life."
-        ),
-    },
-    "VEH-003": {
-        "vehicle_id": "VEH-003",
-        "readiness_score": 74,
-        "confidence": "medium",
-        "classification": "Ready with Conditions",
-        "reason": (
-            "VEH-003 averages 320 km daily on mixed routes, marginally exceeding "
-            "the Volvo FE Electric's 300 km range. The 14 daily stops provide "
-            "opportunity charging windows to bridge the gap. The vehicle's age "
-            "of 5 years and moderate efficiency (5.1 kmpl) make electrification "
-            "financially compelling. A 6.5-hour overnight charging window is "
-            "adequate for DC fast charging. Route consistency score of 0.65 "
-            "introduces mild prediction uncertainty in daily energy consumption."
-        ),
-    },
-    "VEH-004": {
-        "vehicle_id": "VEH-004",
-        "readiness_score": 83,
-        "confidence": "high",
-        "classification": "Ready",
-        "reason": (
-            "VEH-004 operates 260 km per day on suburban fixed routes with a "
-            "route consistency score of 0.80, making energy consumption highly "
-            "predictable. The Tata Ultra EV's 300 km range provides a 15% "
-            "buffer. High utilisation (88%) and 12 operating hours per day "
-            "indicate high fuel expenditure, amplifying ROI from conversion. "
-            "The 5-hour charging window is tight but sufficient with 150 kW DC "
-            "charging. Vehicle age of 6 years increases the urgency of replacement."
-        ),
-    },
-    "VEH-005": {
-        "vehicle_id": "VEH-005",
-        "readiness_score": 95,
-        "confidence": "high",
-        "classification": "Highly Ready",
-        "reason": (
-            "VEH-005 is the strongest conversion candidate in the fleet. Daily "
-            "distance of 130 km is 63% below the F-150 Lightning's 354 km range, "
-            "eliminating range anxiety entirely. A 10-hour overnight charging "
-            "window far exceeds the 8-hour charge requirement. Low idle time "
-            "(30 min/day), low operating hours (6 h/day), and a recent "
-            "registration year (2023) confirm operational efficiency. Mixed "
-            "route type supports flexible charging scheduling. The lowest "
-            "purchase price in the recommended EV catalogue further strengthens "
-            "the investment case."
-        ),
-    },
-}
-
-
-def _validate_vehicle_id(vehicle_id: str) -> str:
-    """Validate and normalise the vehicle_id input.
-
-    Args:
-        vehicle_id: Raw caller-supplied identifier.
-
-    Returns:
-        A stripped, non-empty vehicle ID string.
-
-    Raises:
-        ValueError: If the value fails any validation check.
-    """
-    if not isinstance(vehicle_id, str):
-        raise ValueError(
-            f"vehicle_id must be a string, received {type(vehicle_id).__name__!r}."
-        )
-    cleaned = vehicle_id.strip()
-    if not cleaned:
-        raise ValueError("vehicle_id must not be empty or whitespace-only.")
-    return cleaned
-
-
-def _lookup_readiness_profile(vehicle_id: str) -> dict:
-    """Retrieve the readiness scoring profile for a given vehicle.
-
-    Args:
-        vehicle_id: A validated, stripped vehicle ID.
-
-    Returns:
-        The readiness profile dictionary.
-
-    Raises:
-        ValueError: If no profile exists for the given ID.
-    """
-    profile = _READINESS_PROFILES.get(vehicle_id)
-    if profile is None:
-        valid_ids = ", ".join(sorted(_READINESS_PROFILES.keys()))
-        raise ValueError(
-            f"No readiness profile found for vehicle_id='{vehicle_id}'. "
-            f"Registered IDs: {valid_ids}."
-        )
-    return profile
-
+    total_score = min(int(score), 100)
+    
+    if total_score >= 85:
+        classification = "Highly Ready"
+        confidence = "high"
+    elif total_score >= 70:
+        classification = "Ready"
+        confidence = "high"
+    elif total_score >= 50:
+        classification = "Conditionally Ready"
+        confidence = "medium"
+    else:
+        classification = "Not Ready"
+        confidence = "low"
+        
+    return {
+        "readiness_score": total_score,
+        "confidence": confidence,
+        "classification": classification,
+        "reason": " ".join(reasons)
+    }
 
 @tool
-def calculate_readiness_score(vehicle_id: str) -> dict:
-    """Estimate the EV electrification readiness of a fleet vehicle.
-
-    Computes a deterministic readiness score by evaluating the vehicle's
-    operational profile against key electrification viability factors:
-
-        - Daily distance vs available EV range (range coverage headroom)
-        - Available charging window vs required charge time
-        - Average idle time and stop frequency (opportunity charging potential)
-        - Route type and consistency score (predictability of energy consumption)
-        - Vehicle age (replacement urgency and remaining ICE service life)
-        - Fuel efficiency (magnitude of fuel cost savings from conversion)
-        - Operating hours and utilisation rate (financial impact multiplier)
-        - Payload compatibility with available EV models
-
-    The output is used by procurement and ROI tools to prioritise fleet
-    electrification investments.
-
+def calculate_readiness_score(daily_distance_km: float, available_charging_window_hours: float, avg_idle_minutes: float, 
+                              stops_per_day: int, route_type: str, route_consistency_score: float, vehicle_age_years: float, 
+                              fuel_efficiency_kmpl: float, operating_hours_per_day: float, utilization_rate: float, payload_kg: float) -> dict:
+    """Estimate the EV electrification readiness of a fleet vehicle based on operational metrics.
+    
     Args:
-        vehicle_id: The unique fleet identifier of the target vehicle
-                    (e.g., "VEH-004"). Must be a non-empty, non-whitespace
-                    string matching a registered vehicle.
-
-    Returns:
-        A dictionary containing:
-            - vehicle_id (str): Echo of the requested identifier.
-            - readiness_score (int): Integer score from 0 to 100 where higher
-              values indicate greater electrification readiness.
-            - confidence (str): Confidence level of the assessment.
-              One of: "high", "medium", "low".
-            - classification (str): Human-readable readiness label.
-              One of: "Highly Ready", "Ready", "Ready with Conditions",
-              "Conditionally Ready", "Not Ready".
-            - reason (str): Detailed explanation of the score, citing
-              specific operational factors that drove the assessment.
-
-    Raises:
-        ValueError: If vehicle_id is not a string, is empty, is whitespace-only,
-                    or does not match any registered vehicle.
-
-    Example:
-        >>> result = calculate_readiness_score.invoke({"vehicle_id": "VEH-005"})
-        >>> result["readiness_score"]
-        95
+        daily_distance_km: Daily distance in km.
+        available_charging_window_hours: Hours available for charging.
+        avg_idle_minutes: Average idle time.
+        stops_per_day: Number of stops.
+        route_type: Urban, Suburban, Highway.
+        route_consistency_score: Predictability from 0 to 1.
+        vehicle_age_years: Age of ICE vehicle.
+        fuel_efficiency_kmpl: Current efficiency.
+        operating_hours_per_day: Hours in operation.
+        utilization_rate: Fleet util rate (0 to 1).
+        payload_kg: Cargo payload in kg.
     """
-    clean_id = _validate_vehicle_id(vehicle_id)
-    return _lookup_readiness_profile(clean_id)
+    return _calculate_readiness_score(
+        daily_distance_km, available_charging_window_hours, avg_idle_minutes, stops_per_day,
+        route_type, route_consistency_score, vehicle_age_years, fuel_efficiency_kmpl,
+        operating_hours_per_day, utilization_rate, payload_kg
+    )

@@ -40,7 +40,7 @@ if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
 # ─── Existing tool imports (no new tools created) ─────────────────────────────
-from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool      import fetch_vehicle_data
+from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool      import fetch_vehicle_data, analyze_fleet_csv
 from ev_ai_agents.ev_fleet_electrification_agent.tools.readiness_score_tool  import calculate_readiness_score
 from ev_ai_agents.ev_fleet_electrification_agent.tools.ev_matching_tool      import recommend_ev_replacement
 from ev_ai_agents.ev_fleet_electrification_agent.tools.roi_tool              import calculate_roi
@@ -66,6 +66,7 @@ log = logging.getLogger(__name__)
 
 _TOOL_REGISTRY: dict[str, Any] = {
     "fleet_data_tool":       fetch_vehicle_data,
+    "analyze_fleet_csv":     analyze_fleet_csv,
     "readiness_score_tool":  calculate_readiness_score,
     "ev_matching_tool":      recommend_ev_replacement,
     "roi_tool":              calculate_roi,
@@ -92,6 +93,15 @@ _INTENT_MAP: list[dict[str, Any]] = [
             "roi_tool",
             "procurement_tool",
         ],
+    },
+    # Bulk analysis
+    {
+        "keywords": {
+            "csv", "batch", "bulk", "analyze fleet", "file", "upload"
+        },
+        "tools": [
+            "analyze_fleet_csv"
+        ]
     },
     # Charging infrastructure / route-based queries
     {

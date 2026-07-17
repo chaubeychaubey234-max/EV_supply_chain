@@ -2,7 +2,8 @@ import pandas as pd
 import os
 from langchain.tools import tool
 
-DATASET_PATH = "/Users/alex-ankush/Desktop/EV/EV_supply_chain/ev_ai_agents/datasets/qms_dataset.csv"
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(_BASE_DIR, "..", "..", "datasets", "qms_dataset.csv")
 
 @tool
 def fetch_process_data(batch_id: str) -> dict:
@@ -13,7 +14,7 @@ def fetch_process_data(batch_id: str) -> dict:
     df = pd.read_csv(DATASET_PATH)
     row = df[df['Batch_ID'] == batch_id]
     if row.empty:
-        row = df.sample(1)
+        return {"error": f"No record found for batch {batch_id}."}
         
     return {
         "batch_id": str(row['Batch_ID'].values[0]),

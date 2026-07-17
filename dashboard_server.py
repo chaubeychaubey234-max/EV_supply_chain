@@ -179,135 +179,108 @@ def get_maintenance_operations(
             
     raise HTTPException(status_code=503, detail="Maintenance Agent module is not available.")
 
+from ev_ai_agents.ev_apm_agent.agent import apm_app
+from ev_ai_agents.ev_qms_agent.agent import qms_app
+
 # 3. EV Asset Performance Management (APM) Agent
 @app.get("/api/agents/ev_apm")
-def get_ev_apm(ev_id: str = Query("EV-9001", description="Target EV ID")):
-    df = load_csv_safe(APM_CSV)
-    if df is None:
-        raise HTTPException(status_code=500, detail="APM telemetry dataset not found on server.")
+def get_ev_apm(
+    ev_id: str = Query(None, description="Target EV ID"),
+    avg_temp: float = Query(None),
+    max_temp: float = Query(None),
+    fc_ratio: float = Query(None),
+    deep_cycles: int = Query(None),
+    charge_dur: float = Query(None)
+):
+    try:
+        input_data = {}
+        if ev_id:
+            input_data["ev_id"] = ev_id
+        if avg_temp is not None:
+            input_data["avg_temperature_c"] = avg_temp
+            input_data["max_temperature_c"] = max_temp
+            input_data["fast_charge_ratio_pct"] = fc_ratio
+            input_data["deep_discharge_cycles"] = deep_cycles
+            input_data["avg_charge_duration_hours"] = charge_dur
+
+        res = apm_app.invoke(input_data)
+
+        battery = res.get("battery_analysis", {})
+        safety = res.get("safety_analysis", {})
+        telemetry = res.get("telemetry_data", {})
         
-    if ev_id not in df['EV_ID'].values:
-        available = df['EV_ID'].unique().tolist()[:5]
-        raise HTTPException(status_code=404, detail=f"EV ID '{ev_id}' not found in telemetry history. Available samples: {available}")
-        
-    row = df[df['EV_ID'] == ev_id].iloc[0]
-
-    soh = float(row['State_of_Health_Pct'])
-    deg_rate = float(row['Degradation_Rate_Pct'])
-    avg_temp = float(row['Avg_Temperature_C'])
-    max_temp = float(row['Max_Temperature_C'])
-    fast_charge = float(row['Fast_Charge_Ratio_Pct'])
-    deep_dis = int(row['Deep_Discharge_Cycles'])
-    charge_dur = float(row['Avg_Charge_Duration_Hours'])
-    ev_id_str = str(row['EV_ID'])
-
-    rul_months = int((soh - 70.0) / deg_rate) if soh > 70.0 and deg_rate > 0 else 0
-    status = "Healthy" if soh > 85.0 else "Attention Required"
-
-    triggers = []
-    if max_temp > 45.0:
-        triggers.append(f"Thermal Event: Max temp exceeded critical limit of 45°C ({max_temp}°C). Inspect cooling coolant leakage.")
-    if fast_charge > 50.0:
-        triggers.append(f"High Fast Charge Ratio: {fast_charge}% of energy supplied via DC fast chargers. Restrict fast-charge usage to preserve battery life.")
-    if deep_dis > 25:
-        triggers.append(f"Deep Discharge Warning: {deep_dis} discharge cycles below 20% state of charge. Recommend adjusting shift lengths.")
-
-    if not triggers:
-        triggers.append("No active alerts. Battery operating inside standard parameters.")
-
-    recommendations = [
-        "Enforce AC slow charging during overnight shifts to trigger automated cell balancing.",
-        "Restrict max charging speeds to 50 kW DC if operating ambient temperature exceeds 35°C.",
-        f"Forecasted battery replacement required in approximately {rul_months} months."
-    ]
-
-    return {
-        "ev_id": ev_id_str,
-        "battery_analysis": {
-            "state_of_health_pct": soh,
-            "degradation_rate_monthly_pct": deg_rate,
-            "remaining_useful_life_months": rul_months,
-            "status": status
-        },
-        "safety_analysis": {
-            "avg_temp_c": avg_temp,
-            "max_temp_c": max_temp,
-            "cooling_status": "OK" if max_temp < 48.0 else "Attention Needed"
-        },
-        "telemetry_data": {
-            "fast_charge_ratio_pct": fast_charge,
-            "deep_discharge_cycles": deep_dis,
-            "avg_charge_duration_hours": charge_dur
-        },
-        "maintenance_triggers": triggers,
-        "recommendations": recommendations,
-        "summary": f"APM Agent evaluated EV ID {ev_id_str}. Overall State of Health is {soh}% with an active estimated lifetime of {rul_months} months."
-    }
+        # Format response for the frontend
+        return {
+            "ev_id": input_data.get("ev_id", "RAW_INPUT"),
+            "battery_analysis": {
+                "state_of_health_pct": battery.get("state_of_health_pct", battery.get("predicted_soh_pct", 0)),
+                "degradation_rate_monthly_pct": battery.get("degradation_rate_monthly_pct", 0),
+                "remaining_useful_life_months": battery.get("remaining_useful_life_months", 0),
+                "status": battery.get("status", "Unknown")
+            },
+            "safety_analysis": {
+                "avg_temp_c": avg_temp if avg_temp is not None else 0,
+                "max_temp_c": max_temp if max_temp is not None else safety.get("max_recorded_temperature_celsius", 0),
+                "cooling_status": safety.get("cooling_system_status", "OK"),
+                "thermal_runaway_warnings": safety.get("thermal_runaway_warnings", 0)
+            },
+            "telemetry_data": {
+                "fast_charge_ratio_pct": fc_ratio if fc_ratio is not None else telemetry.get("fast_charging_ratio_percentage", 0),
+                "deep_discharge_cycles": deep_cycles if deep_cycles is not None else 0,
+                "avg_charge_duration_hours": charge_dur if charge_dur is not None else 0
+            },
+            "maintenance_triggers": res.get("maintenance_triggers", []),
+            "recommendations": res.get("recommendations", []),
+            "summary": "APM Agent executed successfully based on telemetry."
+        }
+    except Exception as e:
+        logger.error(f"Error calling APM agent: {e}")
+        raise HTTPException(status_code=500, detail=f"APM agent execution failed: {str(e)}")
 
 # 4. EV Manufacturing Quality Intelligence (QMS) Agent
 @app.get("/api/agents/ev_qms")
-def get_ev_qms(batch_id: str = Query("BTH-0001", description="Manufacturing Batch ID")):
-    df = load_csv_safe(QMS_CSV)
-    if df is None:
-        raise HTTPException(status_code=500, detail="QMS manufacturing dataset not found on server.")
+def get_ev_qms(
+    batch_id: str = Query(None, description="Manufacturing Batch ID"),
+    elec_vol: float = Query(None),
+    int_res: float = Query(None),
+    cell_cap: float = Query(None),
+    amb_temp: float = Query(None)
+):
+    try:
+        input_data = {}
+        if batch_id:
+            input_data["batch_id"] = batch_id
+        if elec_vol is not None:
+            input_data["electrolyte_volume_ml"] = elec_vol
+            input_data["internal_resistance_mohm"] = int_res
+            input_data["capacity_mah"] = cell_cap
+            input_data["ambient_temp_c"] = amb_temp
+
+        res = qms_app.invoke(input_data)
         
-    if batch_id not in df['Batch_ID'].values:
-        available = sorted(df['Batch_ID'].unique().tolist())[:5]
-        raise HTTPException(status_code=404, detail=f"Batch ID '{batch_id}' not found. Available samples: {available}")
+        batch_metrics = res.get("batch_metrics", {})
         
-    batch_df = df[df['Batch_ID'] == batch_id]
-
-    total_cells = len(batch_df)
-    scrap_df = batch_df[batch_df['QC_Grade'] == 'Scrap']
-    scrap_count = len(scrap_df)
-    defect_rate = (scrap_count / total_cells) * 100 if total_cells > 0 else 0.0
-    
-    avg_ir = float(batch_df['Internal_Resistance_mOhm'].mean())
-    avg_cap = float(batch_df['Capacity_mAh'].mean())
-    avg_electrolyte = float(batch_df['Electrolyte_Volume_ml'].mean())
-    
-    grade_distribution = batch_df['QC_Grade'].value_counts().to_dict()
-    defects = batch_df['Defect_Type'].dropna().value_counts().to_dict()
-    top_defect = list(defects.keys())[0] if defects else "None"
-    
-    line_performance = batch_df.groupby('Production_Line')['QC_Grade'].apply(lambda x: (x == 'Scrap').mean() * 100).to_dict()
-
-    drift_report = (
-        f"QMS analysis detected process drift in Batch {batch_id}. "
-        f"Average Internal Resistance ({avg_ir:.2f} mOhm) shows a 3.4% positive drift "
-        f"compared to standard control thresholds. Defect rate is {defect_rate:.2f}%, with "
-        f"'{top_defect}' as the primary contributing factor."
-    )
-
-    root_cause = (
-        f"High defect correlation found on Production Line 3 during Evening shifts. "
-        f"Ambient temperatures exceeded standard limits by 2.1°C, leading to slight "
-        f"electrolyte viscosity drop during filling stage."
-    )
-
-    alerts = [
-        f"Alert: Internal resistance standard deviation exceeds bounds in {batch_id} cells.",
-        "Action: Recalibrate electrolyte pump nozzles on filling station #3."
-    ]
-
-    return {
-        "batch_id": batch_id,
-        "cell_metrics": {
-            "total_cells_inspected": total_cells,
-            "scrap_defect_rate_pct": round(defect_rate, 2),
-            "average_internal_resistance_mOhm": round(avg_ir, 2),
-            "average_cell_capacity_mAh": round(avg_cap, 1),
-            "average_electrolyte_volume_ml": round(avg_electrolyte, 2)
-        },
-        "quality_distributions": {
-            "grades": grade_distribution,
-            "defect_categories": defects,
-            "scrap_rate_by_line_pct": line_performance
-        },
-        "quality_drift_analysis": drift_report,
-        "root_cause_analysis": root_cause,
-        "alerts": alerts
-    }
+        return {
+            "batch_id": input_data.get("batch_id", "RAW_INPUT"),
+            "cell_metrics": {
+                "total_cells_inspected": batch_metrics.get("total_inspected", 1),
+                "scrap_defect_rate_pct": batch_metrics.get("defect_rate_pct", 0.0),
+                "average_internal_resistance_mOhm": int_res if int_res is not None else batch_metrics.get("avg_resistance_mohm", 0.0),
+                "average_cell_capacity_mAh": cell_cap if cell_cap is not None else batch_metrics.get("avg_capacity_mah", 0.0),
+                "average_electrolyte_volume_ml": elec_vol if elec_vol is not None else batch_metrics.get("avg_electrolyte_ml", 0.0)
+            },
+            "quality_distributions": {
+                "grades": {"Grade A": 0, "Grade B": 0, "Scrap": 0},
+                "defect_categories": {},
+                "scrap_rate_by_line_pct": {}
+            },
+            "quality_drift_analysis": res.get("process_drift", "QMS Agent executed. Analysis completed."),
+            "root_cause_analysis": res.get("root_cause", "N/A"),
+            "alerts": res.get("corrective_actions", [])
+        }
+    except Exception as e:
+        logger.error(f"Error calling QMS agent: {e}")
+        raise HTTPException(status_code=500, detail=f"QMS agent execution failed: {str(e)}")
 
 # 5. EV Supply Chain & Manufacturing Logistics Agent
 @app.get("/api/agents/supply_chain")

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 from .state import APMState
-from .tools.battery_tools import fetch_battery_health
+from .tools.battery_tools import fetch_battery_health, predict_battery_health
 from .tools.thermal_tools import fetch_thermal_events
 from .tools.charging_tools import fetch_charging_patterns
 
@@ -16,16 +16,29 @@ class APMAnalysisOutput(BaseModel):
     maintenance_triggers: List[str] = Field(description="List of predictive maintenance triggers.")
 
 def fetch_data_node(state: APMState):
-    """Fetches all telemetry data for the EV."""
-    ev_id = state["ev_id"]
+    """Fetches all telemetry data for the EV or runs ML prediction."""
     
-    # We call the underlying function of the tool directly for deterministic data fetching
-    battery_data = fetch_battery_health.invoke({"ev_id": ev_id})
-    thermal_data = fetch_thermal_events.invoke({"ev_id": ev_id})
-    charging_data = fetch_charging_patterns.invoke({"ev_id": ev_id})
+    # Check if we have raw telemetry data for prediction
+    if state.get("avg_temperature_c") is not None:
+        battery_data = predict_battery_health.invoke({
+            "avg_temperature_c": state["avg_temperature_c"],
+            "fast_charge_ratio_pct": state["fast_charge_ratio_pct"],
+            "deep_discharge_cycles": state["deep_discharge_cycles"],
+            "avg_charge_duration_hours": state["avg_charge_duration_hours"],
+            "max_temperature_c": state["max_temperature_c"]
+        })
+        # Mock thermal/charging data for prediction pathway
+        thermal_data = {"max_recorded_temperature_celsius": state["max_temperature_c"]}
+        charging_data = {"fast_charging_ratio_percentage": state["fast_charge_ratio_pct"]}
+    else:
+        # Historical lookup
+        ev_id = state.get("ev_id", "Unknown")
+        battery_data = fetch_battery_health.invoke({"ev_id": ev_id})
+        thermal_data = fetch_thermal_events.invoke({"ev_id": ev_id})
+        charging_data = fetch_charging_patterns.invoke({"ev_id": ev_id})
     
     return {
-        "telemetry_data": charging_data, # store raw charging data
+        "telemetry_data": charging_data,
         "battery_analysis": battery_data,
         "safety_analysis": thermal_data
     }

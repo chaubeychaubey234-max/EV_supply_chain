@@ -1,0 +1,6 @@
+vehicle_id,vehicle_type,manufacturer,model,fuel_type,year,payload_capacity_kg,fuel_efficiency_kmpl,current_odometer_km,daily_distance_km,average_speed_kmph,idle_time_minutes,operating_hours_per_day,route_type,depot_location
+VEH-001,heavy_duty_truck,Freightliner,Cascadia 126,diesel,2021,14500.0,3.2,148320.0,430.0,74.5,110.0,8.5,highway,Mumbai North Logistics Hub
+VEH-002,delivery_van,Ford,Transit 350,diesel,2022,1600.0,9.5,36450.0,175.0,42.0,55.0,7.0,urban,Pune City Distribution Centre
+VEH-003,medium_duty_truck,Mercedes-Benz,Actros 1845,diesel,2020,8000.0,5.1,215780.0,320.0,62.0,80.0,9.0,mixed,Nashik Regional Depot
+VEH-004,passenger_bus,Tata Motors,Starbus Ultra,cng,2019,6500.0,4.8,310200.0,260.0,48.0,95.0,12.0,suburban,Thane Bus Terminus
+VEH-005,pickup_truck,Toyota,Hilux GD-6,diesel,2023,1000.0,11.2,12400.0,130.0,58.0,30.0,6.0,mixed,Aurangabad Field Operations Base

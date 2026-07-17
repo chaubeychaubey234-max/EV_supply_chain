@@ -347,13 +347,26 @@
                             </div>
 
                             <div class="input-group mt-4">
-                                <label for="apm-ev-select">Target EV ID</label>
+                                <label for="apm-ev-select">Target EV ID (or manual telemetry)</label>
                                 <select id="apm-ev-select" class="form-select">
                                     <!-- Options filled dynamically -->
                                 </select>
                             </div>
+                            
+                            <div class="input-group mt-3">
+                                <label>Or enter raw telemetry (overrides ID):</label>
+                                <div style="display:flex; gap:10px; margin-top:5px;">
+                                    <input type="number" id="apm-avg-temp" class="form-select" placeholder="Avg Temp °C" />
+                                    <input type="number" id="apm-max-temp" class="form-select" placeholder="Max Temp °C" />
+                                    <input type="number" id="apm-fc-ratio" class="form-select" placeholder="Fast Charge %" />
+                                </div>
+                                <div style="display:flex; gap:10px; margin-top:10px;">
+                                    <input type="number" id="apm-deep-cycles" class="form-select" placeholder="Deep Discharge Cycles" />
+                                    <input type="number" id="apm-charge-dur" class="form-select" placeholder="Charge Duration (hrs)" />
+                                </div>
+                            </div>
 
-                            <button id="run-apm-agent-btn" class="primary-btn glow-btn">
+                            <button id="run-apm-agent-btn" class="primary-btn glow-btn mt-4">
                                 <i class="fa-solid fa-magnifying-glass-chart"></i> Analyze Battery Sensor Data
                             </button>
                         </div>
@@ -389,13 +402,25 @@
                             </div>
 
                             <div class="input-group mt-4">
-                                <label for="qms-batch-select">Target Batch ID</label>
+                                <label for="qms-batch-select">Target Batch ID (or manual metrics)</label>
                                 <select id="qms-batch-select" class="form-select">
                                     <!-- Options filled dynamically -->
                                 </select>
                             </div>
+                            
+                            <div class="input-group mt-3">
+                                <label>Or enter raw cell metrics (overrides Batch ID):</label>
+                                <div style="display:flex; gap:10px; margin-top:5px;">
+                                    <input type="number" id="qms-elec-vol" class="form-select" placeholder="Electrolyte Vol (ml)" />
+                                    <input type="number" id="qms-int-res" class="form-select" placeholder="Internal Res (mΩ)" />
+                                </div>
+                                <div style="display:flex; gap:10px; margin-top:10px;">
+                                    <input type="number" id="qms-cell-cap" class="form-select" placeholder="Cell Capacity (mAh)" />
+                                    <input type="number" id="qms-amb-temp" class="form-select" placeholder="Ambient Temp °C" />
+                                </div>
+                            </div>
 
-                            <button id="run-qms-agent-btn" class="primary-btn glow-btn">
+                            <button id="run-qms-agent-btn" class="primary-btn glow-btn mt-4">
                                 <i class="fa-solid fa-chart-bar"></i> Audit Quality Control
                             </button>
                         </div>

@@ -2,7 +2,8 @@ import pandas as pd
 import os
 from langchain.tools import tool
 
-DATASET_PATH = "/Users/alex-ankush/Desktop/EV/EV_supply_chain/ev_ai_agents/datasets/apm_dataset.csv"
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(_BASE_DIR, "..", "..", "datasets", "apm_dataset.csv")
 
 @tool
 def fetch_thermal_events(ev_id: str) -> dict:
@@ -13,7 +14,7 @@ def fetch_thermal_events(ev_id: str) -> dict:
     df = pd.read_csv(DATASET_PATH)
     row = df[df['EV_ID'] == ev_id]
     if row.empty:
-        row = df.sample(1)
+        return {"error": f"No record found for {ev_id}."}
         
     avg_temp = float(row['Avg_Temperature_C'].values[0])
     max_temp = float(row['Max_Temperature_C'].values[0])

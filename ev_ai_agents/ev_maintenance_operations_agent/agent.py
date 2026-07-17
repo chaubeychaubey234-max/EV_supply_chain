@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import re
 import logging
@@ -89,7 +89,7 @@ def generate_llm_response(user_query: str, tool_outputs: dict) -> dict:
         "next_steps": next_steps
     }
 
-def run_agent(user_query: str) -> dict:
+def run_agent(user_query: str, vehicle_record: dict = None) -> dict:
     """Main orchestration entry point.
     
     1. Understand user intent and select tools.
@@ -142,8 +142,11 @@ def run_agent(user_query: str) -> dict:
         try:
             if tool_name == "maintenance_risk_analyzer":
                 # Requires vehicle_record dict
-                active_id = vehicle_id if vehicle_id and vehicle_id.startswith("EV_") else "EV_2001"
-                record = _fetch_record_from_csv(active_id)
+                if vehicle_record:
+                    record = vehicle_record
+                else:
+                    active_id = vehicle_id if vehicle_id and vehicle_id.startswith("EV_") else "EV_2001"
+                    record = _fetch_record_from_csv(active_id)
                 res = analyze_maintenance_risk.invoke({"vehicle_record": record})
                 tool_outputs[tool_name] = res
                 success_count += 1
