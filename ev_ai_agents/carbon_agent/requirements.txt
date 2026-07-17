@@ -1,0 +1,8 @@
+streamlit>=1.30.0
+pandas>=2.0.0
+folium>=0.15.0
+langchain>=0.1.0
+langchain-google-genai>=0.0.1
+python-dotenv>=1.0.0
+matplotlib>=3.5.0
+jinja2

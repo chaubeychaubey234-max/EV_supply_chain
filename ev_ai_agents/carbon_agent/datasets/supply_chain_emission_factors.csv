@@ -1,0 +1,13 @@
+material,supplier,scope3_emission_factor_kg_co2_per_kg,category,unit
+Lithium Carbonate,EcoMinerals,15.5,Purchased goods and services,kg
+Cobalt Sulfate,CongoMining Co,28.2,Purchased goods and services,kg
+Nickel Sulfate,AussieNickel Ltd,12.8,Purchased goods and services,kg
+Synthetic Graphite,SinoCarbon,6.4,Purchased goods and services,kg
+LFP Battery Cell,VoltBattery,45.0,Purchased goods and services,unit
+NMC Battery Cell,PowerPack Corp,72.0,Purchased goods and services,unit
+Steel Sheets,Stelco,2.3,Purchased goods and services,kg
+Aluminum Ingots,AluMax,8.1,Purchased goods and services,kg
+Copper Wiring,CopperLines,3.7,Purchased goods and services,kg
+Ocean Freight,GlobalShipping,0.015,Upstream transportation,ton-km
+Road Freight (Diesel),TruckingForce,0.115,Upstream transportation,ton-km
+Grid Electricity,VoltPower,0.38,Fuel and energy-related activities,kWh
