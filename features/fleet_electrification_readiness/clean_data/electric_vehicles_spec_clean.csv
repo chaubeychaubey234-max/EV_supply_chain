@@ -1,0 +1,478 @@
+make,model,vehicle_type,battery_capacity_kwh,range_km,efficiency_wh_per_km,charging_power_kw,charging_time,drivetrain,towing_capacity_kg,cargo_volume_l,segment,fast_charge_port,seats,range_category,charging_speed_category
+Abarth,500E Convertible,Hatchback,37.8,225,156,67.0,0.56,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Abarth,500E Hatchback,Hatchback,37.8,225,149,67.0,0.56,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Abarth,600E Scorpionissima,Suv,50.8,280,158,79.0,0.64,Fwd,0.0,360.0,Jb - Compact,Ccs,5,Medium,Fast
+Abarth,600E Turismo,Suv,50.8,280,158,79.0,0.64,Fwd,0.0,360.0,Jb - Compact,Ccs,5,Medium,Fast
+Aiways,U5,Suv,60.0,315,156,78.0,0.77,Fwd,750.0,496.0,Jc - Medium,Ccs,5,Medium,Fast
+Aiways,U6,Suv,60.0,350,150,78.0,0.77,Fwd,750.0,472.0,Jc - Medium,Ccs,5,Medium,Fast
+Alfa,Romeo Junior Elettrica 54 Kwh,Suv,50.8,320,128,85.0,0.6,Fwd,0.0,400.0,Jb - Compact,Ccs,5,Medium,Fast
+Alfa,Romeo Junior Elettrica 54 Kwh Veloce,Suv,50.8,310,164,85.0,0.6,Fwd,0.0,400.0,Jb - Compact,Ccs,5,Medium,Fast
+Alpine,A290 Electric 180 Hp,Hatchback,52.0,310,138,70.0,0.74,Fwd,500.0,326.0,B - Compact,Ccs,5,Medium,Fast
+Alpine,A290 Electric 220 Hp,Hatchback,52.0,305,144,70.0,0.74,Fwd,500.0,326.0,B - Compact,Ccs,5,Medium,Fast
+Audi,A6 Avant E-Tron,Station/Estate,75.8,465,146,150.0,0.51,Rwd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,A6 Avant E-Tron Performance,Station/Estate,94.9,575,151,200.0,0.47,Rwd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,A6 Avant E-Tron Quattro,Station/Estate,94.9,560,157,200.0,0.47,Awd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,A6 Sportback E-Tron,Liftback Sedan,75.8,495,136,150.0,0.51,Rwd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,A6 Sportback E-Tron Performance,Liftback Sedan,94.9,610,141,200.0,0.47,Rwd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,A6 Sportback E-Tron Quattro,Liftback Sedan,94.9,590,147,200.0,0.47,Awd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,Q4 Sportback E-Tron 40,Suv,59.0,340,156,110.0,0.54,Rwd,1000.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 Sportback E-Tron 45,Suv,77.0,435,162,120.0,0.64,Rwd,1000.0,535.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 Sportback E-Tron 45 Quattro,Suv,77.0,410,165,120.0,0.64,Awd,1200.0,535.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 Sportback E-Tron 55 Quattro,Suv,77.0,415,165,120.0,0.64,Awd,1200.0,535.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 E-Tron 40,Suv,59.0,325,159,110.0,0.54,Rwd,1000.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 E-Tron 45,Suv,77.0,420,169,120.0,0.64,Rwd,1000.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 E-Tron 45 Quattro,Suv,77.0,395,171,120.0,0.64,Awd,1200.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q4 E-Tron 55 Quattro,Suv,77.0,395,171,120.0,0.64,Awd,1200.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Audi,Q6 E-Tron,Suv,75.8,395,166,150.0,0.51,Rwd,2000.0,526.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Audi,Q6 E-Tron Sportback,Suv,75.8,410,139,150.0,0.51,Rwd,2000.0,511.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Audi,Q6 E-Tron Sportback Performance,Suv,94.9,510,145,190.0,0.5,Rwd,2000.0,511.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Audi,Q6 E-Tron Sportback Quattro,Suv,94.9,500,149,200.0,0.47,Awd,2400.0,511.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Audi,Q6 E-Tron Performance,Suv,94.9,490,171,190.0,0.5,Rwd,2000.0,526.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Audi,Q6 E-Tron Quattro,Suv,94.9,480,176,200.0,0.47,Awd,2400.0,470.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Audi,S6 Avant E-Tron,Station/Estate,94.9,530,156,200.0,0.47,Awd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,S6 Sportback E-Tron,Liftback Sedan,94.9,555,149,200.0,0.47,Awd,2100.0,502.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Audi,Sq6 E-Tron,Suv,94.9,470,169,200.0,0.47,Awd,2400.0,514.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Audi,Sq6 E-Tron Sportback,Suv,94.9,495,164,200.0,0.47,Awd,2400.0,511.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Audi,E-Tron Gt Rs,Sedan,97.0,525,184,281.0,0.35,Awd,0.0,350.0,F - Luxury,Ccs,4,High,Ultra_Fast
+Audi,E-Tron Gt Rs Performance,Sedan,97.0,525,182,281.0,0.35,Awd,0.0,350.0,F - Luxury,Ccs,4,High,Ultra_Fast
+Audi,E-Tron Gt S,Sedan,97.0,540,172,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,4,High,Ultra_Fast
+Audi,E-Tron Gt Quattro,Sedan,97.0,540,169,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,4,High,Ultra_Fast
+Bmw,I4 M50,Liftback Sedan,81.3,450,197,131.0,0.62,Awd,1600.0,470.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Bmw,I4 Edrive35,Liftback Sedan,67.1,430,174,95.0,0.71,Rwd,1600.0,470.0,D - Large,Ccs,5,Medium,Fast
+Bmw,I4 Edrive40,Liftback Sedan,81.3,515,174,131.0,0.62,Rwd,1600.0,470.0,D - Large,Ccs,5,High,Ultra_Fast
+Bmw,I4 Xdrive40,Liftback Sedan,81.3,490,183,131.0,0.62,Awd,1600.0,470.0,D - Large,Ccs,5,High,Ultra_Fast
+Bmw,I5 M60 Xdrive Sedan (My25),Sedan,81.2,430,172,136.0,0.6,Awd,2000.0,490.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Bmw,I5 M60 Xdrive Touring (My25),Station/Estate,81.2,425,179,136.0,0.6,Awd,2000.0,570.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Bmw,I5 Edrive40 Sedan (My25),Sedan,81.2,480,159,136.0,0.6,Rwd,1500.0,490.0,E - Executive,Ccs,5,High,Ultra_Fast
+Bmw,I5 Edrive40 Touring (My25),Station/Estate,81.2,465,165,136.0,0.6,Rwd,1500.0,570.0,E - Executive,Ccs,5,High,Ultra_Fast
+Bmw,I5 Xdrive40 Sedan (My25),Sedan,81.2,465,167,136.0,0.6,Awd,2000.0,490.0,E - Executive,Ccs,5,High,Ultra_Fast
+Bmw,I5 Xdrive40 Touring (My25),Station/Estate,81.2,450,174,136.0,0.6,Awd,2000.0,570.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Bmw,I7 M70 Xdrive,Sedan,101.7,490,208,159.0,0.64,Awd,0.0,500.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Bmw,I7 Edrive50,Sedan,101.7,520,177,159.0,0.64,Rwd,0.0,500.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Bmw,I7 Xdrive60,Sedan,101.7,510,172,159.0,0.64,Awd,2000.0,500.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Bmw,Ix M70 Xdrive,Suv,108.9,500,209,150.0,0.73,Awd,2500.0,500.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Bmw,Ix Xdrive45,Suv,94.8,470,193,115.0,0.82,Awd,2500.0,500.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Bmw,Ix Xdrive60,Suv,109.1,525,194,150.0,0.73,Awd,2500.0,500.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Bmw,Ix1 Edrive20,Suv,64.7,390,150,94.0,0.69,Fwd,750.0,490.0,Jc - Medium,Ccs,5,Medium,Fast
+Bmw,Ix1 Xdrive30,Suv,64.7,380,155,94.0,0.69,Awd,1200.0,490.0,Jc - Medium,Ccs,5,Medium,Fast
+Bmw,Ix2 Edrive20,Suv,64.7,395,147,94.0,0.69,Fwd,750.0,525.0,Jc - Medium,Ccs,5,Medium,Fast
+Bmw,Ix2 Xdrive30,Suv,64.7,385,155,94.0,0.69,Awd,1200.0,525.0,Jc - Medium,Ccs,5,Medium,Fast
+Byd,Atto 2,Suv,45.1,245,145,51.0,0.88,Fwd,750.0,400.0,Jb - Compact,Ccs,5,Low,Fast
+Byd,Atto 3 (My25),Suv,60.5,340,144,75.0,0.81,Fwd,750.0,440.0,Jc - Medium,Ccs,5,Medium,Fast
+Byd,Dolphin 44.9 Kwh Active,Hatchback,44.9,265,132,50.0,0.9,Fwd,0.0,345.0,C - Medium,Ccs,5,Medium,Fast
+Byd,Dolphin 44.9 Kwh Boost,Hatchback,44.9,260,145,50.0,0.9,Fwd,0.0,345.0,C - Medium,Ccs,5,Medium,Fast
+Byd,Dolphin 60.4 Kwh,Hatchback,60.5,350,142,65.0,0.93,Fwd,0.0,345.0,C - Medium,Ccs,5,Medium,Fast
+Byd,Dolphin Surf 30 Kwh Active,Hatchback,30.0,190,136,45.0,0.67,Fwd,0.0,308.0,B - Compact,Ccs,4,Low,Fast
+Byd,Dolphin Surf 43.2 Kwh Boost,Hatchback,43.2,270,134,60.0,0.72,Fwd,0.0,308.0,B - Compact,Ccs,4,Medium,Fast
+Byd,Dolphin Surf 43.2 Kwh Comfort,Hatchback,43.2,265,139,60.0,0.72,Fwd,0.0,308.0,B - Compact,Ccs,4,Medium,Fast
+Byd,Seal 61.4 Kwh Rwd Comfort,Sedan,61.4,365,133,75.0,0.82,Rwd,750.0,400.0,D - Large,Ccs,5,Medium,Fast
+Byd,Seal 82.5 Kwh Awd Excellence,Sedan,82.5,445,159,100.0,0.82,Awd,1500.0,400.0,D - Large,Ccs,5,Medium,Fast
+Byd,Seal 82.5 Kwh Rwd Design,Sedan,82.5,480,145,100.0,0.82,Rwd,750.0,400.0,D - Large,Ccs,5,High,Fast
+Byd,Seal U 71.8 Kwh Comfort,Suv,71.8,360,171,72.0,1.0,Fwd,1300.0,552.0,Jd - Large,Ccs,5,Medium,Fast
+Byd,Seal U 87 Kwh Design,Suv,87.0,425,174,85.0,1.02,Fwd,1300.0,552.0,Jd - Large,Ccs,5,Medium,Fast
+Byd,Sealion 7 82.5 Kwh Awd Design,Suv,82.5,400,181,115.0,0.72,Awd,1500.0,520.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Byd,Sealion 7 82.5 Kwh Rwd Comfort,Suv,82.5,415,171,115.0,0.72,Rwd,750.0,520.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Byd,Sealion 7 91.3 Kwh Awd Excellence,Suv,91.3,430,182,165.0,0.55,Awd,1500.0,520.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Byd,Tang Flagship,Suv,108.8,460,205,100.0,1.09,Awd,1500.0,235.0,Je - Executive,Ccs,7,High,Fast
+Cupra,Born 170 Kw - 59 Kwh,Hatchback,59.0,360,156,110.0,0.54,Rwd,0.0,385.0,C - Medium,Ccs,5,Medium,Ultra_Fast
+Cupra,Born 170 Kw - 77 Kwh,Hatchback,77.0,460,157,125.0,0.62,Rwd,0.0,385.0,C - Medium,Ccs,5,High,Ultra_Fast
+Cupra,Born Vz,Hatchback,79.0,465,149,135.0,0.59,Rwd,0.0,385.0,C - Medium,Ccs,5,High,Ultra_Fast
+Cupra,Tavascan Endurance,Suv,77.0,445,142,120.0,0.64,Rwd,1000.0,540.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Cupra,Tavascan Vz,Suv,77.0,425,150,120.0,0.64,Awd,1200.0,540.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Cadillac,Lyriq 600 E4,Suv,102.0,460,192,165.0,0.62,Awd,1587.0,793.0,Jf - Luxury,Ccs,5,High,Ultra_Fast
+Citroen,E-Berlingo M 50 Kwh,Small Passenger Van,50.0,235,149,80.0,0.62,Fwd,750.0,775.0,N - Passenger Van,Ccs,5,Low,Fast
+Citroen,E-Berlingo Xl 50 Kwh,Small Passenger Van,50.0,230,149,80.0,0.62,Fwd,750.0,1050.0,N - Passenger Van,Ccs,7,Low,Fast
+Citroen,E-C3,Hatchback,44.0,255,135,60.0,0.73,Fwd,550.0,310.0,B - Compact,Ccs,5,Medium,Fast
+Citroen,E-C3 Aircross,Suv,44.0,240,144,60.0,0.73,Fwd,350.0,460.0,Jb - Compact,Ccs,5,Low,Fast
+Citroen,E-C4,Hatchback,46.3,285,135,78.0,0.59,Fwd,0.0,380.0,C - Medium,Ccs,5,Medium,Fast
+Citroen,E-C4 54 Kwh,Hatchback,50.8,325,122,78.0,0.65,Fwd,0.0,380.0,C - Medium,Ccs,5,Medium,Fast
+Citroen,E-C4 X,Sedan,46.3,290,132,78.0,0.59,Fwd,0.0,510.0,C - Medium,Ccs,5,Medium,Fast
+Citroen,E-C4 X 54 Kwh,Sedan,50.8,335,119,78.0,0.65,Fwd,0.0,510.0,C - Medium,Ccs,5,Medium,Fast
+Citroen,E-Spacetourer M 50 Kwh,Small Passenger Van,46.3,180,217,78.0,0.59,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Low,Fast
+Citroen,E-Spacetourer M 75 Kwh,Small Passenger Van,68.0,260,202,79.0,0.86,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Medium,Fast
+Citroen,E-Spacetourer Xl 50 Kwh,Small Passenger Van,46.3,180,219,78.0,0.59,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Low,Fast
+Citroen,E-Spacetourer Xl 75 Kwh,Small Passenger Van,68.0,260,204,79.0,0.86,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Medium,Fast
+Ds,3 E-Tense,Suv,50.8,300,128,85.0,0.6,Fwd,0.0,350.0,Jb - Compact,Ccs,5,Medium,Fast
+Ds,N°4 E-Tense,Hatchback,58.3,375,130,70.0,0.83,Fwd,0.0,390.0,Jc - Medium,Ccs,5,Medium,Fast
+Ds,N°8 Awd Long Range,Suv,97.2,530,146,130.0,0.75,Awd,1400.0,620.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Ds,N°8 Fwd,Suv,73.7,415,141,100.0,0.74,Fwd,1260.0,620.0,Jd - Large,Ccs,5,Medium,Fast
+Ds,N°8 Fwd Long Range,Suv,97.2,545,136,130.0,0.75,Fwd,1200.0,620.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Dacia,Spring Electric 45,Hatchback,25.0,165,109,29.0,0.86,Fwd,0.0,308.0,A - Mini,Ccs,4,Low,Fast
+Dacia,Spring Electric 65,Hatchback,25.0,160,114,29.0,0.86,Fwd,0.0,308.0,A - Mini,Ccs,4,Low,Fast
+Dongfeng,Box 31.4 Kwh,Hatchback,29.0,190,126,50.0,0.58,Fwd,0.0,326.0,B - Compact,Ccs,5,Low,Fast
+Dongfeng,Box 42.3 Kwh,Hatchback,40.0,255,129,51.0,0.78,Fwd,0.0,326.0,B - Compact,Ccs,5,Medium,Fast
+Elaris,Beo 86 Kwh,Suv,81.0,390,203,65.0,1.25,Fwd,750.0,467.0,Jd - Large,Ccs,5,Medium,Fast
+Fiat,500E 3+1 24 Kwh,Hatchback,21.3,135,112,40.0,0.53,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Fiat,500E 3+1 42 Kwh,Hatchback,37.3,235,122,67.0,0.56,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Fiat,500E Cabrio 24 Kwh,Cabriolet,21.3,135,112,40.0,0.53,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Fiat,500E Cabrio 42 Kwh,Cabriolet,37.3,230,125,67.0,0.56,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Fiat,500E Hatchback 24 Kwh,Hatchback,21.3,135,112,40.0,0.53,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Fiat,500E Hatchback 42 Kwh,Hatchback,37.3,235,118,67.0,0.56,Fwd,0.0,185.0,B - Compact,Ccs,4,Low,Fast
+Fiat,600E,Suv,50.8,310,124,79.0,0.64,Fwd,0.0,360.0,Jb - Compact,Ccs,5,Medium,Fast
+Fiat,Grande Panda,Hatchback,43.8,260,136,60.0,0.73,Fwd,550.0,361.0,B - Compact,Ccs,5,Medium,Fast
+Ford,Capri Extended Range Awd,Liftback Sedan,79.0,455,148,135.0,0.59,Awd,1200.0,572.0,D - Large,Ccs,5,High,Ultra_Fast
+Ford,Capri Extended Range Rwd,Liftback Sedan,77.0,455,135,120.0,0.64,Rwd,1000.0,572.0,D - Large,Ccs,5,High,Ultra_Fast
+Ford,Capri Standard Range Rwd,Liftback Sedan,52.0,320,163,85.0,0.61,Rwd,1000.0,572.0,D - Large,Ccs,5,Medium,Fast
+Ford,Explorer Extended Range Awd,Suv,79.0,440,153,135.0,0.59,Awd,1200.0,536.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Ford,Explorer Extended Range Rwd,Suv,77.0,435,139,120.0,0.64,Rwd,1000.0,536.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Ford,Explorer Standard Range Rwd,Suv,52.0,305,137,85.0,0.61,Rwd,1000.0,536.0,Jc - Medium,Ccs,5,Medium,Fast
+Ford,Mustang Mach-E Er Awd (My25),Suv,88.0,435,160,105.0,0.84,Awd,1500.0,519.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Ford,Mustang Mach-E Er Awd (My24),Suv,91.0,445,165,115.0,0.79,Awd,1500.0,519.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Ford,Mustang Mach-E Er Rwd (My25),Suv,88.0,475,147,105.0,0.84,Rwd,1500.0,519.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Ford,Mustang Mach-E Er Rwd (My24),Suv,91.0,480,152,115.0,0.79,Rwd,1500.0,519.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Ford,Mustang Mach-E Gt (My24),Suv,91.0,425,177,115.0,0.79,Awd,750.0,519.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Ford,Mustang Mach-E Gt (My25),Suv,91.0,435,177,115.0,0.79,Awd,750.0,519.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Ford,Mustang Mach-E Rally (My25),Suv,91.0,415,178,115.0,0.79,Awd,750.0,519.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Ford,Mustang Mach-E Rally (My24),Suv,91.0,410,178,115.0,0.79,Awd,750.0,519.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Ford,Mustang Mach-E Sr Rwd (My24),Suv,72.6,385,154,100.0,0.73,Rwd,750.0,519.0,Jd - Large,Ccs,5,Medium,Fast
+Ford,Mustang Mach-E Sr Rwd (My25),Suv,72.6,380,154,100.0,0.73,Rwd,750.0,519.0,Jd - Large,Ccs,5,Medium,Fast
+Ford,Puma Gen-E,Suv,43.6,275,126,85.0,0.51,Fwd,750.0,523.0,Jb - Compact,Ccs,5,Medium,Fast
+Ford,E-Tourneo Courier,Small Passenger Van,43.6,200,164,80.0,0.55,Fwd,750.0,470.0,N - Passenger Van,Ccs,5,Low,Fast
+Ford,E-Tourneo Custom L1 160 Kw,Small Passenger Van,64.0,235,370,70.0,0.91,Rwd,2000.0,672.0,N - Passenger Van,Ccs,8,Low,Fast
+Ford,E-Tourneo Custom L1 210 Kw,Small Passenger Van,64.0,235,370,70.0,0.91,Rwd,2000.0,672.0,N - Passenger Van,Ccs,8,Low,Fast
+Ford,E-Tourneo Custom L2 160 Kw,Small Passenger Van,64.0,235,370,70.0,0.91,Rwd,2000.0,672.0,N - Passenger Van,Ccs,8,Low,Fast
+Ford,E-Tourneo Custom L2 210 Kw,Small Passenger Van,64.0,235,370,70.0,0.91,Rwd,2000.0,672.0,N - Passenger Van,Ccs,8,Low,Fast
+Gwm,Ora 03 48 Kwh,Hatchback,45.4,260,146,45.0,1.01,Fwd,0.0,228.0,C - Medium,Ccs,5,Medium,Fast
+Gwm,Ora 03 63 Kwh,Hatchback,59.3,340,141,56.0,1.06,Fwd,0.0,228.0,C - Medium,Ccs,5,Medium,Fast
+Gwm,Ora 03 Gt,Hatchback,59.3,325,148,56.0,1.06,Fwd,0.0,228.0,C - Medium,Ccs,5,Medium,Fast
+Gwm,Ora 07 Gt,Sedan,83.5,430,161,80.0,1.04,Awd,0.0,333.0,D - Large,Ccs,5,Medium,Fast
+Gwm,Ora 07 Pro,Sedan,64.3,350,146,75.0,0.86,Fwd,0.0,333.0,D - Large,Ccs,5,Medium,Fast
+Gwm,Ora 07 Pure,Sedan,64.3,350,146,75.0,0.86,Fwd,0.0,333.0,D - Large,Ccs,5,Medium,Fast
+Genesis,G80 Electrified Luxury,Sedan,82.5,440,159,160.0,0.52,Awd,1200.0,354.0,F - Luxury,Ccs,5,Medium,Ultra_Fast
+Genesis,Gv60 Premium,Suv,74.0,390,143,200.0,0.37,Rwd,1600.0,432.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Genesis,Gv60 Sport,Suv,74.0,375,157,200.0,0.37,Awd,1600.0,432.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Genesis,Gv60 Sport Plus,Suv,74.0,360,159,200.0,0.37,Awd,1600.0,432.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Genesis,Gv70 Electrified Sport,Suv,74.0,350,163,190.0,0.39,Awd,1800.0,503.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Honda,E:Ny1,Suv,61.9,335,150,60.0,1.03,Fwd,0.0,361.0,Jb - Compact,Ccs,5,Medium,Fast
+Hongqi,E-Hs9 120 Kwh,Suv,112.0,455,217,110.0,1.02,Awd,1500.0,438.0,Jf - Luxury,Ccs,5,High,Ultra_Fast
+Hongqi,E-Hs9 84 Kwh,Suv,76.5,320,193,112.0,0.68,Awd,1500.0,438.0,Jf - Luxury,Ccs,5,Medium,Ultra_Fast
+Hongqi,E-Hs9 99 Kwh,Suv,90.0,370,194,112.0,0.8,Awd,1500.0,438.0,Jf - Luxury,Ccs,5,Medium,Ultra_Fast
+Hyundai,Inster Long Range,Suv,46.0,300,124,70.0,0.66,Fwd,0.0,280.0,Ja - Mini,Ccs,4,Medium,Fast
+Hyundai,Inster Standard Range,Suv,39.0,255,119,60.0,0.65,Fwd,0.0,280.0,Ja - Mini,Ccs,4,Medium,Fast
+Hyundai,Ioniq 5 63 Kwh Rwd (My24),Suv,60.0,345,136,150.0,0.4,Rwd,750.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Hyundai,Ioniq 5 84 Kwh Awd (My24),Suv,80.0,445,162,205.0,0.39,Awd,1600.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Hyundai,Ioniq 5 84 Kwh Rwd (My24),Suv,80.0,450,155,205.0,0.39,Rwd,1600.0,520.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Hyundai,Ioniq 5 N (My24),Suv,80.0,390,179,205.0,0.39,Awd,0.0,480.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Hyundai,Ioniq 6 Long Range 2Wd,Sedan,74.0,495,136,200.0,0.37,Rwd,1500.0,401.0,D - Large,Ccs,5,High,Ultra_Fast
+Hyundai,Ioniq 6 Long Range Awd,Sedan,74.0,440,143,200.0,0.37,Awd,1500.0,401.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Hyundai,Ioniq 6 Standard Range 2Wd,Sedan,50.0,335,117,120.0,0.42,Rwd,750.0,401.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Hyundai,Ioniq 9 Long Range Awd,Suv,106.0,490,177,195.0,0.54,Awd,2500.0,338.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Hyundai,Ioniq 9 Long Range Rwd,Suv,106.0,500,171,195.0,0.54,Rwd,1600.0,338.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Hyundai,Ioniq 9 Performance Awd,Suv,106.0,480,177,195.0,0.54,Awd,2500.0,338.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Hyundai,Kona Electric 48 Kwh,Suv,48.4,295,128,50.0,0.97,Fwd,300.0,466.0,Jb - Compact,Ccs,5,Medium,Fast
+Hyundai,Kona Electric 65 Kwh,Suv,65.4,390,144,86.0,0.76,Fwd,750.0,466.0,Jb - Compact,Ccs,5,Medium,Fast
+Jaguar,I-Pace Ev400,Suv,84.7,380,208,85.0,1.0,Awd,750.0,505.0,Jd - Large,Ccs,5,Medium,Fast
+Jeep,Avenger Electric,Suv,50.8,310,132,85.0,0.6,Fwd,0.0,355.0,Jb - Compact,Ccs,5,Medium,Fast
+Jeep,Compass Electric 74 Kwh,Suv,74.0,370,148,90.0,0.82,Fwd,1000.0,550.0,Jc - Medium,Ccs,5,Medium,Fast
+Kgm,Torres Evx,Suv,72.0,370,156,85.0,0.85,Fwd,1500.0,839.0,Jc - Medium,Ccs,5,Medium,Fast
+Kia,Ev3 Long Range,Suv,78.0,455,139,105.0,0.74,Fwd,1000.0,460.0,Jb - Compact,Ccs,5,High,Ultra_Fast
+Kia,Ev3 Standard Range,Suv,55.0,325,133,80.0,0.69,Fwd,300.0,460.0,Jb - Compact,Ccs,5,Medium,Fast
+Kia,Ev4 Hatchback Long Range,Hatchback,78.0,475,132,105.0,0.74,Fwd,750.0,435.0,C - Medium,Ccs,5,High,Ultra_Fast
+Kia,Ev4 Hatchback Standard Range,Hatchback,55.0,340,134,80.0,0.69,Fwd,750.0,435.0,C - Medium,Ccs,5,Medium,Fast
+Kia,Ev4 Sedan Long Range,Sedan,78.0,495,124,105.0,0.74,Fwd,750.0,490.0,C - Medium,Ccs,5,High,Ultra_Fast
+Kia,Ev4 Sedan Standard Range,Sedan,55.0,355,128,80.0,0.69,Fwd,750.0,490.0,C - Medium,Ccs,5,Medium,Fast
+Kia,Ev6 Gt,Suv,80.0,385,178,205.0,0.39,Awd,1800.0,480.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Kia,Ev6 Long Range 2Wd,Suv,80.0,455,143,205.0,0.39,Rwd,1800.0,490.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Kia,Ev6 Long Range Awd,Suv,80.0,440,154,205.0,0.39,Awd,1800.0,490.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Kia,Ev6 Standard Range 2Wd,Suv,60.0,345,140,150.0,0.4,Rwd,750.0,490.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Kia,Ev9 76.1 Kwh Rwd,Suv,73.0,355,165,160.0,0.46,Rwd,900.0,333.0,Jf - Luxury,Ccs,7,Medium,Ultra_Fast
+Kia,Ev9 99.8 Kwh Awd,Suv,96.0,435,188,194.0,0.49,Awd,2500.0,333.0,Jf - Luxury,Ccs,7,Medium,Ultra_Fast
+Kia,Ev9 99.8 Kwh Awd Gt,Suv,96.0,420,190,194.0,0.49,Awd,2500.0,333.0,Jf - Luxury,Ccs,7,Medium,Ultra_Fast
+Kia,Ev9 99.8 Kwh Awd Gt-Line,Suv,96.0,425,190,194.0,0.49,Awd,2500.0,333.0,Jf - Luxury,Ccs,7,Medium,Ultra_Fast
+Kia,Ev9 99.8 Kwh Rwd,Suv,96.0,450,171,194.0,0.49,Rwd,900.0,333.0,Jf - Luxury,Ccs,7,Medium,Ultra_Fast
+Kia,Niro Ev,Suv,64.8,385,140,70.0,0.93,Fwd,750.0,475.0,Jc - Medium,Ccs,5,Medium,Fast
+Lancia,Ypsilon,Hatchback,48.1,310,122,80.0,0.6,Fwd,0.0,309.0,B - Compact,Ccs,5,Medium,Fast
+Leapmotor,C10,Suv,69.9,350,166,70.0,1.0,Rwd,1500.0,435.0,Jd - Large,Ccs,5,Medium,Fast
+Leapmotor,T03,Hatchback,36.0,225,136,30.0,1.2,Fwd,0.0,210.0,A - Mini,Ccs,4,Low,Fast
+Lexus,Rz 300E,Suv,64.0,365,149,100.0,0.64,Fwd,750.0,522.0,Jc - Medium,Ccs,5,Medium,Fast
+Lexus,Rz 450E,Suv,64.0,350,158,100.0,0.64,Awd,750.0,522.0,Jd - Large,Ccs,5,Medium,Fast
+Lexus,Ux 300E,Suv,64.0,340,145,35.0,1.83,Fwd,0.0,316.0,Jc - Medium,Chademo,5,Medium,Fast
+Lotus,Eletre,Suv,109.0,495,204,259.0,0.42,Awd,2250.0,611.0,Jf - Luxury,Ccs,5,High,Ultra_Fast
+Lotus,Eletre R,Suv,109.0,455,266,259.0,0.42,Awd,2250.0,611.0,Jf - Luxury,Ccs,5,High,Ultra_Fast
+Lotus,Eletre S,Suv,109.0,480,222,259.0,0.42,Awd,2250.0,611.0,Jf - Luxury,Ccs,5,High,Ultra_Fast
+Lotus,Emeya,Liftback Sedan,98.9,520,198,240.0,0.41,Awd,2250.0,509.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Lotus,Emeya R,Liftback Sedan,98.9,465,227,240.0,0.41,Awd,1225.0,509.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Lotus,Emeya S,Liftback Sedan,98.9,520,198,240.0,0.41,Awd,2250.0,509.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Lucid,Air Grand Touring,Sedan,112.0,665,143,184.0,0.61,Awd,0.0,456.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Lucid,Air Pure Rwd,Sedan,92.0,565,130,160.0,0.57,Rwd,0.0,456.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Lucid,Air Touring,Sedan,92.0,580,142,160.0,0.57,Awd,0.0,456.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Lynk&Co,02,Suv,65.0,370,149,90.0,0.72,Rwd,1600.0,410.0,Jc - Medium,Ccs,5,Medium,Fast
+Mg,Cyberster Gt,Cabriolet,74.4,395,168,85.0,0.88,Awd,1000.0,249.0,G - Sports,Ccs,2,Medium,Fast
+Mg,Cyberster Trophy,Cabriolet,74.4,425,146,85.0,0.88,Rwd,1000.0,249.0,G - Sports,Ccs,2,Medium,Fast
+Mg,4 Electric 51 Kwh,Hatchback,50.8,300,145,68.0,0.75,Rwd,500.0,363.0,C - Medium,Ccs,5,Medium,Fast
+Mg,4 Electric 64 Kwh,Hatchback,61.7,360,142,116.0,0.53,Rwd,500.0,363.0,C - Medium,Ccs,5,Medium,Ultra_Fast
+Mg,4 Electric 77 Kwh,Hatchback,74.4,425,143,110.0,0.68,Rwd,500.0,363.0,C - Medium,Ccs,5,Medium,Ultra_Fast
+Mg,4 Electric Xpower,Hatchback,61.7,320,160,116.0,0.53,Awd,500.0,363.0,C - Medium,Ccs,5,Medium,Ultra_Fast
+Mg,5 Electric Long Range,Station/Estate,57.4,335,151,60.0,0.96,Fwd,500.0,479.0,C - Medium,Ccs,5,Medium,Fast
+Mg,5 Electric Standard Range,Station/Estate,46.0,265,148,53.0,0.87,Fwd,500.0,479.0,C - Medium,Ccs,5,Medium,Fast
+Mg,S5 Ev 49 Kwh,Suv,47.1,275,139,80.0,0.59,Rwd,750.0,453.0,Jc - Medium,Ccs,5,Medium,Fast
+Mg,S5 Ev 64 Kwh,Suv,62.1,365,134,90.0,0.69,Rwd,750.0,453.0,Jc - Medium,Ccs,5,Medium,Fast
+Mg,Zs Ev Long Range,Suv,68.3,370,155,82.0,0.83,Fwd,500.0,448.0,Jb - Compact,Ccs,5,Medium,Fast
+Mg,Zs Ev Standard Range,Suv,49.0,265,153,50.0,0.98,Fwd,500.0,448.0,Jb - Compact,Ccs,5,Medium,Fast
+Maserati,Grancabrio Folgore,Cabriolet,83.0,395,198,190.0,0.44,Awd,1200.0,151.0,F - Luxury,Ccs,4,Medium,Ultra_Fast
+Maserati,Granturismo Folgore,Coupe,83.0,420,182,217.0,0.38,Awd,1200.0,270.0,F - Luxury,Ccs,4,Medium,Ultra_Fast
+Maserati,Grecale Folgore,Suv,95.0,400,220,110.0,0.86,Awd,1800.0,535.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Maxus,Mifa 9,Small Passenger Van,84.0,365,195,103.0,0.82,Fwd,1000.0,470.0,N - Passenger Van,Ccs,7,Medium,Ultra_Fast
+Mazda,6E 68.8 Kwh,Liftback Sedan,66.0,390,138,120.0,0.55,Rwd,1500.0,456.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Mazda,6E Long Range 80 Kwh,Liftback Sedan,75.0,440,136,70.0,1.07,Rwd,1500.0,456.0,D - Large,Ccs,5,Medium,Fast
+Mercedes-Benz,Cla 250+,Sedan,85.0,565,122,235.0,0.36,Rwd,1500.0,405.0,D - Large,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Cla 350 4Matic,Sedan,85.0,550,126,235.0,0.36,Awd,1800.0,405.0,D - Large,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqa 250,Suv,66.5,395,146,100.0,0.66,Fwd,1500.0,340.0,Jc - Medium,Ccs,5,Medium,Fast
+Mercedes-Benz,Eqa 250+,Suv,70.5,420,142,90.0,0.78,Fwd,1500.0,340.0,Jc - Medium,Ccs,5,Medium,Fast
+Mercedes-Benz,Eqa 300 4Matic,Suv,66.5,350,162,100.0,0.66,Awd,1800.0,340.0,Jc - Medium,Ccs,5,Medium,Fast
+Mercedes-Benz,Eqa 350 4Matic,Suv,66.5,350,162,100.0,0.66,Awd,1800.0,340.0,Jc - Medium,Ccs,5,Medium,Fast
+Mercedes-Benz,Eqb 250+,Suv,70.5,415,152,90.0,0.78,Fwd,1400.0,495.0,Jc - Medium,Ccs,7,Medium,Fast
+Mercedes-Benz,Eqb 300 4Matic,Suv,66.5,345,168,100.0,0.66,Awd,1700.0,495.0,Jc - Medium,Ccs,7,Medium,Fast
+Mercedes-Benz,Eqb 350 4Matic,Suv,66.5,345,168,100.0,0.66,Awd,1700.0,495.0,Jc - Medium,Ccs,7,Medium,Fast
+Mercedes-Benz,Eqe 300,Sedan,89.0,525,163,120.0,0.74,Rwd,750.0,430.0,E - Executive,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqe 350 4Matic,Sedan,90.6,515,173,141.0,0.64,Awd,1700.0,430.0,E - Executive,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqe 350+,Sedan,96.0,555,164,141.0,0.68,Rwd,750.0,430.0,E - Executive,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqe 500 4Matic,Sedan,90.6,505,173,141.0,0.64,Awd,1700.0,430.0,E - Executive,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqe Amg 43 4Matic,Sedan,90.6,450,207,141.0,0.64,Awd,1700.0,430.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Eqe Amg 53 4Matic+,Sedan,90.6,450,208,141.0,0.64,Awd,1700.0,430.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Eqe Suv 300,Suv,90.6,450,182,141.0,0.64,Rwd,750.0,520.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Eqe Suv 350 4Matic,Suv,90.6,435,189,141.0,0.64,Awd,1800.0,520.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Eqe Suv 350+,Suv,96.0,475,164,141.0,0.68,Rwd,750.0,520.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqe Suv 500 4Matic,Suv,96.0,455,187,141.0,0.68,Awd,1800.0,520.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqe Suv Amg 43 4Matic,Suv,90.6,425,214,141.0,0.64,Awd,1800.0,520.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Eqe Suv Amg 53 4Matic+,Suv,90.6,420,242,141.0,0.64,Awd,1800.0,520.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Eqs 350,Sedan,96.0,570,165,130.0,0.74,Rwd,750.0,620.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqs 450 4Matic,Sedan,118.0,655,180,160.0,0.74,Awd,1700.0,620.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqs 450+,Sedan,118.0,685,173,160.0,0.74,Rwd,750.0,620.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqs 500 4Matic,Sedan,118.0,640,180,160.0,0.74,Awd,1700.0,620.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqs 580 4Matic,Sedan,118.0,640,180,160.0,0.74,Awd,1700.0,620.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqs Amg 53 4Matic+,Sedan,118.0,585,222,160.0,0.74,Awd,1700.0,620.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Mercedes-Benz,Eqs Suv 450 4Matic,Suv,118.0,530,199,160.0,0.74,Awd,1800.0,645.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Mercedes-Benz,Eqs Suv 450+,Suv,118.0,540,195,160.0,0.74,Rwd,750.0,645.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Mercedes-Benz,Eqs Suv 500 4Matic,Suv,118.0,530,199,160.0,0.74,Awd,1800.0,645.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Mercedes-Benz,Eqs Suv 580 4Matic,Suv,118.0,530,199,160.0,0.74,Awd,1800.0,470.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Mercedes-Benz,Eqs Suv Maybach 680,Suv,118.0,490,211,160.0,0.74,Awd,1800.0,440.0,Jf - Luxury,Ccs,4,High,Ultra_Fast
+Mercedes-Benz,Eqt 200 Long,Small Passenger Van,45.0,220,177,50.0,0.9,Fwd,1500.0,828.0,N - Passenger Van,Ccs,7,Low,Fast
+Mercedes-Benz,Eqt 200 Standard,Small Passenger Van,45.0,225,167,50.0,0.9,Fwd,1500.0,551.0,N - Passenger Van,Ccs,5,Low,Fast
+Mercedes-Benz,Eqv 250 Extra-Long,Small Passenger Van,60.0,210,282,60.0,1.0,Fwd,0.0,1410.0,N - Passenger Van,Ccs,7,Low,Fast
+Mercedes-Benz,Eqv 250 Long,Small Passenger Van,60.0,215,282,60.0,1.0,Fwd,0.0,1030.0,N - Passenger Van,Ccs,7,Low,Fast
+Mercedes-Benz,Eqv 300 Extra-Long,Small Passenger Van,90.0,315,249,96.0,0.94,Fwd,0.0,1410.0,N - Passenger Van,Ccs,7,Medium,Fast
+Mercedes-Benz,Eqv 300 Long,Small Passenger Van,90.0,320,276,96.0,0.94,Fwd,0.0,1030.0,N - Passenger Van,Ccs,7,Medium,Fast
+Mercedes-Benz,G 580,Suv,116.0,360,267,150.0,0.77,Awd,0.0,555.0,Jf - Luxury,Ccs,5,Medium,Ultra_Fast
+Mercedes-Benz,Evito Tourer Extra-Long 60 Kwh,Small Passenger Van,60.0,215,254,60.0,1.0,Fwd,0.0,1390.0,N - Passenger Van,Ccs,8,Low,Fast
+Mercedes-Benz,Evito Tourer Long 60 Kwh,Small Passenger Van,60.0,220,259,60.0,1.0,Fwd,0.0,990.0,N - Passenger Van,Ccs,8,Low,Fast
+Mercedes-Benz,Evito Tourer Long 90 Kwh,Small Passenger Van,90.0,325,260,96.0,0.94,Fwd,0.0,990.0,N - Passenger Van,Ccs,8,Medium,Fast
+Mini,Aceman E,Suv,38.5,230,129,60.0,0.64,Fwd,750.0,300.0,Jb - Compact,Ccs,5,Low,Fast
+Mini,Aceman Jcw,Suv,49.2,280,143,75.0,0.66,Fwd,750.0,300.0,Jb - Compact,Ccs,5,Medium,Fast
+Mini,Aceman Se,Suv,49.2,290,129,75.0,0.66,Fwd,750.0,300.0,Jb - Compact,Ccs,5,Medium,Fast
+Mini,Cooper E,Hatchback,36.6,250,125,60.0,0.61,Fwd,0.0,200.0,B - Compact,Ccs,4,Medium,Fast
+Mini,Cooper Jcw,Hatchback,49.2,290,135,75.0,0.66,Fwd,0.0,200.0,B - Compact,Ccs,4,Medium,Fast
+Mini,Cooper Se,Hatchback,49.2,330,127,75.0,0.66,Fwd,0.0,200.0,B - Compact,Ccs,4,Medium,Fast
+Mini,Countryman E,Suv,64.6,380,140,94.0,0.69,Fwd,750.0,460.0,Jc - Medium,Ccs,5,Medium,Fast
+Mini,Countryman Se All4,Suv,64.6,365,149,94.0,0.69,Awd,1200.0,460.0,Jc - Medium,Ccs,5,Medium,Fast
+Nio,El6 Long Range,Suv,90.0,435,170,135.0,0.67,Awd,1200.0,579.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Nio,El6 Standard Range,Suv,73.5,365,181,110.0,0.67,Awd,1200.0,579.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Nio,El7 Long Range,Suv,90.0,430,185,100.0,0.9,Awd,2000.0,570.0,Jf - Luxury,Ccs,5,Medium,Fast
+Nio,El7 Standard Range,Suv,73.5,355,198,110.0,0.67,Awd,2000.0,570.0,Jf - Luxury,Ccs,5,Medium,Ultra_Fast
+Nio,El8 Long Range,Suv,90.0,440,185,190.0,0.47,Awd,2000.0,265.0,Jf - Luxury,Ccs,6,Medium,Ultra_Fast
+Nio,El8 Standard Range,Suv,73.5,360,196,110.0,0.67,Awd,2000.0,265.0,Jf - Luxury,Ccs,6,Medium,Ultra_Fast
+Nio,Et5 Long Range,Sedan,90.0,500,167,100.0,0.9,Awd,1400.0,386.0,E - Executive,Ccs,5,High,Fast
+Nio,Et5 Standard Range,Sedan,73.5,410,175,110.0,0.67,Awd,1400.0,386.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Nio,Et5 Touring Long Range,Station/Estate,90.0,485,178,135.0,0.67,Awd,1400.0,450.0,E - Executive,Ccs,5,High,Ultra_Fast
+Nio,Et5 Touring Standard Range,Station/Estate,73.5,400,169,110.0,0.67,Awd,1400.0,450.0,E - Executive,Ccs,5,Medium,Ultra_Fast
+Nio,Et7 Long Range,Sedan,90.0,505,178,100.0,0.9,Awd,2000.0,363.0,F - Luxury,Ccs,5,High,Fast
+Nio,Et7 Standard Range,Sedan,73.5,415,191,110.0,0.67,Awd,2000.0,363.0,F - Luxury,Ccs,5,Medium,Ultra_Fast
+Nissan,Ariya 63Kwh,Suv,63.0,335,175,90.0,0.7,Fwd,750.0,468.0,Jc - Medium,Ccs,5,Medium,Fast
+Nissan,Ariya 87Kwh,Suv,87.0,450,169,110.0,0.79,Fwd,750.0,468.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Nissan,Ariya E-4Orce 87Kwh - 225 Kw,Suv,87.0,405,190,110.0,0.79,Awd,1500.0,415.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Nissan,Ariya E-4Orce 87Kwh - 320 Kw Nismo,Suv,87.0,385,209,110.0,0.79,Awd,750.0,415.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Nissan,Townstar Ev Passenger,Small Passenger Van,45.0,225,158,50.0,0.9,Fwd,1500.0,819.0,N - Passenger Van,Ccs,5,Low,Fast
+Nissan,Townstar Ev Passenger L2,Small Passenger Van,45.0,220,173,50.0,0.9,Fwd,1500.0,819.0,N - Passenger Van,Ccs,7,Low,Fast
+Omoda,E5,Suv,61.0,345,152,60.0,1.02,Fwd,750.0,380.0,Jc - Medium,Ccs,5,Medium,Fast
+Opel,Astra Electric,Hatchback,50.8,320,128,85.0,0.6,Fwd,0.0,352.0,C - Medium,Ccs,5,Medium,Fast
+Opel,Astra Sports Tourer Electric,Station/Estate,50.8,310,123,85.0,0.6,Fwd,0.0,516.0,C - Medium,Ccs,5,Medium,Fast
+Opel,Combo-E Life 50 Kwh,Small Passenger Van,50.0,235,149,80.0,0.62,Fwd,750.0,775.0,N - Passenger Van,Ccs,5,Low,Fast
+Opel,Combo-E Life Xl 50 Kwh,Small Passenger Van,50.0,230,149,80.0,0.62,Fwd,750.0,1050.0,N - Passenger Van,Ccs,7,Low,Fast
+Opel,Corsa Electric 50 Kwh,Hatchback,46.3,290,131,78.0,0.59,Fwd,0.0,267.0,B - Compact,Ccs,5,Medium,Fast
+Opel,Corsa Electric 51 Kwh,Hatchback,48.1,315,120,80.0,0.6,Fwd,0.0,267.0,B - Compact,Ccs,5,Medium,Fast
+Opel,Frontera 44 Kwh,Suv,44.0,245,144,60.0,0.73,Fwd,350.0,460.0,Jb - Compact,Ccs,5,Low,Fast
+Opel,Grandland 73 Kwh,Suv,73.0,365,145,90.0,0.81,Fwd,1200.0,550.0,Jc - Medium,Ccs,5,Medium,Fast
+Opel,Grandland 82 Kwh,Suv,82.2,410,146,100.0,0.82,Fwd,1200.0,550.0,Jc - Medium,Ccs,5,Medium,Fast
+Opel,Mokka Electric,Suv,50.8,285,126,85.0,0.6,Fwd,0.0,310.0,Jb - Compact,Ccs,5,Medium,Fast
+Opel,Zafira-E Life L2 50 Kwh,Small Passenger Van,46.3,180,217,78.0,0.59,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Low,Fast
+Opel,Zafira-E Life L2 75 Kwh,Small Passenger Van,68.0,260,202,79.0,0.86,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Medium,Fast
+Opel,Zafira-E Life L3 50 Kwh,Small Passenger Van,46.3,180,219,78.0,0.59,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Low,Fast
+Opel,Zafira-E Life L3 75 Kwh,Small Passenger Van,68.0,260,204,79.0,0.86,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Medium,Fast
+Peugeot,E-2008 50 Kwh,Suv,46.3,270,136,78.0,0.59,Fwd,0.0,434.0,Jb - Compact,Ccs,5,Medium,Fast
+Peugeot,E-2008 54 Kwh,Suv,50.8,300,125,85.0,0.6,Fwd,0.0,434.0,Jb - Compact,Ccs,5,Medium,Fast
+Peugeot,E-208 50 Kwh,Hatchback,46.3,290,132,78.0,0.59,Fwd,0.0,265.0,B - Compact,Ccs,5,Medium,Fast
+Peugeot,E-208 51 Kwh,Hatchback,48.1,310,120,80.0,0.6,Fwd,0.0,265.0,B - Compact,Ccs,5,Medium,Fast
+Peugeot,E-3008 73 Kwh,Suv,73.0,380,143,90.0,0.81,Fwd,1250.0,588.0,Jc - Medium,Ccs,5,Medium,Fast
+Peugeot,E-3008 73 Kwh Dual Motor,Suv,73.0,375,195,90.0,0.81,Awd,750.0,588.0,Jc - Medium,Ccs,5,Medium,Fast
+Peugeot,E-3008 97 Kwh Long Range,Suv,96.9,500,145,135.0,0.72,Fwd,1200.0,588.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Peugeot,E-308,Hatchback,50.8,300,124,80.0,0.64,Fwd,0.0,412.0,C - Medium,Ccs,5,Medium,Fast
+Peugeot,E-308 Sw,Station/Estate,50.8,300,127,80.0,0.64,Fwd,750.0,608.0,C - Medium,Ccs,5,Medium,Fast
+Peugeot,E-408 58 Kwh,Suv,58.3,375,129,70.0,0.83,Fwd,750.0,471.0,Jd - Large,Ccs,5,Medium,Fast
+Peugeot,E-5008 73 Kwh,Suv,73.0,370,150,90.0,0.81,Fwd,1000.0,348.0,Jd - Large,Ccs,7,Medium,Fast
+Peugeot,E-5008 73 Kwh Dual Motor,Suv,73.0,360,203,90.0,0.81,Awd,750.0,348.0,Jd - Large,Ccs,7,Medium,Fast
+Peugeot,E-5008 97 Kwh Long Range,Suv,96.9,485,152,135.0,0.72,Fwd,1000.0,348.0,Jd - Large,Ccs,7,High,Ultra_Fast
+Peugeot,E-Rifter M 50 Kwh,Small Passenger Van,50.0,235,152,80.0,0.62,Fwd,750.0,775.0,N - Passenger Van,Ccs,5,Low,Fast
+Peugeot,E-Rifter Xl 50 Kwh,Small Passenger Van,50.0,230,153,80.0,0.62,Fwd,750.0,1050.0,N - Passenger Van,Ccs,7,Low,Fast
+Peugeot,E-Traveller L2 50 Kwh,Small Passenger Van,46.3,180,217,78.0,0.59,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Low,Fast
+Peugeot,E-Traveller L2 75 Kwh,Small Passenger Van,68.0,260,202,79.0,0.86,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Medium,Fast
+Peugeot,E-Traveller L3 50 Kwh,Small Passenger Van,46.3,180,219,78.0,0.59,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Low,Fast
+Peugeot,E-Traveller L3 75 Kwh,Small Passenger Van,68.0,260,204,79.0,0.86,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Medium,Fast
+Polestar,2 Long Range Dual Motor (My26),Liftback Sedan,79.0,455,142,125.0,0.63,Awd,1500.0,407.0,D - Large,Ccs,5,High,Ultra_Fast
+Polestar,2 Long Range Performance (My26),Liftback Sedan,79.0,450,142,125.0,0.63,Awd,1500.0,407.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Polestar,2 Long Range Single Motor (My26),Liftback Sedan,79.0,475,130,125.0,0.63,Rwd,1500.0,407.0,D - Large,Ccs,5,High,Ultra_Fast
+Polestar,2 Standard Range Single Motor (My26),Liftback Sedan,67.0,405,129,110.0,0.61,Rwd,1500.0,407.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Polestar,3 Long Range Dual Motor,Suv,107.0,515,183,150.0,0.71,Awd,2200.0,484.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Polestar,3 Long Range Performance,Suv,107.0,495,194,150.0,0.71,Awd,2200.0,484.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Polestar,3 Long Range Single Motor,Suv,107.0,530,166,150.0,0.71,Rwd,1500.0,484.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Polestar,4 Long Range Dual Motor,Liftback Sedan,94.0,485,165,135.0,0.7,Awd,2000.0,526.0,E - Executive,Ccs,5,High,Ultra_Fast
+Polestar,4 Long Range Single Motor,Liftback Sedan,94.0,495,157,135.0,0.7,Rwd,1500.0,526.0,E - Executive,Ccs,5,High,Ultra_Fast
+Porsche,Macan 4 Electric,Suv,95.0,470,184,200.0,0.48,Awd,2000.0,540.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Porsche,Macan 4S Electric,Suv,95.0,470,186,200.0,0.48,Awd,2000.0,540.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Porsche,Macan Electric,Suv,95.0,495,177,200.0,0.48,Rwd,2000.0,540.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Porsche,Macan Turbo Electric,Suv,95.0,460,183,200.0,0.48,Awd,2000.0,480.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Porsche,Taycan,Sedan,82.3,495,164,195.0,0.42,Rwd,0.0,407.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4,Sedan,82.3,490,172,195.0,0.42,Awd,0.0,407.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4 Cross Turismo,Station/Estate,97.0,510,188,281.0,0.35,Awd,0.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4 Plus,Sedan,97.0,565,175,281.0,0.35,Awd,0.0,407.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4S,Sedan,82.3,490,174,195.0,0.42,Awd,0.0,407.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4S Cross Turismo,Station/Estate,97.0,510,188,281.0,0.35,Awd,0.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4S Plus,Sedan,97.0,565,177,281.0,0.35,Awd,0.0,407.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4S Plus Sport Turismo,Station/Estate,97.0,510,186,281.0,0.35,Awd,0.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan 4S Sport Turismo,Station/Estate,82.3,440,183,195.0,0.42,Awd,0.0,446.0,F - Luxury,Ccs,5,Medium,Ultra_Fast
+Porsche,Taycan Gts,Sedan,97.0,535,176,281.0,0.35,Awd,0.0,366.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Gts Sport Turismo,Station/Estate,97.0,505,185,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Plus,Sedan,97.0,575,168,281.0,0.35,Rwd,0.0,407.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Plus Sport Turismo,Station/Estate,97.0,530,176,281.0,0.35,Rwd,0.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Sport Turismo,Station/Estate,82.3,460,173,195.0,0.42,Rwd,0.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo,Sedan,97.0,535,174,281.0,0.35,Awd,0.0,366.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo Cross Turismo,Station/Estate,97.0,495,188,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo Gt,Sedan,97.0,475,184,281.0,0.35,Awd,0.0,326.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo Gt Weissach,Sedan,97.0,475,180,281.0,0.35,Awd,0.0,367.0,F - Luxury,Ccs,2,High,Ultra_Fast
+Porsche,Taycan Turbo S,Sedan,97.0,525,174,281.0,0.35,Awd,0.0,366.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo S Cross Turismo,Station/Estate,97.0,485,188,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo S Sport Turismo,Station/Estate,97.0,505,183,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Porsche,Taycan Turbo Sport Turismo,Station/Estate,97.0,505,184,281.0,0.35,Awd,0.0,405.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Renault,4 E-Tech 40Kwh 120Hp,Suv,40.0,245,124,55.0,0.73,Fwd,750.0,420.0,Jb - Compact,Ccs,5,Low,Fast
+Renault,4 E-Tech 52Kwh 150Hp,Suv,52.0,315,127,70.0,0.74,Fwd,750.0,420.0,Jb - Compact,Ccs,5,Medium,Fast
+Renault,5 E-Tech 40Kwh 120Hp,Hatchback,40.0,250,132,55.0,0.73,Fwd,500.0,326.0,B - Compact,Ccs,5,Medium,Fast
+Renault,5 E-Tech 40Kwh 95Hp,Hatchback,40.0,255,129,113.0,0.64,Fwd,500.0,326.0,B - Compact,Ccs,5,Medium,Ultra_Fast
+Renault,5 E-Tech 52Kwh 150Hp,Hatchback,52.0,320,129,70.0,0.74,Fwd,500.0,326.0,B - Compact,Ccs,5,Medium,Fast
+Renault,Kangoo E-Tech Electric,Small Passenger Van,45.0,225,158,50.0,0.9,Fwd,1500.0,950.0,N - Passenger Van,Ccs,5,Low,Fast
+Renault,Kangoo Grand E-Tech Electric,Small Passenger Van,45.0,220,170,50.0,0.9,Fwd,1500.0,500.0,N - Passenger Van,Ccs,7,Low,Fast
+Renault,Megane E-Tech Ev60 130Hp (Tu2025),Hatchback,60.0,380,125,88.0,0.68,Fwd,500.0,440.0,C - Medium,Ccs,5,Medium,Fast
+Renault,Megane E-Tech Ev60 220Hp (Tu2025),Hatchback,60.0,380,133,88.0,0.68,Fwd,900.0,440.0,C - Medium,Ccs,5,Medium,Fast
+Renault,Scenic E-Tech Ev60 170Hp,Suv,60.0,340,144,75.0,0.8,Fwd,1100.0,545.0,Jc - Medium,Ccs,5,Medium,Fast
+Renault,Scenic E-Tech Ev87 220Hp,Suv,87.0,480,143,95.0,0.92,Fwd,1100.0,545.0,Jc - Medium,Ccs,5,High,Fast
+Rolls-Royce,Spectre,Coupe,102.0,465,192,126.0,0.81,Awd,1000.0,380.0,I - Luxury,Ccs,4,High,Ultra_Fast
+Skoda,Elroq 50,Suv,52.0,310,149,90.0,0.58,Rwd,1000.0,470.0,Jc - Medium,Ccs,5,Medium,Fast
+Skoda,Elroq 60,Suv,59.0,350,149,110.0,0.54,Rwd,1000.0,470.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Skoda,Elroq 85,Suv,77.0,450,145,120.0,0.64,Rwd,1000.0,470.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Skoda,Elroq Rs,Suv,79.0,450,151,135.0,0.59,Awd,1200.0,470.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Skoda,Enyaq 60,Suv,59.0,360,145,110.0,0.54,Rwd,1000.0,585.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Skoda,Enyaq 85,Suv,77.0,455,141,120.0,0.64,Rwd,1000.0,585.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Skoda,Enyaq 85X,Suv,77.0,450,150,120.0,0.64,Awd,1200.0,585.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Skoda,Enyaq Coupe 60,Suv,59.0,370,141,110.0,0.54,Rwd,1000.0,570.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Skoda,Enyaq Coupe 85,Suv,77.0,470,138,120.0,0.64,Rwd,1000.0,570.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Skoda,Enyaq Coupe 85X,Suv,77.0,460,146,120.0,0.64,Awd,1200.0,570.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Skoda,Enyaq Coupe Rs,Suv,79.0,470,143,135.0,0.59,Awd,1200.0,570.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Skoda,Enyaq Rs,Suv,79.0,460,147,135.0,0.59,Awd,1200.0,585.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Skywell,Be11 Long Range,Suv,81.0,390,166,50.0,1.62,Fwd,750.0,467.0,Jd - Large,Ccs,5,Medium,Fast
+Skywell,Be11 Standard Range,Suv,68.0,330,149,50.0,1.36,Fwd,750.0,467.0,Jd - Large,Ccs,5,Medium,Fast
+Smart,#1 Brabus,Suv,62.0,325,155,100.0,0.62,Awd,1600.0,313.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#1 Premium,Suv,62.0,335,141,100.0,0.62,Rwd,1600.0,323.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#1 Pro,Suv,47.0,250,152,65.0,0.72,Rwd,0.0,323.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#1 Pro+,Suv,62.0,335,148,100.0,0.62,Rwd,1600.0,323.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#1 Pulse,Suv,62.0,325,155,100.0,0.62,Awd,1600.0,313.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#1 Pure,Suv,47.0,250,152,65.0,0.72,Rwd,0.0,323.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#1 Pure+,Suv,62.0,335,148,100.0,0.62,Rwd,1600.0,323.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#3 Brabus,Suv,62.0,335,149,100.0,0.62,Awd,1600.0,370.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#3 Premium,Suv,62.0,355,136,110.0,0.56,Rwd,1600.0,370.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast
+Smart,#3 Pro,Suv,47.0,265,145,65.0,0.72,Rwd,0.0,370.0,Jb - Compact,Ccs,5,Medium,Fast
+Smart,#3 Pro+,Suv,62.0,355,143,110.0,0.56,Rwd,1600.0,370.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast
+Smart,#5 Brabus,Suv,94.0,450,174,230.0,0.41,Awd,1600.0,630.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Smart,#5 Premium,Suv,94.0,465,159,230.0,0.41,Rwd,1600.0,630.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Smart,#5 Pro,Suv,74.4,370,160,110.0,0.68,Rwd,1600.0,630.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Smart,#5 Pro+,Suv,94.0,465,159,230.0,0.41,Rwd,1600.0,630.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Smart,#5 Pulse,Suv,94.0,455,174,230.0,0.41,Awd,1600.0,630.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Smart,#5 Summit Edition,Suv,94.0,455,174,230.0,0.41,Awd,1600.0,630.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Subaru,Solterra Awd,Suv,64.0,320,154,100.0,0.64,Awd,750.0,441.0,Jc - Medium,Ccs,5,Medium,Fast
+Tesla,Model 3 Long Range Awd (Highland),Sedan,75.0,525,119,124.0,0.6,Awd,1000.0,594.0,D - Large,Ccs,5,High,Ultra_Fast
+Tesla,Model 3 Long Range Rwd (Highland),Sedan,75.0,545,117,124.0,0.6,Rwd,1000.0,594.0,D - Large,Ccs,5,High,Ultra_Fast
+Tesla,Model 3 Performance (Highland),Sedan,75.0,490,142,124.0,0.6,Awd,0.0,594.0,D - Large,Ccs,5,High,Ultra_Fast
+Tesla,Model 3 Rwd (Highland Catl Lfp64),Sedan,60.5,445,116,110.0,0.55,Rwd,1000.0,594.0,D - Large,Ccs,5,Medium,Ultra_Fast
+Tesla,Model S Dual Motor,Liftback Sedan,95.0,575,150,140.0,0.68,Awd,1600.0,709.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Tesla,Model S Plaid,Liftback Sedan,95.0,560,158,140.0,0.68,Awd,1600.0,709.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Tesla,Model X Dual Motor,Suv,95.0,485,165,140.0,0.68,Awd,2250.0,425.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Tesla,Model X Plaid,Suv,95.0,465,180,140.0,0.68,Awd,2250.0,425.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Tesla,Model Y Long Range Awd (Juniper),Suv,75.0,455,132,124.0,0.6,Awd,1600.0,854.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Tesla,Model Y Long Range Rwd (Juniper),Suv,75.0,470,121,124.0,0.6,Rwd,1600.0,854.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Tesla,Model Y Rwd (Juniper),Suv,60.5,375,121,110.0,0.55,Rwd,1600.0,854.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Toyota,Proace Verso L 75 Kwh,Small Passenger Van,68.0,260,204,79.0,0.86,Fwd,1000.0,989.0,N - Passenger Van,Ccs,9,Medium,Fast
+Toyota,Proace Verso M 50 Kwh,Small Passenger Van,46.3,180,217,78.0,0.59,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Low,Fast
+Toyota,Proace Verso M 75 Kwh,Small Passenger Van,68.0,260,202,79.0,0.86,Fwd,1000.0,603.0,N - Passenger Van,Ccs,9,Medium,Fast
+Toyota,Proace City Verso Electric L1 50 Kwh,Small Passenger Van,50.0,235,149,80.0,0.62,Fwd,750.0,775.0,N - Passenger Van,Ccs,5,Low,Fast
+Toyota,Proace City Verso Electric L2 50 Kwh,Small Passenger Van,50.0,230,149,80.0,0.62,Fwd,750.0,1050.0,N - Passenger Van,Ccs,7,Low,Fast
+Toyota,Bz4X Awd,Suv,64.0,345,154,100.0,0.64,Awd,750.0,452.0,Jc - Medium,Ccs,5,Medium,Fast
+Toyota,Bz4X Fwd,Suv,64.0,350,145,100.0,0.64,Fwd,750.0,452.0,Jc - Medium,Ccs,5,Medium,Fast
+Vinfast,Vf 8 Eco Extended Range,Suv,87.7,405,186,120.0,0.73,Awd,1800.0,376.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Vinfast,Vf 8 Plus Extended Range,Suv,87.7,400,196,120.0,0.73,Awd,1800.0,376.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Volkswagen,Id. Buzz Lwb Gtx,Small Passenger Van,86.0,350,182,145.0,0.59,Awd,1600.0,1340.0,N - Passenger Van,Ccs,7,Medium,Ultra_Fast
+Volkswagen,Id. Buzz Lwb Pro,Small Passenger Van,86.0,370,190,145.0,0.59,Rwd,1000.0,1340.0,N - Passenger Van,Ccs,7,Medium,Ultra_Fast
+Volkswagen,Id. Buzz Nwb Gtx,Small Passenger Van,79.0,330,194,135.0,0.59,Awd,1800.0,1121.0,N - Passenger Van,Ccs,6,Medium,Ultra_Fast
+Volkswagen,Id. Buzz Nwb Pro,Small Passenger Van,79.0,360,187,135.0,0.59,Rwd,1200.0,1121.0,N - Passenger Van,Ccs,6,Medium,Ultra_Fast
+Volkswagen,Id. Buzz Nwb Pure,Small Passenger Van,59.0,275,178,110.0,0.54,Rwd,1000.0,1121.0,N - Passenger Van,Ccs,6,Medium,Ultra_Fast
+Volkswagen,Id.3 Gtx,Hatchback,79.0,470,131,135.0,0.59,Rwd,0.0,385.0,C - Medium,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.3 Gtx Performance,Hatchback,79.0,465,131,135.0,0.59,Rwd,0.0,385.0,C - Medium,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.3 Pro,Hatchback,59.0,365,136,110.0,0.54,Rwd,0.0,385.0,C - Medium,Ccs,5,Medium,Ultra_Fast
+Volkswagen,Id.3 Pro S,Hatchback,77.0,465,138,120.0,0.64,Rwd,0.0,385.0,C - Medium,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.3 Pure,Hatchback,52.0,325,134,90.0,0.58,Rwd,0.0,385.0,C - Medium,Ccs,5,Medium,Fast
+Volkswagen,Id.4 Gtx,Suv,77.0,420,152,120.0,0.64,Awd,1200.0,543.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volkswagen,Id.4 Pro,Suv,77.0,445,149,120.0,0.64,Rwd,1000.0,543.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volkswagen,Id.4 Pro 4Motion,Suv,77.0,435,155,120.0,0.64,Awd,1200.0,543.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volkswagen,Id.4 Pure,Suv,52.0,285,143,87.0,0.6,Rwd,1000.0,543.0,Jc - Medium,Ccs,5,Medium,Fast
+Volkswagen,Id.5 Gtx,Suv,77.0,430,144,120.0,0.64,Awd,1200.0,549.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volkswagen,Id.5 Pro,Suv,77.0,460,138,120.0,0.64,Rwd,1000.0,549.0,Jc - Medium,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.5 Pure,Suv,52.0,320,142,87.0,0.6,Rwd,1000.0,549.0,Jc - Medium,Ccs,5,Medium,Fast
+Volkswagen,Id.7 Gtx,Liftback Sedan,86.0,500,145,145.0,0.59,Awd,1200.0,532.0,E - Executive,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.7 Pro,Liftback Sedan,77.0,475,132,125.0,0.62,Rwd,1000.0,532.0,E - Executive,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.7 Pro S,Liftback Sedan,86.0,525,133,145.0,0.59,Rwd,1000.0,532.0,E - Executive,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.7 Tourer Gtx,Station/Estate,86.0,500,147,145.0,0.59,Awd,1200.0,605.0,E - Executive,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.7 Tourer Pro,Station/Estate,77.0,470,146,125.0,0.62,Rwd,1000.0,605.0,E - Executive,Ccs,5,High,Ultra_Fast
+Volkswagen,Id.7 Tourer Pro S,Station/Estate,86.0,520,125,145.0,0.59,Rwd,1000.0,605.0,E - Executive,Ccs,5,High,Ultra_Fast
+Volvo,Ec40 Single Motor (My26),Suv,67.0,360,151,110.0,0.61,Rwd,1500.0,404.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ec40 Single Motor Er (My26),Suv,79.0,420,146,125.0,0.63,Rwd,1500.0,404.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ec40 Twin Motor (My26),Suv,79.0,400,155,125.0,0.63,Awd,1800.0,404.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ec40 Twin Motor Performance (My26),Suv,79.0,400,155,125.0,0.63,Awd,1800.0,404.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Es90 Single Motor (My26),Liftback Sedan,88.0,485,135,190.0,0.46,Rwd,1600.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Volvo,Es90 Twin Motor (My26),Liftback Sedan,102.0,530,146,225.0,0.45,Awd,2000.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Volvo,Es90 Twin Motor Performance (My26),Liftback Sedan,102.0,530,146,225.0,0.45,Awd,2000.0,446.0,F - Luxury,Ccs,5,High,Ultra_Fast
+Volvo,Ex30 Cross Country (My26),Suv,65.0,330,152,114.0,0.57,Awd,1600.0,318.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex30 Single Motor (My24-26),Suv,49.0,275,147,80.0,0.61,Rwd,1000.0,318.0,Jb - Compact,Ccs,5,Medium,Fast
+Volvo,Ex30 Single Motor Er (My24-26),Suv,65.0,365,138,113.0,0.58,Rwd,1600.0,318.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex30 Twin Motor Performance (My24-26),Suv,65.0,340,145,113.0,0.58,Awd,1600.0,318.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex40 Single Motor (My26),Suv,67.0,345,154,110.0,0.61,Rwd,1500.0,410.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex40 Single Motor Er (My26),Suv,79.0,400,152,125.0,0.63,Rwd,1500.0,410.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex40 Twin Motor (My26),Suv,79.0,385,163,125.0,0.63,Awd,1800.0,410.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex40 Twin Motor Performance (My26),Suv,79.0,385,163,125.0,0.63,Awd,1800.0,410.0,Jc - Medium,Ccs,5,Medium,Ultra_Fast
+Volvo,Ex90 Single Motor (My24-26),Suv,100.0,460,182,140.0,0.71,Rwd,1200.0,310.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Volvo,Ex90 Twin Motor (My24-26),Suv,107.0,470,188,150.0,0.71,Awd,2200.0,310.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Volvo,Ex90 Twin Motor Performance (My24-26),Suv,107.0,455,188,150.0,0.71,Awd,2200.0,310.0,Jf - Luxury,Ccs,7,High,Ultra_Fast
+Voyah,Free 106 Kwh,Suv,100.0,480,200,80.0,1.25,Awd,2000.0,550.0,Je - Executive,Ccs,5,High,Fast
+Xpeng,G6 Awd Performance,Suv,87.5,475,159,180.0,0.49,Awd,1500.0,571.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Xpeng,G6 Rwd Long Range,Suv,87.5,480,154,180.0,0.49,Rwd,1500.0,571.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Xpeng,G6 Rwd Standard Range,Suv,66.0,370,152,140.0,0.47,Rwd,1500.0,571.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Xpeng,G9 Awd Performance,Suv,93.1,465,179,224.0,0.42,Awd,1500.0,660.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Xpeng,G9 Rwd Long Range,Suv,93.1,480,163,224.0,0.42,Rwd,1500.0,660.0,Je - Executive,Ccs,5,High,Ultra_Fast
+Xpeng,G9 Rwd Standard Range,Suv,75.8,395,165,170.0,0.45,Rwd,1500.0,660.0,Je - Executive,Ccs,5,Medium,Ultra_Fast
+Xpeng,P7 Awd Performance,Sedan,82.7,460,164,138.0,0.6,Awd,0.0,440.0,E - Executive,Ccs,5,High,Ultra_Fast
+Xpeng,P7 Rwd Long Range,Sedan,82.7,495,144,138.0,0.6,Rwd,0.0,440.0,E - Executive,Ccs,5,High,Ultra_Fast
+Xpeng,P7 Wing Edition,Sedan,82.7,455,164,138.0,0.6,Awd,0.0,440.0,E - Executive,Ccs,5,High,Ultra_Fast
+Zeekr,001 Long Range Rwd,Liftback Sedan,94.0,505,152,135.0,0.7,Rwd,1500.0,539.0,E - Executive,Ccs,5,High,Ultra_Fast
+Zeekr,001 Performance Awd,Liftback Sedan,94.0,480,159,135.0,0.7,Awd,2000.0,539.0,E - Executive,Ccs,5,High,Ultra_Fast
+Zeekr,001 Privilege Awd,Liftback Sedan,94.0,480,162,135.0,0.7,Awd,2000.0,539.0,E - Executive,Ccs,5,High,Ultra_Fast
+Zeekr,7X Long Range Rwd,Suv,94.0,475,153,260.0,0.36,Rwd,2000.0,539.0,Jd - Large,Ccs,5,High,Ultra_Fast
+Zeekr,7X Performance Awd,Suv,94.0,450,173,260.0,0.36,Awd,2000.0,539.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Zeekr,7X Premium Rwd,Suv,71.0,365,148,240.0,0.3,Rwd,2000.0,539.0,Jd - Large,Ccs,5,Medium,Ultra_Fast
+Zeekr,X Core Rwd (My25),Suv,49.0,265,148,70.0,0.7,Rwd,1600.0,362.0,Jb - Compact,Ccs,5,Medium,Fast
+Zeekr,X Long Range Rwd (My25),Suv,65.0,360,146,114.0,0.57,Rwd,1600.0,362.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast
+Zeekr,X Privilege Awd (My25),Suv,65.0,350,153,114.0,0.57,Awd,1600.0,362.0,Jb - Compact,Ccs,5,Medium,Ultra_Fast

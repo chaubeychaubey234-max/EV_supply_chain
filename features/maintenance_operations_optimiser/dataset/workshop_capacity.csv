@@ -1,0 +1,26 @@
+workshop_id,workshop_name,city,is_available,ev_specialized,battery_repair_capable,total_slots_per_day,booked_slots_today,technician_count,current_workload_percent,available_slots,specializations,avg_service_hours
+WS_001,Mumbai EV Service Centre 1,Mumbai,False,True,True,7,6,2,27.1,"['11:00', '15:00', '14:00']","Battery,BMS",3.3
+WS_002,Mumbai EV Service Centre 2,Mumbai,False,True,False,6,1,9,68.3,"['13:00', '14:00']","BEV,Battery,Motor",7.5
+WS_003,Delhi EV Service Centre 1,Delhi,False,True,False,10,2,7,76.9,"['10:00', '16:00', '08:00']","Battery,BMS",3.9
+WS_004,Delhi EV Service Centre 2,Delhi,False,True,True,7,0,6,71.2,['16:00'],"Battery,BMS",11.7
+WS_005,Kolkata EV Service Centre 1,Kolkata,True,False,True,4,3,8,29.7,['14:00'],"BEV,Battery,Motor",4.3
+WS_006,Kolkata EV Service Centre 2,Kolkata,True,False,False,7,1,8,72.5,['10:00'],"Battery,BMS",10.0
+WS_007,Kolkata EV Service Centre 3,Kolkata,False,False,True,11,2,3,30.5,"['15:00', '09:00', '13:00']","Battery,BMS",8.6
+WS_008,Bangalore EV Service Centre 1,Bangalore,True,True,False,8,3,6,30.5,"['09:00', '08:00', '11:00']","BEV,Battery,Motor",7.7
+WS_009,Bangalore EV Service Centre 2,Bangalore,True,False,False,9,4,6,61.9,"['10:00', '09:00', '08:00', '11:00']",BEV,10.5
+WS_010,Bangalore EV Service Centre 3,Bangalore,True,True,True,10,0,8,42.0,"['14:00', '11:00']","BEV,Battery,Motor",9.8
+WS_011,Nagpur EV Service Centre 1,Nagpur,True,True,True,7,6,4,21.7,['08:00'],"BEV,PHEV",9.2
+WS_012,Nagpur EV Service Centre 2,Nagpur,True,True,False,5,7,6,31.4,"['11:00', '13:00']","BEV,PHEV",5.0
+WS_013,Nagpur EV Service Centre 3,Nagpur,True,False,False,8,2,9,28.9,['10:00'],"BEV,Charging System",11.1
+WS_014,Nagpur EV Service Centre 4,Nagpur,True,False,True,6,6,9,78.4,"['15:00', '14:00']","Battery,BMS",3.0
+WS_015,Pune EV Service Centre 1,Pune,True,False,True,7,5,3,42.9,"['09:00', '11:00', '10:00', '16:00']","BEV,Battery,Motor",6.3
+WS_016,Pune EV Service Centre 2,Pune,True,True,False,5,4,2,26.3,"['10:00', '15:00', '13:00']","BEV,Battery,Motor",5.3
+WS_017,Chennai EV Service Centre 1,Chennai,True,False,True,5,4,8,89.4,['16:00'],"BEV,Battery,Motor",5.5
+WS_018,Chennai EV Service Centre 2,Chennai,True,True,True,4,1,9,56.2,"['08:00', '14:00']",BEV,6.9
+WS_019,Chennai EV Service Centre 3,Chennai,True,True,False,5,4,6,40.0,"['15:00', '10:00']","BEV,Battery,Motor",6.4
+WS_020,Hyderabad EV Service Centre 1,Hyderabad,True,True,False,4,7,6,61.6,['10:00'],"BEV,PHEV",8.7
+WS_021,Hyderabad EV Service Centre 2,Hyderabad,True,True,True,9,5,7,77.6,"['08:00', '13:00']","BEV,Charging System",2.4
+WS_022,Ahmedabad EV Service Centre 1,Ahmedabad,True,True,False,6,2,8,80.6,"['09:00', '15:00', '16:00', '14:00']","BEV,Charging System",11.4
+WS_023,Ahmedabad EV Service Centre 2,Ahmedabad,True,True,True,8,0,4,94.4,"['16:00', '09:00']","Battery,BMS",10.9
+WS_024,Jaipur EV Service Centre 1,Jaipur,False,True,False,7,2,2,69.6,"['14:00', '10:00', '08:00', '15:00']",BEV,11.4
+WS_025,Jaipur EV Service Centre 2,Jaipur,False,True,True,4,0,8,31.5,"['09:00', '10:00', '13:00']","BEV,PHEV",5.1
