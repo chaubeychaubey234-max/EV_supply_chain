@@ -3,7 +3,8 @@ import shutil
 import kagglehub
 
 def download_datasets():
-    datasets_dir = "/Users/alex-ankush/Desktop/EV/datasets"
+    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+    datasets_dir = os.path.abspath(os.path.join(CURRENT_DIR, "datasets"))
     os.makedirs(datasets_dir, exist_ok=True)
     
     print("Downloading QMS dataset...")

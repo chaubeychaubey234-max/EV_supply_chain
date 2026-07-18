@@ -57,13 +57,19 @@ def predict_battery_health(avg_temperature_c: float, fast_charge_ratio_pct: floa
     
     rul_months = int((soh_pred - 70.0) / deg_pred) if soh_pred > 70.0 and deg_pred > 0 else 0
     
+    # Note: State of Health (SoH) regression performs poorly (R² ≈ -0.27) because the target SoH
+    # has very low correlation with raw operating telemetry in this synthetic dataset.
+    # We explicitly flag the SoH confidence as experimental/low, while degradation-rate prediction is high-confidence.
     return {
         "ev_id": "PREDICTED_ASSET",
         "state_of_health_percentage": round(soh_pred, 2),
         "degradation_rate_per_month": round(deg_pred, 2),
         "remaining_useful_life_months": rul_months,
         "status": "Healthy" if soh_pred > 80.0 else "Attention Needed",
-        "source": "model_prediction"
+        "source": "model_prediction",
+        "soh_confidence": "Low (Experimental - R² ≈ -0.27 due to low dataset correlation)",
+        "degradation_rate_confidence": "High (R² ≈ 0.94)",
+        "notes": "State of Health (SoH) prediction has high uncertainty in this iteration. Degradation rate and Remaining Useful Life (RUL) are prioritized for operational planning."
     }
 
 @tool

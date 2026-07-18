@@ -40,6 +40,11 @@ def train_and_evaluate():
     
     preds = clf.predict(X_test)
     
+    # Note: The perfect classification metrics (Precision, Recall, F1 = 1.00) are expected because
+    # the synthetic dataset has been generated using deterministic rules on the selected features
+    # (e.g. strict thresholds for Capacity_mAh, Retention_50Cycle_Pct, and Anode_Overhang_mm).
+    # These metrics do not reflect expected real-world production performance where noise,
+    # measurement errors, and hidden variables prevent perfect separation.
     print("\nClassification Report:")
     target_names = ["Grade A", "Grade B", "Scrap"]
     print(classification_report(y_test, preds, target_names=target_names))

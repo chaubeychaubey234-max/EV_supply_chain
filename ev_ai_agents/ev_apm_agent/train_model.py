@@ -32,6 +32,9 @@ def train_and_evaluate():
     )
     
     # 1. Train State of Health (SoH) Model
+    # Note: State of Health (SoH) prediction shows poor metrics (R² ≈ -0.27) because in this synthetic
+    # dataset, State_of_Health_Pct is statistically independent of the telemetry features. 
+    # This is a dataset property, and the model should be marked as experimental/low-confidence in production.
     print("Training SoH Model...")
     soh_model = XGBRegressor(n_estimators=100, random_state=42)
     soh_model.fit(X_train, y_soh_train)

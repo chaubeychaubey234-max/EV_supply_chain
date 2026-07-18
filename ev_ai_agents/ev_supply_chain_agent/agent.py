@@ -57,7 +57,7 @@ class QueryParameters(BaseModel):
 def get_llm():
     """Helper to instantiate Google Gemini LLM if API key is present."""
     api_key = os.environ.get("GROQ_API_KEY")
-    if api_key:
+    if api_key and not api_key.startswith("dummy"):
         return ChatGroq(
             model="llama-3.3-70b-versatile", 
             temperature=0.2, 

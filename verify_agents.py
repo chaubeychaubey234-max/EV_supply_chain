@@ -6,6 +6,7 @@ from ev_ai_agents.ev_apm_agent.agent import apm_app
 from ev_ai_agents.ev_qms_agent.agent import qms_app
 from ev_ai_agents.ev_fleet_electrification_agent.agent import run_agent as run_fleet_agent
 from ev_ai_agents.ev_maintenance_operations_agent.agent import run_agent as run_maint_agent
+from ev_ai_agents.ev_supply_chain_agent.agent import supply_chain_app
 
 def test_apm_agent():
     print("\n" + "="*50)
@@ -137,9 +138,35 @@ def test_maint_agent():
             print("Status: Failed")
             traceback.print_exc()
 
+def test_supply_chain_agent():
+    print("\n" + "="*50)
+    print("TESTING SUPPLY CHAIN AGENT")
+    print("="*50)
+    
+    test_cases = [
+        {"name": "Supplier Audit", "state": {"query": "Audit supplier SUP-001 and review ESG mineral risk."}},
+        {"name": "Material Traceability", "state": {"query": "Trace battery batch BAT-2024-001."}},
+        {"name": "Geopolitical Risk", "state": {"query": "Analyze geopolitical risk for lithium originating from China."}},
+        {"name": "Empty Query", "state": {"query": ""}}
+    ]
+    
+    for case in test_cases:
+        print(f"\n[Supply Chain Test] {case['name']}")
+        print(f"Input state: {case['state']}")
+        try:
+            res = supply_chain_app.invoke(case["state"])
+            print("Status: Success")
+            print("Response fields:", list(res.keys()))
+            print("Supplier details:", res.get("supplier_details"))
+            print("Geopolitical risk rating:", res.get("risk_rating"))
+        except Exception as e:
+            print("Status: Failed")
+            traceback.print_exc()
+
 if __name__ == "__main__":
     load_dotenv()
     test_apm_agent()
     test_qms_agent()
     test_fleet_agent()
     test_maint_agent()
+    test_supply_chain_agent()
