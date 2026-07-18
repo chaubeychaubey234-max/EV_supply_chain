@@ -16,3 +16,12 @@ class APMState(TypedDict, total=False):
     recommendations: List[str]
     maintenance_triggers: List[str]
     messages: List[str]
+
+    # Optional internal orchestration fields
+    user_query: Optional[str]
+    detected_intent: Optional[str]
+    analysis_mode: Optional[str]
+    tool_outputs: Optional[dict]
+    confidence: Optional[float]
+    analysis_plan: Optional[List[str]]
+    reasoning_output: Optional[dict]
