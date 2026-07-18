@@ -1,26 +1,5 @@
 """
 agent.py — Orchestration layer for the Fleet Electrification Readiness Agent.
-
-Responsibilities
-----------------
-1. Accept a natural-language user query.
-2. Route intent to the correct subset of existing tools.
-3. Execute each selected tool and collect outputs.
-4. Pass collected outputs to ``generate_llm_response()`` (Groq stub).
-5. Return a single structured response dictionary.
-
-LLM integration
----------------
-All future LLM interaction is isolated to ``generate_llm_response()``.
-When Groq is ready, **only that one function** needs to be updated.
-No other code in this file needs to change.
-
-Tools used
-----------
-The agent imports and calls the six existing tools directly from:
-    features/fleet_electrification_readiness/tools/
-
-No new tools are created. No business logic lives here.
 """
 
 from __future__ import annotations
@@ -28,10 +7,14 @@ from __future__ import annotations
 import logging
 import sys
 import os
-from typing import Any
+import re
+from typing import Any, List, Optional
+from pydantic import BaseModel, Field
+from langgraph.graph import StateGraph, END
+from langchain_groq import ChatGroq
+from langchain_core.messages import SystemMessage, HumanMessage
 
-# ─── Path bootstrap ───────────────────────────────────────────────────────────
-# Resolve project root so imports work regardless of the CWD used to run the agent.
+# Resolve project root so imports work
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))                   # …/ev_fleet_electrification_agent/
 _FEAT_DIR  = os.path.dirname(_AGENT_DIR)                                   # …/fleet_electrification_readiness/
 _FEATS_DIR = os.path.dirname(_FEAT_DIR)                                    # …/features/
@@ -39,7 +22,7 @@ _ROOT_DIR  = os.path.dirname(_FEATS_DIR)                                   # pro
 if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
-# ─── Existing tool imports (no new tools created) ─────────────────────────────
+# Existing tool imports
 from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool      import fetch_vehicle_data, analyze_fleet_csv
 from ev_ai_agents.ev_fleet_electrification_agent.tools.readiness_score_tool  import calculate_readiness_score
 from ev_ai_agents.ev_fleet_electrification_agent.tools.ev_matching_tool      import recommend_ev_replacement
@@ -49,7 +32,7 @@ from ev_ai_agents.ev_fleet_electrification_agent.tools.procurement_tool      imp
 
 from .state import AgentState
 
-# ─── Logging ──────────────────────────────────────────────────────────────────
+# Logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(message)s",
@@ -57,13 +40,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Tool registry
-# Maps a stable string key → the LangChain @tool callable.
-# Agent orchestration references these keys only — never the callables directly.
-# ─────────────────────────────────────────────────────────────────────────────
-
+# Centralized Tool Registry
 _TOOL_REGISTRY: dict[str, Any] = {
     "fleet_data_tool":       fetch_vehicle_data,
     "analyze_fleet_csv":     analyze_fleet_csv,
@@ -75,305 +52,288 @@ _TOOL_REGISTRY: dict[str, Any] = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Intent → tool mapping
-# Each intent group defines which tools should run for matching queries.
+# Pydantic Schemas for Structured LLM Outputs & Wrapper
 # ─────────────────────────────────────────────────────────────────────────────
 
-_INTENT_MAP: list[dict[str, Any]] = [
-    # Full electrification / transition evaluation
-    {
-        "keywords": {
-            "transition", "electrif", "ev adoption", "convert", "replace",
-            "procurement", "fleet ev", "go electric", "switch to ev",
-        },
-        "tools": [
-            "fleet_data_tool",
-            "readiness_score_tool",
-            "ev_matching_tool",
-            "roi_tool",
-            "procurement_tool",
-        ],
-    },
-    # Bulk analysis
-    {
-        "keywords": {
-            "csv", "batch", "bulk", "analyze fleet", "file", "upload"
-        },
-        "tools": [
-            "analyze_fleet_csv"
-        ]
-    },
-    # Charging infrastructure / route-based queries
-    {
-        "keywords": {
-            "charg", "infrastructure", "station", "charger", "charging point",
-            "route", "range", "overnight", "window",
-        },
-        "tools": [
-            "fleet_data_tool",
-            "route_analysis_tool",
-        ],
-    },
-    # Financial / ROI / savings
-    {
-        "keywords": {
-            "roi", "return on investment", "saving", "cost", "payback",
-            "financial", "annual saving", "profit", "break even",
-        },
-        "tools": [
-            "roi_tool",
-        ],
-    },
-    # Carbon / emissions
-    {
-        "keywords": {
-            "carbon", "emission", "co2", "co₂", "green", "environment",
-            "sustainability", "footprint", "ghg",
-        },
-        "tools": [
-            "procurement_tool",
-        ],
-    },
-    # EV model / recommendation
-    {
-        "keywords": {
-            "recommend", "suitable ev", "which ev", "best ev", "ev model",
-            "replacement", "match", "spec",
-        },
-        "tools": [
-            "ev_matching_tool",
-        ],
-    },
-    # Readiness scoring
-    {
-        "keywords": {
-            "readiness", "ready", "score", "assess", "feasib", "viable",
-        },
-        "tools": [
-            "readiness_score_tool",
-        ],
-    },
-]
+class FleetQueryPlan(BaseModel):
+    query_type: str = Field(description="Query type: conceptual, statistical, asset, or hybrid")
+    requires_dataset: bool = Field(description="True if dataset access is required")
+    tools: List[str] = Field(description="List of tool keys to run. Choose from: fleet_data_tool, readiness_score_tool, ev_matching_tool, roi_tool, procurement_tool, route_analysis_tool, analyze_fleet_csv")
+    requires_llm: bool = Field(description="True if LLM reasoning is required to synthesize the final answer")
+    confidence: float = Field(description="Confidence score between 0.0 and 1.0 representing plan confidence")
 
+class FleetReasoningOutput(BaseModel):
+    summary: str = Field(description="Summary of the fleet electrification analysis.")
+    reasoning: str = Field(description="Detailed logic explaining the recommendations, ROI, and feasibility.")
+    recommendations: List[str] = Field(description="List of actionable electrification recommendations.")
+    risks: List[str] = Field(description="Key deployment or transition risks identified.")
+    next_steps: List[str] = Field(description="Concrete immediate next steps for fleet managers.")
+
+class LLMResponse(BaseModel):
+    success: bool
+    data: Optional[Any] = None
+    error: Optional[str] = None
 
 # ─────────────────────────────────────────────────────────────────────────────
-# LLM placeholder
+# Isolated LLM Helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def generate_llm_response(
-    user_query: str,
-    tool_outputs: dict[str, Any],
-) -> dict[str, Any]:
-    """Generate a natural-language summary from tool outputs via an LLM.
+def get_llm() -> ChatGroq:
+    """Initialize the Groq model. Validates that GROQ_API_KEY exists."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key or api_key.startswith("dummy"):
+        raise ValueError("GROQ_API_KEY not found or invalid in environment.")
+    return ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
 
-    **Current status:** Groq integration is pending.
-    This function returns a structured placeholder response that includes
-    all raw tool outputs so the rest of the pipeline remains fully functional.
-
-    When Groq (or any other LLM) is integrated, replace **only** the body
-    of this function. No other code in agent.py needs to change.
-
-    Args:
-        user_query:   The original user question.
-        tool_outputs: Collected outputs from all executed tools.
-
-    Returns:
-        A structured response dict containing at minimum:
-        ``status``, ``summary``, ``tool_outputs``, ``recommendations``, ``next_steps``.
+def generate_llm_response(prompt_messages: list, response_model: Any = None) -> LLMResponse:
+    """Invokes the LLM and catches expected configuration and API infrastructure errors.
+    Propagates programming exceptions normally.
     """
-    # ── Groq integration point ──────────────────────────────────────────────
-    # TODO: Replace this block with a Groq API call, e.g.:
-    #
-    #   from groq import Groq
-    #   client = Groq(api_key=os.environ["GROQ_API_KEY"])
-    #   completion = client.chat.completions.create(
-    #       model="llama-3.3-70b-versatile",
-    #       messages=[
-    #           {"role": "system", "content": SYSTEM_PROMPT},
-    #           {"role": "user",   "content": _build_prompt(user_query, tool_outputs)},
-    #       ],
-    #   )
-    #   return _parse_groq_response(completion)
-    # ───────────────────────────────────────────────────────────────────────
+    try:
+        llm = get_llm()
+        if response_model:
+            structured_llm = llm.with_structured_output(response_model)
+            res = structured_llm.invoke(prompt_messages)
+            return LLMResponse(success=True, data=res, error=None)
+        else:
+            res = llm.invoke(prompt_messages)
+            return LLMResponse(success=True, data=res, error=None)
+    except (ValueError, Exception) as exc:
+        exc_class_name = type(exc).__name__
+        is_infra = False
+        
+        # Determine if it's an expected infrastructure error
+        if isinstance(exc, ValueError):
+            is_infra = True
+        else:
+            # Safely check module or package info without hard dependency failures
+            mod_name = type(exc).__module__.lower()
+            if "groq" in mod_name or "openai" in mod_name:
+                is_infra = True
+            elif "Connection" in exc_class_name or "Timeout" in exc_class_name or "RateLimit" in exc_class_name:
+                is_infra = True
+                
+        if is_infra:
+            log.warning(f"LLM infrastructure error caught: {exc_class_name} - {str(exc)}")
+            return LLMResponse(success=False, data=None, error="LLM_NOT_CONFIGURED")
+        else:
+            # Propagate normal developer/programming errors
+            raise exc
 
-    log.info("generate_llm_response: LLM not yet integrated — returning placeholder.")
+# ─────────────────────────────────────────────────────────────────────────────
+# LangGraph Nodes
+# ─────────────────────────────────────────────────────────────────────────────
 
-    # Build lightweight placeholder recommendations from raw tool data
-    recommendations: list[str] = []
-    next_steps: list[str] = []
+def planner_node(state: AgentState) -> dict:
+    """Planner node: Requests an execution plan from the LLM and stores the LLMResponse."""
+    user_query = state.user_query
+    
+    system_prompt = (
+        "You are the Query Planner for a Fleet Electrification & Procurement Intelligence system.\n"
+        "Analyze the user's natural language query and decide on an execution plan.\n"
+        "Available tool capabilities in the registry:\n"
+        "- 'fleet_data_tool': Retrieve specifications and basic data for a specific vehicle_id.\n"
+        "- 'readiness_score_tool': Calculate an electrification readiness score (0-100) for a vehicle.\n"
+        "- 'ev_matching_tool': Recommends EV replacement models based on existing vehicle specs.\n"
+        "- 'roi_tool': Calculates financial return on investment and estimated payback years.\n"
+        "- 'procurement_tool': Recommends purchase/lease strategy and schedule.\n"
+        "- 'route_analysis_tool': Performs route and range safety analysis for daily vehicle routes.\n"
+        "- 'analyze_fleet_csv': Batch/bulk csv upload processing tool.\n"
+        "\n"
+        "Classify the query into one of: 'conceptual', 'statistical', 'asset', or 'hybrid'.\n"
+        "Determine which tools are required to fulfill the user's query.\n"
+        "Confidence must be a float between 0.0 and 1.0."
+    )
+    
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=f"Generate a query plan for user query: '{user_query}'")
+    ]
+    
+    response = generate_llm_response(messages, FleetQueryPlan)
+    
+    updates: dict[str, Any] = {
+        "planner_response": response
+    }
+    
+    if response.success and response.data:
+        plan: FleetQueryPlan = response.data
+        updates["detected_intent"] = plan.query_type
+        updates["analysis_plan"] = plan.tools
+        updates["confidence"] = plan.confidence
+        updates["analysis_mode"] = plan.query_type
+        
+    return updates
 
-    if "readiness_score_tool" in tool_outputs:
-        rs = tool_outputs["readiness_score_tool"]
-        score = rs.get("readiness_score", "N/A")
-        cls   = rs.get("classification", "")
-        recommendations.append(
-            f"Readiness score is {score}/100 ({cls}). "
-            "Review the classification rationale before committing to procurement."
-        )
-        next_steps.append("Commission a formal route-optimisation study.")
+def tool_executor_node(state: AgentState) -> dict:
+    """Tool Executor node: Executes the planned tools if planning was successful."""
+    planner_res: Optional[LLMResponse] = state.planner_response
+    if planner_res is None or not planner_res.success:
+        log.info("Tool Executor: Skipping tool execution because planning was unavailable (success=False).")
+        return {"tool_outputs": {}, "selected_tools": []}
+        
+    plan: Optional[FleetQueryPlan] = planner_res.data
+    tools_to_run = plan.tools if plan else []
+    tool_outputs: dict[str, Any] = {}
+    vehicle_id = state.vehicle_id or "VEH-002"
+    
+    for tool_name in tools_to_run:
+        tool_callable = _TOOL_REGISTRY.get(tool_name)
+        if not tool_callable:
+            log.error(f"Tool '{tool_name}' not found in registry.")
+            tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available in registry."}
+            continue
+            
+        try:
+            log.info(f"Executing tool: {tool_name} for vehicle: {vehicle_id}")
+            result = tool_callable.invoke({"vehicle_id": vehicle_id})
+            tool_outputs[tool_name] = result
+        except Exception as e:
+            log.exception(f"Error executing tool {tool_name}")
+            tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
+            
+    return {"tool_outputs": tool_outputs, "selected_tools": tools_to_run}
 
-    if "roi_tool" in tool_outputs:
-        roi = tool_outputs["roi_tool"]
-        savings   = roi.get("total_annual_savings_usd", 0)
-        payback   = roi.get("estimated_payback_years", "N/A")
-        roi_pct   = roi.get("roi_percent_over_10_years", "N/A")
-        recommendations.append(
-            f"Estimated annual savings: USD {savings:,.0f}. "
-            f"Payback period: {payback} years. "
-            f"10-year ROI: {roi_pct}%."
-        )
-        next_steps.append("Engage fleet finance team to validate ROI assumptions.")
+def llm_reasoning_node(state: AgentState) -> dict:
+    """LLM Reasoning node: Asks the LLM to interpret tool outputs or conceptually answer queries."""
+    planner_res: Optional[LLMResponse] = state.planner_response
+    if planner_res is None or not planner_res.success:
+        log.info("LLM Reasoning: Skipping reasoning because planner was unavailable (success=False).")
+        return {
+            "reasoner_response": LLMResponse(success=False, error="LLM_NOT_CONFIGURED")
+        }
+        
+    user_query = state.user_query
+    detected_intent = state.detected_intent
+    tool_outputs = state.tool_outputs
+    
+    system_prompt = (
+        "You are an expert consultant in fleet electrification and EV procurement.\n"
+        "Your job is to interpret tool outputs and explain them clearly, justify recommendations, and suggest next steps.\n"
+        "Strict Rule: You must NEVER perform calculations or invent numerical values. All metrics, scores, and costs must come directly from tool outputs.\n"
+        "Strict Rule: If tool outputs are missing or empty, state that the analysis is conceptual only."
+    )
+    
+    user_prompt = (
+        f"User Query: {user_query}\n"
+        f"Intent/Mode: {detected_intent}\n\n"
+        f"Tool Outputs:\n"
+    )
+    for t_name, t_out in tool_outputs.items():
+        user_prompt += f"--- {t_name} ---\n{t_out}\n\n"
+        
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=user_prompt)
+    ]
+    
+    response = generate_llm_response(messages, FleetReasoningOutput)
+    
+    updates: dict[str, Any] = {
+        "reasoner_response": response
+    }
+    if response.success and response.data:
+        updates["reasoning_output"] = response.data.model_dump()
+        
+    return updates
 
-    if "ev_matching_tool" in tool_outputs:
-        ev = tool_outputs["ev_matching_tool"]
-        recommendations.append(
-            f"Recommended EV: {ev.get('recommended_ev', 'N/A')} "
-            f"(compatibility score: {ev.get('compatibility_score', 'N/A')})."
-        )
-        next_steps.append("Request EV supplier demo and total-cost-of-ownership comparison.")
-
-    if "procurement_tool" in tool_outputs:
-        proc = tool_outputs["procurement_tool"]
-        recommendations.append(
-            f"Procurement recommendation: {proc.get('recommendation', 'N/A')} "
-            f"(window: {proc.get('recommended_purchase_window', 'N/A')})."
-        )
-        next_steps.append("Initiate procurement process per recommended purchase window.")
-
-    if "route_analysis_tool" in tool_outputs:
-        route = tool_outputs["route_analysis_tool"]
-        window = route.get("available_charging_window_hours", "N/A")
-        recommendations.append(
-            f"Charging window available: {window} hours. "
-            "Verify depot charging infrastructure capacity."
-        )
-        next_steps.append("Survey depot for Level 2 / DC fast charger installation feasibility.")
-
-    if not recommendations:
-        recommendations = ["Review full tool outputs for detailed insights."]
-    if not next_steps:
-        next_steps = ["Consult fleet operations team for next steps."]
-
+def response_builder_node(state: AgentState) -> dict:
+    """Response Builder node: Converts the state into the central Supervisor response model."""
+    planner_res: Optional[LLMResponse] = state.planner_response
+    reasoner_res: Optional[LLMResponse] = state.reasoner_response
+    
+    # Check if LLM is unconfigured
+    llm_configured = True
+    error_msg = ""
+    if planner_res and not planner_res.success and planner_res.error == "LLM_NOT_CONFIGURED":
+        llm_configured = False
+        error_msg = "LLM is not configured. Add the GROQ_API_KEY to enable AI reasoning."
+    elif reasoner_res and not reasoner_res.success and reasoner_res.error == "LLM_NOT_CONFIGURED":
+        llm_configured = False
+        error_msg = "LLM is not configured. Add the GROQ_API_KEY to enable AI reasoning."
+        
+    if not llm_configured:
+        final_response = {
+            "status": "error",
+            "selected_tools": [],
+            "tool_outputs": {},
+            "summary": error_msg,
+            "recommendations": ["Add the GROQ_API_KEY to enable AI reasoning."],
+            "next_steps": ["Configure GROQ_API_KEY in the environment."]
+        }
+        return {
+            "final_response": final_response,
+            "execution_status": "error"
+        }
+        
+    # Success/Partial path: Merging LLM narrative and raw tool outputs
+    reasoning = state.reasoning_output or {}
+    final_response = {
+        "status": "success",
+        "selected_tools": state.selected_tools,
+        "tool_outputs": state.tool_outputs,
+        "summary": reasoning.get("summary", ""),
+        "recommendations": reasoning.get("recommendations", []),
+        "next_steps": reasoning.get("next_steps", [])
+    }
+    
+    # Inspect tool outputs for any error keys
+    failed = False
+    for k, v in state.tool_outputs.items():
+        if isinstance(v, dict) and "error" in v:
+            failed = True
+            break
+            
+    if failed:
+        final_response["status"] = "partial"
+        
     return {
-        "status":          "LLM integration pending",
-        "summary":         (
-            f"Query '{user_query}' processed. "
-            f"{len(tool_outputs)} tool(s) executed successfully. "
-            "Groq LLM narrative will replace this placeholder on integration."
-        ),
-        "tool_outputs":    tool_outputs,
-        "recommendations": recommendations,
-        "next_steps":      next_steps,
+        "final_response": final_response,
+        "execution_status": final_response["status"]
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Intent routing
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _select_tools(query: str) -> list[str]:
-    """Map a user query to the required tool keys via keyword matching.
-
-    Supports multi-intent queries (e.g. "electrification and savings" triggers
-    both the transition group and the ROI group).
-
-    Args:
-        query: Raw user query string.
-
-    Returns:
-        Ordered, deduplicated list of tool-registry keys to execute.
-        Falls back to ``["fleet_data_tool", "readiness_score_tool"]`` when
-        no keywords match.
-    """
-    query_lower = query.lower()
-    matched: list[str] = []
-
-    for intent in _INTENT_MAP:
-        if any(kw in query_lower for kw in intent["keywords"]):
-            for tool_key in intent["tools"]:
-                if tool_key not in matched:
-                    matched.append(tool_key)
-
-    if not matched:
-        log.warning("_select_tools: no intent matched — falling back to readiness check.")
-        matched = ["fleet_data_tool", "readiness_score_tool"]
-
-    return matched
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Tool execution
+# Standardized LangGraph Pipeline Setup
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _execute_tool(tool_key: str, vehicle_id: str) -> tuple[bool, Any]:
-    """Invoke a single tool from the registry and return its output.
+workflow = StateGraph(AgentState)
 
-    Args:
-        tool_key:   Key in ``_TOOL_REGISTRY``.
-        vehicle_id: Vehicle identifier forwarded to the tool.
+workflow.add_node("planner", planner_node)
+workflow.add_node("tool_executor", tool_executor_node)
+workflow.add_node("llm_reasoning", llm_reasoning_node)
+workflow.add_node("response_builder", response_builder_node)
 
-    Returns:
-        ``(success, output)`` — output is the tool result dict on success,
-        or an error dict on failure.
-    """
-    callable_tool = _TOOL_REGISTRY.get(tool_key)
-    if callable_tool is None:
-        err = f"Tool '{tool_key}' is not registered in _TOOL_REGISTRY."
-        log.error(err)
-        return False, {"error": err}
+workflow.set_entry_point("planner")
+workflow.add_edge("planner", "tool_executor")
+workflow.add_edge("tool_executor", "llm_reasoning")
+workflow.add_edge("llm_reasoning", "response_builder")
+workflow.add_edge("response_builder", END)
 
-    try:
-        log.info("  Executing tool: %s (vehicle_id=%s)", tool_key, vehicle_id)
-        result = callable_tool.invoke({"vehicle_id": vehicle_id})
-        return True, result
-    except Exception as exc:
-        log.error("  Tool '%s' failed: %s", tool_key, exc)
-        return False, {"error": str(exc), "tool": tool_key}
-
+fleet_app = workflow.compile()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
 def run_agent(user_query: str, vehicle_id: str = "VEH-002") -> dict[str, Any]:
-    """Execute the Fleet Electrification Readiness Agent.
-
-    Orchestration flow
-    ------------------
-    1. Validate inputs.
-    2. Select tools via intent routing.
-    3. Execute each selected tool; collect outputs.
-    4. Pass outputs to ``generate_llm_response()``.
-    5. Populate :class:`AgentState` and return the final response dict.
+    """Execute the Fleet Electrification Readiness Agent using LangGraph.
 
     Args:
         user_query: Natural-language question from the user.
         vehicle_id: Fleet vehicle identifier to evaluate (default ``"VEH-002"``).
 
     Returns:
-        Structured response dictionary::
-
-            {
-                "status":          "success" | "partial" | "error",
-                "selected_tools":  [...],
-                "tool_outputs":    {...},
-                "summary":         "...",
-                "recommendations": [...],
-                "next_steps":      [...],
-            }
+        Structured response dictionary matching Supervisor expectations.
     """
     log.info("=" * 60)
-    log.info("Fleet Electrification Agent — START")
+    log.info("Fleet Electrification Agent (LangGraph Workflow) — START")
     log.info("  Query     : %s", user_query)
     log.info("  Vehicle   : %s", vehicle_id)
     log.info("=" * 60)
-
-    # ── 1. Input validation ──────────────────────────────────────────────────
-    state = AgentState()
-
+    
+    # 1. Validate inputs
     if not isinstance(user_query, str) or not user_query.strip():
         log.error("Invalid user_query: must be a non-empty string.")
-        state.mark_error()
         return {
             "status":          "error",
             "selected_tools":  [],
@@ -385,7 +345,6 @@ def run_agent(user_query: str, vehicle_id: str = "VEH-002") -> dict[str, Any]:
 
     if not isinstance(vehicle_id, str) or not vehicle_id.strip():
         log.error("Invalid vehicle_id: must be a non-empty string.")
-        state.mark_error()
         return {
             "status":          "error",
             "selected_tools":  [],
@@ -394,52 +353,33 @@ def run_agent(user_query: str, vehicle_id: str = "VEH-002") -> dict[str, Any]:
             "recommendations": [],
             "next_steps":      [],
         }
-
-    state.user_query = user_query.strip()
-    state.add_history("user", state.user_query)
-
-    # ── 2. Intent routing ─────────────────────────────────────────────────────
-    selected = _select_tools(state.user_query)
-    state.selected_tools = selected
-    log.info("Selected tools: %s", selected)
-
-    # ── 3. Tool execution ─────────────────────────────────────────────────────
-    failed_tools: list[str] = []
-
-    for tool_key in selected:
-        ok, output = _execute_tool(tool_key, vehicle_id.strip())
-        state.add_tool_output(tool_key, output)
-        if not ok:
-            failed_tools.append(tool_key)
-
-    # ── 4. Determine execution status ─────────────────────────────────────────
-    if not failed_tools:
-        state.mark_success()
-    elif len(failed_tools) < len(selected):
-        state.mark_partial()
-        log.warning("Partial execution: failed tools — %s", failed_tools)
-    else:
-        state.mark_error()
-        log.error("All tools failed: %s", failed_tools)
-
-    # ── 5. Generate response (LLM stub) ───────────────────────────────────────
-    llm_output = generate_llm_response(state.user_query, state.tool_outputs)
-
-    # ── 6. Assemble final response ────────────────────────────────────────────
-    state.final_response = {
-        "status":          state.execution_status,
-        "selected_tools":  state.selected_tools,
-        "tool_outputs":    state.tool_outputs,
-        "summary":         llm_output.get("summary", ""),
-        "recommendations": llm_output.get("recommendations", []),
-        "next_steps":      llm_output.get("next_steps", []),
-    }
-
-    state.add_history("assistant", state.final_response["summary"])
-
-    log.info("Agent completed with status: %s", state.execution_status)
-    return state.final_response
-
+        
+    # 2. Invoke StateGraph workflow
+    state = AgentState(
+        user_query=user_query.strip(),
+        vehicle_id=vehicle_id.strip(),
+        execution_status="pending"
+    )
+    
+    try:
+        res = fleet_app.invoke(state)
+        if isinstance(res, dict):
+            final_res = res.get("final_response", {})
+        else:
+            final_res = getattr(res, "final_response", {})
+            
+        log.info("Agent completed with status: %s", final_res.get("status"))
+        return final_res
+    except Exception as e:
+        log.exception("Workflow failed during execution")
+        return {
+            "status":          "error",
+            "selected_tools":  [],
+            "tool_outputs":    {},
+            "summary":         f"Internal Agent execution error: {str(e)}",
+            "recommendations": ["Retry execution or inspect backend logs."],
+            "next_steps":      []
+        }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Local test

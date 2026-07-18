@@ -8,7 +8,7 @@ Stores the complete lifecycle of a single agent invocation:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 
 @dataclass
@@ -30,6 +30,16 @@ class AgentState:
     final_response: dict[str, Any] = field(default_factory=dict)
     execution_status: str = "pending"
     conversation_history: list[dict[str, str]] = field(default_factory=list)
+
+    # Orchestration fields for LangGraph compatibility
+    detected_intent: str = ""
+    analysis_mode: str = ""
+    confidence: float = 1.0
+    analysis_plan: list[str] = field(default_factory=list)
+    reasoning_output: dict[str, Any] = field(default_factory=dict)
+    planner_response: Optional[Any] = None  # Stores the LLMResponse[FleetQueryPlan]
+    reasoner_response: Optional[Any] = None # Stores the LLMResponse[FleetReasoningOutput]
+    vehicle_id: str = "VEH-002"  # Preserve vehicle ID passed down to tools
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
