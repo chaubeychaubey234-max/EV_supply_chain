@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from ev_ai_agents.ev_apm_agent.agent import apm_app
 from ev_ai_agents.ev_qms_agent.agent import qms_app
 from ev_ai_agents.ev_fleet_electrification_agent.agent import run_agent as run_fleet_agent
+from ev_ai_agents.ev_maintenance_operations_agent.agent import run_agent as run_maint_agent
 
 def test_apm_agent():
     print("\n" + "="*50)
@@ -101,8 +102,44 @@ def test_fleet_agent():
             print("Status: Failed")
             traceback.print_exc()
 
+def test_maint_agent():
+    print("\n" + "="*50)
+    print("TESTING MAINTENANCE OPERATIONS AGENT")
+    print("="*50)
+    
+    test_cases = [
+        {"name": "Conceptual Query", "query": "What is predictive maintenance?"},
+        {"name": "Maintenance Scheduling", "query": "Generate maintenance schedule."},
+        {"name": "Maintenance Risk", "query": "Which EVs are high risk?"},
+        {"name": "Charging Availability", "query": "Will charging stations be available tomorrow?"},
+        {"name": "Workshop Capacity", "query": "Optimize workshop utilization."},
+        {"name": "Downtime", "query": "Reduce fleet downtime."},
+        {"name": "Hybrid Query", "query": "Generate maintenance schedule while considering charger availability."},
+        {"name": "Invalid Asset", "query": "Inspect an unknown vehicle EV_9999."},
+        {"name": "Empty Query", "query": ""},
+        {"name": "No/Missing Query", "query": None}
+    ]
+    
+    for case in test_cases:
+        print(f"\n[Maintenance Test] {case['name']}")
+        query = case.get("query")
+        print(f"Input: query='{query}'")
+        try:
+            res = run_maint_agent(query)
+            print("Status: Success")
+            print("Response fields:", list(res.keys()))
+            print("Status returned:", res.get("status"))
+            print("Summary snippet:", res.get("summary")[:100] + ("..." if len(res.get("summary", "")) > 100 else ""))
+            print("Recommendations:", res.get("recommendations"))
+            print("Next Steps:", res.get("next_steps"))
+            print("Executed tools:", res.get("selected_tools"))
+        except Exception as e:
+            print("Status: Failed")
+            traceback.print_exc()
+
 if __name__ == "__main__":
     load_dotenv()
     test_apm_agent()
     test_qms_agent()
     test_fleet_agent()
+    test_maint_agent()
