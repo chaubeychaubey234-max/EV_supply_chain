@@ -72,20 +72,18 @@ Agent Data Provided:
 # Note: They return a dictionary meant to be merged via `operator.ior` on `agent_responses`
 
 def call_apm_agent(state: OrchestratorState) -> dict:
-    ev_id_match = re.search(r"EV-\d+", state["user_query"], re.IGNORECASE)
-    ev_id = ev_id_match.group(0).upper() if ev_id_match else "EV-9000"
-    result = apm_app.invoke({"ev_id": ev_id})
-    return {"agent_responses": {"apm": {"recommendations": result.get("recommendations", "")}}}
+    """Forwards the full user query to the APM agent's own planner."""
+    result = apm_app.invoke({"user_query": state["user_query"]})
+    return {"agent_responses": {"apm": result}}
 
 def call_qms_agent(state: OrchestratorState) -> dict:
-    batch_id_match = re.search(r"BATCH-\d+", state["user_query"], re.IGNORECASE)
-    batch_id = batch_id_match.group(0).upper() if batch_id_match else "BATCH-001"
-    result = qms_app.invoke({"batch_id": batch_id})
-    return {"agent_responses": {"qms": {"quality_drift_analysis": result.get("quality_drift_analysis", "")}}}
+    """Forwards the full user query to the QMS agent's own planner."""
+    result = qms_app.invoke({"user_query": state["user_query"]})
+    return {"agent_responses": {"qms": result}}
 
 def call_supply_chain_agent(state: OrchestratorState) -> dict:
     result = supply_chain_app.invoke({"query": state["user_query"]})
-    return {"agent_responses": {"supply_chain": result.get("final_response", "")}}
+    return {"agent_responses": {"supply_chain": result.get("unified_report", result)}}
 
 def call_fleet_agent(state: OrchestratorState) -> dict:
     result = run_fleet_agent(state["user_query"])
@@ -100,19 +98,73 @@ def call_carbon_agent(state: OrchestratorState) -> dict:
     result = carbon_agent.invoke({"input": state["user_query"]})
     return {"agent_responses": {"carbon": result.get("output", result)}}
 
+def call_apm_then_maintenance_agent(state: OrchestratorState) -> dict:
+    """
+    Dependency-aware node: runs APM first, then conditionally runs Maintenance
+    only if APM signals a health issue (SoH < 80 or status != 'Healthy').
+    Used when the router selects BOTH 'apm' and 'maintenance' for the same query.
+    """
+    # Step 1: Run APM
+    apm_result = apm_app.invoke({"user_query": state["user_query"]})
+    
+    battery = apm_result.get("battery_analysis", {})
+    soh = battery.get("state_of_health_percentage", 100.0)
+    status = battery.get("status", "Healthy")
+    
+    # Step 2: Conditional Maintenance invocation
+    if soh < 80.0 or status != "Healthy":
+        maint_query = (
+            f"{state['user_query']} "
+            f"[Context from APM: Battery SoH={soh}%, status='{status}', "
+            f"degradation_rate={battery.get('degradation_rate_per_month', 'N/A')}%/month. "
+            f"Maintenance is warranted — generate a prioritized schedule.]"
+        )
+        maint_result = run_maintenance_agent(maint_query)
+        return {
+            "agent_responses": {
+                "apm": apm_result,
+                "maintenance": maint_result,
+                "_dependency_note": f"Maintenance triggered: APM SoH={soh}% < 80% threshold."
+            }
+        }
+    else:
+        return {
+            "agent_responses": {
+                "apm": apm_result,
+                "maintenance": {
+                    "skipped": True,
+                    "reason": f"APM reports healthy battery (SoH={soh}%, status='{status}'). "
+                               "No maintenance action required at this time."
+                },
+                "_dependency_note": f"Maintenance skipped: APM SoH={soh}% >= 80%, status='{status}'."
+            }
+        }
+
+
 # --- Build the Map-Reduce Supervisor Graph ---
 
 def route_to_parallel_agents(state: OrchestratorState):
     """The conditional edge that returns multiple Send() objects for parallel execution."""
     sends = []
-    for agent in state.get("next_agents", []):
-        if agent in ["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon"]:
-            sends.append(Send(agent, state))
+    selected = state.get("next_agents", [])
     
+    # Dependency-aware sequencing: if BOTH apm and maintenance are selected,
+    # use the combined node that runs APM first and conditionally triggers maintenance
+    if "apm" in selected and "maintenance" in selected:
+        sends.append(Send("apm_then_maintenance", state))
+        # Add remaining agents (excluding apm and maintenance which are handled together)
+        for agent in selected:
+            if agent not in ("apm", "maintenance") and agent in ["qms", "supply_chain", "fleet", "carbon"]:
+                sends.append(Send(agent, state))
+    else:
+        for agent in selected:
+            if agent in ["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon"]:
+                sends.append(Send(agent, state))
+
     # If no agents selected or an error occurred, go straight to aggregator
     if not sends:
         return "aggregator"
-        
+
     return sends
 
 workflow = StateGraph(OrchestratorState)
@@ -124,17 +176,18 @@ workflow.add_node("supply_chain", call_supply_chain_agent)
 workflow.add_node("fleet", call_fleet_agent)
 workflow.add_node("maintenance", call_maintenance_agent)
 workflow.add_node("carbon", call_carbon_agent)
+workflow.add_node("apm_then_maintenance", call_apm_then_maintenance_agent)
 workflow.add_node("aggregator", aggregate_responses)
 
 # Map (Fan-out)
 workflow.add_conditional_edges(
     "router",
     route_to_parallel_agents,
-    ["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon", "aggregator"]
+    ["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon", "apm_then_maintenance", "aggregator"]
 )
 
 # Reduce (Fan-in): All agents route to the aggregator
-for agent in ["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon"]:
+for agent in ["apm", "qms", "supply_chain", "fleet", "maintenance", "carbon", "apm_then_maintenance"]:
     workflow.add_edge(agent, "aggregator")
 
 # Finish

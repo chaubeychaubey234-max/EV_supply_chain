@@ -169,7 +169,8 @@ from ev_ai_agents.ev_qms_agent.agent import qms_app
 # 3. EV Asset Performance Management (APM) Agent
 @app.get("/api/agents/ev_apm")
 def get_ev_apm(
-    ev_id: str = Query(None, description="Target EV ID"),
+    user_query: str = Query(None, description="Natural language query (primary path)"),
+    ev_id: str = Query(None, description="Target EV ID (override for programmatic calls)"),
     avg_temp: float = Query(None),
     max_temp: float = Query(None),
     fc_ratio: float = Query(None),
@@ -177,45 +178,48 @@ def get_ev_apm(
     charge_dur: float = Query(None)
 ):
     try:
-        input_data = {}
-        if ev_id:
-            input_data["ev_id"] = ev_id
-        if avg_temp is not None:
-            input_data["avg_temperature_c"] = avg_temp
-            input_data["max_temperature_c"] = max_temp
-            input_data["fast_charge_ratio_pct"] = fc_ratio
-            input_data["deep_discharge_cycles"] = deep_cycles
-            input_data["avg_charge_duration_hours"] = charge_dur
-
-        res = apm_app.invoke(input_data)
+        # Natural language query is the primary path — goes through the agent's own planner
+        if user_query and user_query.strip():
+            res = apm_app.invoke({"user_query": user_query})
+        else:
+            # Legacy: structured field path
+            input_data = {}
+            if ev_id:
+                input_data["ev_id"] = ev_id
+            if avg_temp is not None:
+                input_data["avg_temperature_c"] = avg_temp
+                input_data["max_temperature_c"] = max_temp
+                input_data["fast_charge_ratio_pct"] = fc_ratio
+                input_data["deep_discharge_cycles"] = deep_cycles
+                input_data["avg_charge_duration_hours"] = charge_dur
+            res = apm_app.invoke(input_data)
 
         battery = res.get("battery_analysis", {})
         safety = res.get("safety_analysis", {})
         telemetry = res.get("telemetry_data", {})
-        
-        # Format response for the frontend
+
         return {
-            "ev_id": input_data.get("ev_id", "RAW_INPUT"),
+            "ev_id": ev_id or battery.get("ev_id", "QUERY_RESULT"),
             "battery_analysis": {
-                "state_of_health_pct": battery.get("state_of_health_pct", battery.get("predicted_soh_pct", 0)),
-                "degradation_rate_monthly_pct": battery.get("degradation_rate_monthly_pct", 0),
+                "state_of_health_pct": battery.get("state_of_health_percentage", battery.get("state_of_health_pct", 0)),
+                "degradation_rate_monthly_pct": battery.get("degradation_rate_per_month", battery.get("degradation_rate_monthly_pct", 0)),
                 "remaining_useful_life_months": battery.get("remaining_useful_life_months", 0),
                 "status": battery.get("status", "Unknown")
             },
             "safety_analysis": {
-                "avg_temp_c": avg_temp if avg_temp is not None else 0,
-                "max_temp_c": max_temp if max_temp is not None else safety.get("max_recorded_temperature_celsius", 0),
+                "avg_temp_c": avg_temp or 0,
+                "max_temp_c": max_temp or safety.get("max_recorded_temperature_celsius", 0),
                 "cooling_status": safety.get("cooling_system_status", "OK"),
                 "thermal_runaway_warnings": safety.get("thermal_runaway_warnings", 0)
             },
             "telemetry_data": {
-                "fast_charge_ratio_pct": fc_ratio if fc_ratio is not None else telemetry.get("fast_charging_ratio_percentage", 0),
-                "deep_discharge_cycles": deep_cycles if deep_cycles is not None else 0,
-                "avg_charge_duration_hours": charge_dur if charge_dur is not None else 0
+                "fast_charge_ratio_pct": fc_ratio or telemetry.get("fast_charging_ratio_percentage", 0),
+                "deep_discharge_cycles": deep_cycles or 0,
+                "avg_charge_duration_hours": charge_dur or 0
             },
             "maintenance_triggers": res.get("maintenance_triggers", []),
             "recommendations": res.get("recommendations", []),
-            "summary": "APM Agent executed successfully based on telemetry."
+            "summary": res.get("messages", ["APM Agent executed successfully."])[-1] if res.get("messages") else "APM Agent executed successfully."
         }
     except Exception as e:
         logger.error(f"Error calling APM agent: {e}")
@@ -224,6 +228,7 @@ def get_ev_apm(
 # 4. EV Manufacturing Quality Intelligence (QMS) Agent
 @app.get("/api/agents/ev_qms")
 def get_ev_qms(
+    user_query: str = Query(None, description="Natural language query (primary path)"),
     batch_id: str = Query(None, description="Manufacturing Batch ID"),
     elec_vol: float = Query(None),
     int_res: float = Query(None),
@@ -231,6 +236,27 @@ def get_ev_qms(
     amb_temp: float = Query(None)
 ):
     try:
+        # Natural language query is the primary path
+        if user_query and user_query.strip():
+            res = qms_app.invoke({"user_query": user_query})
+            batch_metrics = res.get("batch_metrics", {})
+            return {
+                "batch_id": batch_id or "QUERY_RESULT",
+                "cell_metrics": {
+                    "total_cells_inspected": batch_metrics.get("total_inspected", 1),
+                    "scrap_defect_rate_pct": batch_metrics.get("defect_rate_pct", 0.0),
+                    "average_internal_resistance_mOhm": batch_metrics.get("avg_resistance_mohm", 0.0),
+                    "average_cell_capacity_mAh": batch_metrics.get("avg_capacity_mah", 0.0),
+                    "average_electrolyte_volume_ml": batch_metrics.get("avg_electrolyte_ml", 0.0)
+                },
+                "quality_distributions": {"grades": {}, "defect_categories": {}, "scrap_rate_by_line_pct": {}},
+                "quality_drift_analysis": res.get("process_drift", ""),
+                "root_cause_analysis": res.get("root_cause", ""),
+                "alerts": res.get("corrective_actions", []),
+                "recommendations": res.get("recommendations", []),
+                "summary": res.get("messages", ["QMS Agent executed."])[-1] if res.get("messages") else "QMS Agent executed."
+            }
+
         input_data = {}
         if batch_id:
             input_data["batch_id"] = batch_id

@@ -342,25 +342,29 @@
                     <div class="agent-interaction-grid">
                         <div class="dashboard-card control-panel">
                             <div class="wizard-steps-timeline">
-                                <div class="step-indicator done"><span>1</span> Select EV ID</div>
+                                <div class="step-indicator done"><span>1</span> Ask the AI Agent</div>
                                 <div class="step-indicator active"><span>2</span> Run Safety Analysis</div>
                             </div>
 
                             <div class="input-group mt-4">
-                                <label for="apm-ev-select">Target EV ID (or manual telemetry)</label>
-                                <select id="apm-ev-select" class="form-select">
+                                <label for="apm-nl-query">Instruction for Battery Health Agent</label>
+                                <textarea id="apm-nl-query" class="form-textarea" rows="3" placeholder="e.g. This vehicle runs mostly on fast chargers in Delhi summer heat, doing frequent full discharges — what's its outlook?">What is the battery health status and remaining useful life for our fleet?</textarea>
+                            </div>
+
+                            <div class="input-group mt-3">
+                                <label style="color: var(--text-muted); font-size: 0.8rem;">Advanced override — select EV ID or enter raw telemetry (optional, overrides NL query):</label>
+                                <select id="apm-ev-select" class="form-select" style="margin-top:5px; opacity:0.7;">
                                     <!-- Options filled dynamically -->
                                 </select>
                             </div>
-                            
-                            <div class="input-group mt-3">
-                                <label>Or enter raw telemetry (overrides ID):</label>
+
+                            <div class="input-group mt-2" style="opacity:0.7;">
                                 <div style="display:flex; gap:10px; margin-top:5px;">
                                     <input type="number" id="apm-avg-temp" class="form-select" placeholder="Avg Temp °C" />
                                     <input type="number" id="apm-max-temp" class="form-select" placeholder="Max Temp °C" />
                                     <input type="number" id="apm-fc-ratio" class="form-select" placeholder="Fast Charge %" />
                                 </div>
-                                <div style="display:flex; gap:10px; margin-top:10px;">
+                                <div style="display:flex; gap:10px; margin-top:8px;">
                                     <input type="number" id="apm-deep-cycles" class="form-select" placeholder="Deep Discharge Cycles" />
                                     <input type="number" id="apm-charge-dur" class="form-select" placeholder="Charge Duration (hrs)" />
                                 </div>
@@ -397,19 +401,23 @@
                     <div class="agent-interaction-grid">
                         <div class="dashboard-card control-panel">
                             <div class="wizard-steps-timeline">
-                                <div class="step-indicator done"><span>1</span> Select Manufacturing Batch</div>
-                                <div class="step-indicator active"><span>2</span> Analyze Quality Drift</div>
+                                <div class="step-indicator done"><span>1</span> Ask the AI Agent</div>
+                                <div class="step-indicator active"><span>2</span> Audit Quality Control</div>
                             </div>
 
                             <div class="input-group mt-4">
-                                <label for="qms-batch-select">Target Batch ID (or manual metrics)</label>
-                                <select id="qms-batch-select" class="form-select">
+                                <label for="qms-nl-query">Instruction for Quality Intelligence Agent</label>
+                                <textarea id="qms-nl-query" class="form-textarea" rows="3" placeholder="e.g. We're seeing more scrap on the night shift, what's likely wrong?">What is the current scrap rate and which production line has the highest defect rate?</textarea>
+                            </div>
+
+                            <div class="input-group mt-3">
+                                <label style="color: var(--text-muted); font-size: 0.8rem;">Advanced override — select Batch ID or enter raw metrics (optional):</label>
+                                <select id="qms-batch-select" class="form-select" style="margin-top:5px; opacity:0.7;">
                                     <!-- Options filled dynamically -->
                                 </select>
                             </div>
                             
-                            <div class="input-group mt-3">
-                                <label>Or enter raw cell metrics (overrides Batch ID):</label>
+                            <div class="input-group mt-2" style="opacity:0.7;">
                                 <div style="display:flex; gap:10px; margin-top:5px;">
                                     <input type="number" id="qms-elec-vol" class="form-select" placeholder="Electrolyte Vol (ml)" />
                                     <input type="number" id="qms-int-res" class="form-select" placeholder="Internal Res (mΩ)" />
