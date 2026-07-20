@@ -118,6 +118,8 @@ def planner_node(state: QMSState) -> dict:
     plan = generate_llm_response(messages, QMSQueryPlan)
     
     final_batch_id = plan.extracted_batch_id or extracted_batch_id
+    if final_batch_id and final_batch_id not in state.get("user_query", ""):
+        final_batch_id = None
     if plan.query_type in ("asset", "hybrid") and not final_batch_id:
         final_batch_id = state.get("batch_id") or "BATCH-001"
         

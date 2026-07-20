@@ -102,31 +102,35 @@ def planner_node(state: SupplyChainState) -> dict:
 def tool_executor_node(state: SupplyChainState) -> dict:
     tools_to_run = state.get("analysis_plan", [])
     tool_outputs = {}
-    supplier_id = state.get("supplier_id")
-    batch_id = state.get("batch_id")
+    
+    final_supplier_id = state.get("supplier_id")
     
     for tool_name in tools_to_run:
-        tool_callable = _TOOL_REGISTRY.get(tool_name)
+        tool_callable = next((t for t in supply_chain_tools if t.name == tool_name), None)
         if not tool_callable:
-            tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available."}
+            tool_outputs[tool_name] = {"error": f"Tool {tool_name} not found"}
             continue
             
         try:
             logger.info(f"Executing tool: {tool_name}")
-            if "supplier" in tool_name or tool_name == "detect_geopolitical_risk":
-                # For detect_geopolitical_risk, mock country if not extracted
-                arg = "China" if tool_name == "detect_geopolitical_risk" else supplier_id
-                if tool_name == "detect_supplier_concentration":
-                    arg = [supplier_id]
-                elif tool_name == "calculate_supplier_risk_score":
-                    arg = {"supplier_id": supplier_id, "quality_score": 90, "delivery_score": 95, "esg_score": 85}
-                
-                result = tool_callable.invoke(arg)
-            elif "batch" in tool_name or tool_name == "verify_traceability_completeness":
-                arg = {"batch_id": batch_id} if tool_name == "verify_traceability_completeness" else batch_id
-                result = tool_callable.invoke(arg)
+            
+            args = {}
+            missing_required = False
+            
+            # Simple inspection for args
+            if hasattr(tool_callable, "args"):
+                if "supplier_id" in tool_callable.args:
+                    if not final_supplier_id:
+                        missing_required = True
+                    else:
+                        args["supplier_id"] = final_supplier_id
+                if "material" in tool_callable.args:
+                    args["material"] = state.get("user_query", "")
+                    
+            if missing_required:
+                result = {"message": f"Tool {tool_name} skipped. No specific supplier_id provided. Answer conceptually based on user query description."}
             else:
-                result = tool_callable.invoke(batch_id)
+                result = tool_callable.invoke(args) if args else tool_callable.invoke({})
                 
             tool_outputs[tool_name] = result
         except Exception as e:
@@ -134,7 +138,6 @@ def tool_executor_node(state: SupplyChainState) -> dict:
             tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
             
     return {"tool_outputs": tool_outputs}
-
 def llm_reasoning_node(state: SupplyChainState) -> dict:
     user_query = state.get("user_query", "No query provided.")
     tool_outputs = state.get("tool_outputs", {})
@@ -160,7 +163,8 @@ def llm_reasoning_node(state: SupplyChainState) -> dict:
 def response_builder_node(state: SupplyChainState) -> dict:
     reasoning = state.get("reasoning_output", {})
     return {
-        "unified_report": reasoning.get("unified_report", "No report generated.")
+        "unified_report": reasoning.get("unified_report", "No report generated."),
+        "tool_outputs": state.get("tool_outputs", {})
     }
 
 workflow = StateGraph(SupplyChainState)

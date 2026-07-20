@@ -295,86 +295,71 @@ def get_ev_qms(
 # 5. EV Supply Chain & Manufacturing Logistics Agent
 @app.get("/api/agents/supply_chain")
 def get_supply_chain(query: str = Query("Audit supplier SUP-001 and review ESG mineral risk.", description="User query")):
+    from ev_ai_agents.ev_supply_chain_agent.agent import supply_chain_app
+    
     df_sc = load_csv_safe(SUPPLY_CHAIN_CSV)
     df_mr = load_csv_safe(MINERAL_RISK_CSV)
     df_bq = load_csv_safe(BATTERY_QUALITY_CSV)
 
-    if df_sc is None or df_mr is None or df_bq is None:
-        raise HTTPException(status_code=500, detail="Supply chain audit datasets not found on server.")
-
     query_lower = query.lower()
     
-    supplier_id = "SUP-001"
-    material = "lithium"
-    batch_id = "BAT-2024-001"
-
-    if "sup-002" in query_lower or "sup-002" in query_lower: supplier_id = "SUP-002"
-    elif "sup-003" in query_lower or "sup-003" in query_lower: supplier_id = "SUP-003"
+    supplier_id = None
+    if "sup-001" in query_lower: supplier_id = "SUP-001"
+    elif "sup-002" in query_lower: supplier_id = "SUP-002"
+    elif "sup-003" in query_lower: supplier_id = "SUP-003"
     
-    if "cobalt" in query_lower: material = "cobalt"
-    elif "nickel" in query_lower: material = "nickel"
-    
-    if "bat-2024-002" in query_lower: batch_id = "BAT-2024-002"
-
     supplier_info = {}
-    row_sc = df_sc[df_sc['supplier_id'].astype(str).str.strip().str.upper() == supplier_id.upper()]
-    if not row_sc.empty:
-        supplier_info = row_sc.iloc[0].to_dict()
-        material = str(supplier_info['material'])
-        batch_id = str(supplier_info['batch_id'])
-    else:
-        raise HTTPException(status_code=404, detail=f"Supplier ID '{supplier_id}' not found in active registry.")
-
     risk_info = {}
-    row_mr = df_mr[df_mr['material'].astype(str).str.strip().str.lower() == material.lower()]
-    if not row_mr.empty:
-        risk_info = row_mr.iloc[0].to_dict()
-
     quality_info = {}
-    row_bq = df_bq[df_bq['batch_id'].astype(str).str.strip().str.upper() == batch_id.upper()]
-    if not row_bq.empty:
-        quality_info = row_bq.iloc[0].to_dict()
+    nodes = []
 
-    report = (
-        f"SUPPLY CHAIN AUDIT SUMMARY FOR {supplier_info.get('supplier_name', 'Ganfeng Lithium')} ({supplier_id})\n\n"
-        f"1. Geopolitical Risk: Material '{material}' originates predominantly from {risk_info.get('country', 'China')}. "
-        f"Global supply share is {risk_info.get('global_supply_percentage', 65.0)}%. The dependency rating is scored at "
-        f"{risk_info.get('dependency_score', 85.0)} out of 100, assigning a '{risk_info.get('risk_level', 'High')}' geopolitical risk profile.\n\n"
-        f"2. Quality Status: Battery pack batch {batch_id} shows a defect rate of "
-        f"{quality_info.get('defect_rate', 0.01) * 100:.2f}% across {quality_info.get('inspection_count', 500)} units checked. "
-        f"Standard defect type flagged is '{quality_info.get('defect_type', 'micro-short circuit')}'.\n\n"
-        f"3. ESG & Traceability: The cobalt or lithium trace maps securely to extraction sites with "
-        f"blockchain audit confirmations. Carbon footprint indicators indicate high supplier compliance."
-    )
+    if supplier_id and df_sc is not None:
+        row_sc = df_sc[df_sc['supplier_id'].astype(str).str.strip().str.upper() == supplier_id.upper()]
+        if not row_sc.empty:
+            supplier_info = row_sc.iloc[0].to_dict()
+            material = str(supplier_info.get('material', ''))
+            batch_id = str(supplier_info.get('batch_id', ''))
+            
+            if df_mr is not None:
+                row_mr = df_mr[df_mr['material'].astype(str).str.strip().str.lower() == material.lower()]
+                if not row_mr.empty:
+                    risk_info = row_mr.iloc[0].to_dict()
 
-    nodes = [
-        {"id": "Mine", "label": f"{risk_info.get('country', 'Mine Site')} Raw Mineral Extraction", "status": "Audited"},
-        {"id": "Refining", "label": f"{supplier_info.get('supplier_name', 'Supplier')} Chemical Refining Hub", "status": "On Track"},
-        {"id": "CellManufacturing", "label": f"Cell Batch {batch_id}", "status": "QC Inspected"},
-        {"id": "Vehicle", "label": f"Deployed on Fleet Vehicle {supplier_info.get('vehicle_id', 'VIN-EV-20240001')}", "status": "In Operation"}
-    ]
+            if df_bq is not None:
+                row_bq = df_bq[df_bq['batch_id'].astype(str).str.strip().str.upper() == batch_id.upper()]
+                if not row_bq.empty:
+                    quality_info = row_bq.iloc[0].to_dict()
+                
+            nodes = [
+                {"id": "Mine", "label": f"{risk_info.get('country', 'Mine Site')} Raw Mineral Extraction", "status": "Audited"},
+                {"id": "Refining", "label": f"{supplier_info.get('supplier_name', 'Supplier')} Chemical Refining Hub", "status": "On Track"},
+                {"id": "CellManufacturing", "label": f"Cell Batch {batch_id}", "status": "QC Inspected"},
+                {"id": "Vehicle", "label": f"Deployed on Fleet Vehicle {supplier_info.get('vehicle_id', 'VIN-EV-20240001')}", "status": "In Operation"}
+            ]
 
+    # Invoke REAL agent!
+    res = supply_chain_app.invoke({"user_query": query})
+    
     return {
         "query": query,
         "supplier_details": supplier_info,
         "mineral_risk": risk_info,
         "battery_quality": quality_info,
-        "unified_report": report,
+        "unified_report": res.get("unified_report", "No report generated."),
         "traceability_nodes": nodes,
-        "risk_rating": risk_info.get('risk_level', 'Medium')
+        "risk_rating": risk_info.get('risk_level', 'Conceptual') if risk_info else 'Conceptual'
     }
 
 # 6. Net Zero Progress & Carbon Intelligence Agent
 @app.get("/api/agents/carbon_tracker")
 def get_carbon_tracker(query: str = Query("What is our net zero target progress?", description="User query")):
+    from ev_ai_agents.carbon_agent.agent import carbon_app
+    
     df_co2 = load_csv_safe(CO2_CSV)
     df_log = load_csv_safe(LOGISTICS_CSV)
     df_ef = load_csv_safe(EMISSION_FACTORS_CSV)
 
-    if df_co2 is None:
-        raise HTTPException(status_code=500, detail="CO2 Emissions dataset not found on server.")
-
-    co2_history = df_co2.to_dict(orient='records')
+    co2_history = df_co2.to_dict(orient='records') if df_co2 is not None else []
     routes = df_log.head(10).to_dict(orient='records') if df_log is not None else []
     emission_factors = df_ef.to_dict(orient='records') if df_ef is not None else []
 
@@ -383,12 +368,8 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
     
     reduction_pct = 100 - (latest["total_emissions"] / co2_history[0]["total_emissions"] * 100) if len(co2_history) > 1 else 42.2
 
-    report = (
-        f"Carbon Intelligence analysis indicates the organization is currently '{status}' "
-        f"for the FY2026 carbon reductions goals. Overall greenhouse gas (GHG) footprint "
-        f"is down {reduction_pct:.1f}% since baseline measurements in 2020. This is highly correlated "
-        f"with the current fleet electrification rate of {latest.get('electrification_rate', 55.0)}%."
-    )
+    # Invoke REAL agent!
+    res = carbon_app.invoke({"user_query": query})
 
     return {
         "status": status,
@@ -396,7 +377,7 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
         "top_routes": routes,
         "emission_factors": emission_factors,
         "carbon_reduction_summary_pct": round(reduction_pct, 1),
-        "unified_report": report
+        "unified_report": res.get("unified_report", "No report generated.")
     }
 
 # 7. Central Supervisor Orchestrator Chatbot Agent

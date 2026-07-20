@@ -119,6 +119,10 @@ def planner_node(state: APMState) -> dict:
     plan = generate_llm_response(messages, APMQueryPlan)
     
     final_ev_id = plan.extracted_ev_id or extracted_ev_id
+    if final_ev_id and final_ev_id not in state.get("user_query", ""):
+        # LLM hallucinated an ID not in the query
+        final_ev_id = None
+        
     if plan.query_type in ("asset", "hybrid") and not final_ev_id:
         final_ev_id = state.get("ev_id") 
         
@@ -194,7 +198,8 @@ def llm_reasoning_node(state: APMState) -> dict:
         "You are an expert AI for Industrial EV Supply Chain & Asset Intelligence. Your role is to act as an EV battery domain expert.\n"
         "Your task is to interpret tool outputs and user queries to provide comprehensive battery health analysis, thermal safety warnings, charging pattern risk analysis, and actionable predictive maintenance recommendations.\n"
         "Strict Rule: You must NEVER calculate statistics. All calculations are done by the tools. You should only explain what they mean in the context of EV operation and battery degradation theory.\n"
-        "Strict Rule: If the query is conceptual, answer using your expert domain knowledge. Do not reference datasets or statistics if no tool was run."
+        "Strict Rule: If the query is conceptual, answer using your expert domain knowledge. Do not reference datasets or statistics if no tool was run.\n"
+        "Strict Rule: Do NOT invent or substitute vehicle IDs. If the tool outputs 'PREDICTED_ASSET', refer to it as a 'hypothetical predicted vehicle'. You must not use any specific vehicle ID like 'EV-XXXX'."
     )
     
     user_prompt = (

@@ -93,28 +93,23 @@ def tool_executor_node(state: CarbonState) -> dict:
     tool_outputs = {}
     
     for tool_name in tools_to_run:
-        tool_callable = _TOOL_REGISTRY.get(tool_name)
+        tool_callable = next((t for t in carbon_tools if t.name == tool_name), None)
         if not tool_callable:
-            tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available."}
+            tool_outputs[tool_name] = {"error": f"Tool {tool_name} not found"}
             continue
             
         try:
             logger.info(f"Executing tool: {tool_name}")
-            # The tools in carbon_agent don't take arguments from state, they parse from context/query if needed
-            # For simplicity, we just pass the user query to tools that accept arguments, or empty dict if they don't.
-            # wait, let's look at how tools are structured. In previous generic ReAct, it let LLM bind tool args.
-            # In this 4-node static tool planner, if tools require args, we'd need to extract them.
-            # But the requirement is to use the 4-node structure. We can just invoke them with {} 
-            # or have the LLM extract args. To avoid complex arg extraction for now, we'll invoke without args.
-            # Most tools like track_net_zero_progress, identify_high_impact_routes require no args.
-            result = tool_callable.invoke({})
+            if hasattr(tool_callable, "args") and ("diesel_usage" in tool_callable.args or "ev_usage" in tool_callable.args):
+                result = {"message": f"Tool {tool_name} skipped. Required usage parameters not provided. Answer conceptually based on user query description."}
+            else:
+                result = tool_callable.invoke({})
             tool_outputs[tool_name] = result
         except Exception as e:
             logger.exception(f"Error executing tool {tool_name}")
             tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
             
     return {"tool_outputs": tool_outputs}
-
 def llm_reasoning_node(state: CarbonState) -> dict:
     user_query = state.get("user_query", "No query provided.")
     detected_intent = state.get("detected_intent", "asset")
@@ -142,7 +137,8 @@ def response_builder_node(state: CarbonState) -> dict:
     return {
         "status": reasoning.get("status", "Unknown"),
         "carbon_reduction_summary_pct": reasoning.get("carbon_reduction_summary_pct", 0.0),
-        "unified_report": reasoning.get("unified_report", "No report generated.")
+        "unified_report": reasoning.get("unified_report", "No report generated."),
+        "tool_outputs": state.get("tool_outputs", {})
     }
 
 workflow = StateGraph(CarbonState)

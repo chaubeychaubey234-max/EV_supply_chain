@@ -978,15 +978,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Refining Country:</span>
-                                <span class="metric-row-value">${details.country}</span>
+                                <span class="metric-row-value">${details.country || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Active Batch ID:</span>
-                                <span class="metric-row-value text-orange">${details.batch_id}</span>
+                                <span class="metric-row-value text-orange">${details.batch_id || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Vendor Class Rating:</span>
-                                <span class="metric-row-value">Tier ${details.supplier_tier} Vendor</span>
+                                <span class="metric-row-value">Tier ${details.supplier_tier || 'N/A'} Vendor</span>
                             </div>
                         </div>
 
@@ -996,19 +996,19 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Geopolitical constraints calculated on mineral mining sites.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Global Mining Share:</span>
-                                <span class="metric-row-value">${risk.global_supply_percentage}% Global</span>
+                                <span class="metric-row-value">${risk.global_supply_percentage || 0}% Global</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Refiner Country:</span>
-                                <span class="metric-row-value">${risk.country}</span>
+                                <span class="metric-row-value">${risk.country || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Dependency Rating:</span>
-                                <span class="metric-row-value">${risk.dependency_score}/100</span>
+                                <span class="metric-row-value">${risk.dependency_score || 0}/100</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Geopolitical ESG Risk:</span>
-                                <span class="metric-row-value text-danger">${risk.risk_level}</span>
+                                <span class="metric-row-value text-danger">${risk.risk_level || 'Conceptual'}</span>
                             </div>
                         </div>
 
@@ -1018,15 +1018,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Gigafactory inspection stats mapped to raw materials vendor.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Total Inspected:</span>
-                                <span class="metric-row-value">${quality.inspection_count} cells</span>
+                                <span class="metric-row-value">${quality.inspection_count || 0} cells</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Material Defect Rate:</span>
-                                <span class="metric-row-value text-danger">${(quality.defect_rate * 100).toFixed(1)}%</span>
+                                <span class="metric-row-value text-danger">${((quality.defect_rate || 0) * 100).toFixed(1)}%</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Common Defect:</span>
-                                <span class="metric-row-value text-orange">${quality.defect_type}</span>
+                                <span class="metric-row-value text-orange">${quality.defect_type || 'N/A'}</span>
                             </div>
                         </div>
                     </div>
