@@ -61,6 +61,7 @@ class FleetQueryPlan(BaseModel):
     requires_dataset: bool = Field(description="True if dataset access is required")
     tools: List[str] = Field(description="List of tool keys to run. Choose from: fleet_data_tool, readiness_score_tool, ev_matching_tool, roi_tool, procurement_tool, route_analysis_tool, analyze_fleet_csv")
     requires_llm: bool = Field(description="True if LLM reasoning is required to synthesize the final answer")
+    generic_description: str = Field(default="", description="Extracted generic vehicle/batch description if no specific ID is provided")
     confidence: float = Field(description="Confidence score between 0.0 and 1.0 representing plan confidence")
 
 class FleetReasoningOutput(BaseModel):
@@ -176,7 +177,7 @@ def tool_executor_node(state: AgentState) -> dict:
     plan: Optional[FleetQueryPlan] = planner_res.data
     tools_to_run = plan.tools if plan else []
     tool_outputs: dict[str, Any] = {}
-    vehicle_id = state.vehicle_id or "VEH-002"
+    vehicle_id = state.vehicle_id 
     
     # Load vehicle details from clean dataset or registry to satisfy parameter demands of readiness and ev matching tools
     import pandas as pd
@@ -421,7 +422,7 @@ fleet_app = workflow.compile()
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_agent(user_query: str, vehicle_id: str = "VEH-002") -> dict[str, Any]:
+def run_agent(user_query: str, vehicle_id: str ) -> dict[str, Any]:
     """Execute the Fleet Electrification Readiness Agent using LangGraph.
 
     Args:
@@ -496,7 +497,7 @@ if __name__ == "__main__":
     import json
 
     TEST_QUERY      = "Evaluate my delivery fleet for electrification and estimate annual savings."
-    TEST_VEHICLE_ID = "VEH-002"
+    TEST_VEHICLE_ID 
 
     print("=" * 60)
     print("Fleet Electrification Agent — Test Run")

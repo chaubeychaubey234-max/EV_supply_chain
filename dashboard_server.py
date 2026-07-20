@@ -402,212 +402,41 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
 # 7. Central Supervisor Orchestrator Chatbot Agent
 @app.get("/api/agents/supervisor")
 def get_supervisor(
-    query: str = Query("Check the APM health for EV-9001 and trace the supplier risk.", description="User query")
+    query: str = Query(..., description="User query")
 ):
-    """The central EV Operations Supervisor Agent.
-    
-    Coordinates the 6 domain-specific AI agents (APM, QMS, Supply Chain, Fleet, Maintenance, Carbon) 
-    to answer multi-intent complex queries.
-    """
+    """The central EV Operations Supervisor Agent."""
+    import logging
+    logger = logging.getLogger("dashboard")
     logger.info(f"Supervisor Chatbot processing: '{query}'")
     
-    # Check if OpenAI is configured and langchain_openai is installed to run the real LangGraph app
-    openai_available = False
-    if os.getenv("OPENAI_API_KEY"):
-        try:
-            import langchain_openai
-            from orchestrator.supervisor import orchestrator_app
-            openai_available = True
-        except ImportError:
-            logger.info("langchain_openai not installed. Falling back to local offline supervisor routing.")
+    if not os.getenv("GROQ_API_KEY"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY is not set. Cannot run supervisor.")
 
-    if openai_available:
-        try:
-            logger.info("Executing online LangGraph orchestrator...")
-            initial_state = {
-                "user_query": query,
-                "agent_responses": {},
-                "next_agents": [],
-                "final_synthesis": ""
-            }
-            res = orchestrator_app.invoke(initial_state)
-            return {
-                "status": "success",
-                "mode": "online",
-                "query": query,
-                "response": res.get("final_synthesis", "No synthesis returned."),
-                "next_agents": res.get("next_agents", []),
-                "agent_responses": res.get("agent_responses", {})
-            }
-        except Exception as e:
-            logger.error(f"Error in LangGraph orchestrator: {e}. Falling back to offline routing...")
-
-    # Fallback to local offline supervisor mapping
-    logger.info("Executing local offline supervisor routing...")
-    query_lower = query.lower()
-    triggered_agents = []
-    agent_responses = {}
-
-    # 1. Fleet Electrification
-    if any(kw in query_lower for kw in ["readiness", "transition", "electrif", "savings", "roi", "vh_", "vehicle"]):
-        triggered_agents.append("fleet")
-        if run_fleet_agent:
-            try:
-                import re
-                v_match = re.search(r"(VH_\d+|VEH-00\d)", query_lower)
-                vid = v_match.group(0).upper() if v_match else "VH_15592"
-                mapped_id = map_vehicle_id(vid)
-                fleet_res = run_fleet_agent("Evaluate my delivery fleet for electrification and estimate annual savings.", mapped_id)
-                agent_responses["fleet"] = fleet_res
-            except Exception as e:
-                agent_responses["fleet"] = {"error": str(e)}
-        else:
-            agent_responses["fleet"] = {"status": "Fleet agent unavailable"}
-
-    # 2. Maintenance Operations
-    if any(kw in query_lower for kw in ["maintenance", "schedule", "workload", "workshop", "downtime", "risk"]):
-        triggered_agents.append("maintenance")
-        if run_maint_agent:
-            try:
-                maint_res = run_maint_agent("Identify high-risk vehicles and prepare a maintenance plan.")
-                agent_responses["maintenance"] = maint_res
-            except Exception as e:
-                agent_responses["maintenance"] = {"error": str(e)}
-        else:
-            agent_responses["maintenance"] = {"status": "Maintenance agent unavailable"}
-
-    # 3. APM Battery Health
-    if any(kw in query_lower for kw in ["battery", "apm", "health", "temperature", "soh", "degradation", "ev-9"]):
-        triggered_agents.append("apm")
-        try:
-            import re
-            ev_match = re.search(r"EV-9\d+", query_lower)
-            ev_id = ev_match.group(0).upper() if ev_match else "EV-9001"
-            apm_res = get_ev_apm(ev_id)
-            agent_responses["apm"] = apm_res
-        except Exception as e:
-            agent_responses["apm"] = {"error": str(e)}
-
-    # 4. QMS Cell Quality
-    if any(kw in query_lower for kw in ["qms", "batch", "cell", "quality", "drift", "defect", "electrolyte", "bth-", "batch-"]):
-        triggered_agents.append("qms")
-        try:
-            import re
-            b_match = re.search(r"BTH-\d+", query_lower)
-            batch_id = b_match.group(0).upper() if b_match else "BTH-0001"
-            qms_res = get_ev_qms(batch_id)
-            agent_responses["qms"] = qms_res
-        except Exception as e:
-            agent_responses["qms"] = {"error": str(e)}
-
-    # 5. Supply Chain Risk
-    if any(kw in query_lower for kw in ["supply", "trace", "supplier", "mineral", "cobalt", "nickel", "lithium", "sup-"]):
-        triggered_agents.append("supply_chain")
-        try:
-            sc_res = get_supply_chain("Audit supplier SUP-001 and review ESG mineral risk.")
-            agent_responses["supply_chain"] = sc_res
-        except Exception as e:
-            agent_responses["supply_chain"] = {"error": str(e)}
-
-    # 6. Carbon Tracker
-    if any(kw in query_lower for kw in ["carbon", "emission", "green", "net-zero", "scope"]):
-        triggered_agents.append("carbon")
-        try:
-            carbon_res = get_carbon_tracker("What is our net zero target progress?")
-            agent_responses["carbon"] = carbon_res
-        except Exception as e:
-            agent_responses["carbon"] = {"error": str(e)}
-
-    # If no specific agents were triggered, trigger a general checklist
-    if not triggered_agents:
-        triggered_agents = ["fleet", "maintenance", "apm", "qms", "supply_chain", "carbon"]
-        try:
-            if run_fleet_agent: agent_responses["fleet"] = run_fleet_agent("Evaluate", "VEH-002")
-            if run_maint_agent: agent_responses["maintenance"] = run_maint_agent("Identify")
-            agent_responses["apm"] = get_ev_apm("EV-9001")
-            agent_responses["qms"] = get_ev_qms("BTH-0001")
-            agent_responses["supply_chain"] = get_supply_chain("Audit supplier SUP-001")
-            agent_responses["carbon"] = get_carbon_tracker("What is our net zero target progress?")
-        except Exception:
-            pass
-
-    # Synthesize answers beautifully
-    synthesis_parts = []
-    synthesis_parts.append(f"### VoltGrid Operations Control — Central AI Supervisor Report\n")
-    synthesis_parts.append(f"Parsed multi-intent query: *\"{query}\"*\n")
-    synthesis_parts.append(f"Triggered sub-agents for evaluation: " + ", ".join([f"`{a.upper()}`" for a in triggered_agents]) + "\n")
-
-    if "apm" in agent_responses:
-        apm = agent_responses["apm"]
-        if "error" not in apm:
-            synthesis_parts.append(f"#### 🔋 Asset Performance Management (APM)")
-            synthesis_parts.append(f"- **EV ID Evaluated**: `{apm['ev_id']}`")
-            synthesis_parts.append(f"- **Battery State of Health (SOH)**: `{apm['battery_analysis']['state_of_health_pct']}%` ({apm['battery_analysis']['status']})")
-            synthesis_parts.append(f"- **Safety Warnings**: *{apm['maintenance_triggers'][0]}*")
-            synthesis_parts.append(f"- **Actionable Guidelines**: {apm['recommendations'][0]}\n")
-
-    if "qms" in agent_responses:
-        qms = agent_responses["qms"]
-        if "error" not in qms:
-            synthesis_parts.append(f"#### 🔬 Cell Quality (QMS)")
-            synthesis_parts.append(f"- **Inspected Batch**: `{qms['batch_id']}`")
-            synthesis_parts.append(f"- **Scrap Defect Rate**: `{qms['cell_metrics']['scrap_defect_rate_pct']}%` (Control Boundary < 2.0%)")
-            synthesis_parts.append(f"- **Drift Analysis**: *{qms['quality_drift_analysis']}*")
-            synthesis_parts.append(f"- **Root Cause Diagnostics**: *{qms['root_cause_analysis']}*\n")
-
-    if "supply_chain" in agent_responses:
-        sc = agent_responses["supply_chain"]
-        if "error" not in sc:
-            synthesis_parts.append(f"#### 📦 Supply Chain & Material Traceability")
-            synthesis_parts.append(f"- **Supplier Audited**: `{sc['supplier_details'].get('supplier_name', 'N/A')}` ({sc['supplier_details'].get('supplier_id', 'N/A')})")
-            synthesis_parts.append(f"- **ESG Geopolitical Risk**: `{sc['risk_rating']}` ({sc['mineral_risk'].get('country', 'N/A')} mineral origin dependency score of `{sc['mineral_risk'].get('dependency_score', 'N/A')}/100`)")
-            synthesis_parts.append(f"- **Quality Compliance**: Defect rate of `{(sc['battery_quality'].get('defect_rate', 0.0) * 100):.2f}%` from supplier.\n")
-
-    if "fleet" in agent_responses:
-        fl = agent_responses["fleet"]
-        if "error" not in fl:
-            try:
-                ready = fl["tool_outputs"]["readiness_score_tool"]
-                ev = fl["tool_outputs"]["ev_matching_tool"]
-                roi = fl["tool_outputs"]["roi_tool"]
-                synthesis_parts.append(f"#### ⚡ Fleet Electrification Readiness")
-                synthesis_parts.append(f"- **Electrification Readiness Score**: `{ready['readiness_score']}%` ({ready['classification']})")
-                synthesis_parts.append(f"- **Recommended Replacement EV**: `{ev['recommended_ev']}` (Compatibility score of `{int(ev['compatibility_score']*100)}%`)")
-                synthesis_parts.append(f"- **Savings Projection**: Total annual savings of `${roi['total_annual_savings_usd']}` with payback period of `{roi['estimated_payback_years']} years`\n")
-            except KeyError:
-                synthesis_parts.append(f"#### ⚡ Fleet Electrification: {fl.get('summary', 'Complete')}\n")
-
-    if "maintenance" in agent_responses:
-        mt = agent_responses["maintenance"]
-        if "error" not in mt:
-            try:
-                risk = mt["tool_outputs"]["maintenance_risk_analyzer"]
-                synthesis_parts.append(f"#### 🛠️ Maintenance Operations Optimiser")
-                synthesis_parts.append(f"- **Urgent Risk Alert**: Vehicle `{risk['vehicle_id']}` has a risk score of `{risk['risk_score']}/100` ({risk['risk_level']})")
-                synthesis_parts.append(f"- **Primary Risk Factor**: *{risk['dominant_risk_factor']}*")
-                synthesis_parts.append(f"- **Recommended Action**: *{risk['recommended_action']}*\n")
-            except KeyError:
-                synthesis_parts.append(f"#### 🛠️ Maintenance Operations: {mt.get('summary', 'Complete')}\n")
-
-    if "carbon" in agent_responses:
-        cb = agent_responses["carbon"]
-        if "error" not in cb:
-            synthesis_parts.append(f"#### 🍃 Net Zero Target & Carbon Intelligence")
-            synthesis_parts.append(f"- **Current Net Zero Status**: `{cb['status']}`")
-            synthesis_parts.append(f"- **Verified GHG Reductions**: down `{cb['carbon_reduction_summary_pct']}%` compared to 2020 baseline levels")
-            synthesis_parts.append(f"- **Logistics Green Routes**: *{cb['unified_report']}*\n")
-
-    synthesis_parts.append("\n*Report compiled by VoltGrid AI Supervisor Orchestrator. Mode: local-offline fallback.*")
-    final_text = "\n".join(synthesis_parts)
-
-    return {
-        "status": "success",
-        "mode": "offline-fallback",
-        "query": query,
-        "response": final_text,
-        "next_agents": triggered_agents,
-        "agent_responses": agent_responses
-    }
+    try:
+        from orchestrator.supervisor import orchestrator_app
+        logger.info("Executing online LangGraph orchestrator...")
+        initial_state = {
+            "user_query": query,
+            "agent_responses": {},
+            "next_agents": [],
+            "final_synthesis": ""
+        }
+        res = orchestrator_app.invoke(initial_state)
+        return {
+            "status": "success",
+            "mode": "online",
+            "query": query,
+            "response": res.get("final_synthesis", "No synthesis returned."),
+            "next_agents": res.get("next_agents", []),
+            "agent_responses": res.get("agent_responses", {})
+        }
+    except Exception as e:
+        from fastapi import HTTPException
+        logger.error(f"Error in LangGraph orchestrator: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Supervisor execution failed: {str(e)}")
 
 # ----------------------------------------------------------------------
 # Serving the Static Frontend

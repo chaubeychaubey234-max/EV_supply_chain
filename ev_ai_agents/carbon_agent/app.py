@@ -221,7 +221,7 @@ if menu_choice == "🔮 Carbon Intelligence Chat":
     try:
         agent_exec = get_agent_executor()
     except Exception as e:
-        st.warning("⚠️ Google Gemini API key not found in environmental variables. Please configure GEMINI_API_KEY to enable chat.")
+        st.warning("⚠️ Groq API key not found in environmental variables. Please configure GROQ_API_KEY to enable chat.")
         
     # Chat message state
     if "messages" not in st.session_state:
@@ -259,7 +259,7 @@ if menu_choice == "🔮 Carbon Intelligence Chat":
                         st.error(f"Error running agent: {err}")
             else:
                 # Mock response fallback
-                ans = "I cannot call Google Gemini without an API Key. Please configure `GEMINI_API_KEY`."
+                ans = "I cannot call Groq without an API Key. Please configure `GROQ_API_KEY`."
                 st.markdown(ans)
                 st.session_state.messages.append({"role": "assistant", "content": ans})
 

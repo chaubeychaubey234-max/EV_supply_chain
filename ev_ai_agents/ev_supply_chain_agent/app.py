@@ -190,7 +190,7 @@ if menu_choice == "🔮 Multi-Agent Auditor":
             
             # Form initial state
             initial_state = {
-                "query": query_val,
+                "user_query": query_val,
                 "supplier_id": None,
                 "batch_id": None,
                 "material": None,

@@ -179,10 +179,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 fleetBadge.className = "badge status-success";
             }
 
-            const ready = data.tool_outputs.readiness_score_tool || { readiness_score: 0, classification: "N/A", reason: "Tool not run" };
-            const ev = data.tool_outputs.ev_matching_tool || { recommended_ev: "N/A", battery_capacity_kwh: 0, estimated_range_km: 0, compatibility_score: 0, reason: "Tool not run" };
-            const roi = data.tool_outputs.roi_tool || { total_annual_savings_usd: 0, annual_fuel_savings_usd: 0, estimated_payback_years: 0, roi_percent_over_10_years: 0, estimated_annual_fuel_cost_usd: 0, estimated_annual_electricity_cost_usd: 0 };
-            const proc = data.tool_outputs.procurement_tool || { recommended_purchase_window: "N/A", priority: "N/A", reason: "Tool not run" };
+            const ready = data.tool_outputs.readiness_score_tool || {};
+            const ev = data.tool_outputs.ev_matching_tool || {};
+            const roi = data.tool_outputs.roi_tool || {};
+            const proc = data.tool_outputs.procurement_tool || {};
 
             fleetContent.innerHTML = `
                 <div class="ai-report fade-in">
@@ -201,10 +201,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             <h4 class="report-card-title">Electrification Readiness</h4>
                             <p class="description-small">Composite score computed across vehicle operating habits.</p>
                             <div class="gauge-visual mt-3">
-                                <div class="gauge-circle" style="--val: ${ready.readiness_score}">
-                                    <div class="gauge-value">${ready.readiness_score}%</div>
+                                <div class="gauge-circle" style="--val: ${ready.readiness_score || 0}">
+                                    <div class="gauge-value">${ready.readiness_score || 0}%</div>
                                 </div>
-                                <div class="gauge-label mt-2">${ready.classification}</div>
+                                <div class="gauge-label mt-2">${ready.classification || 'N/A'}</div>
                             </div>
                         </div>
 
@@ -214,21 +214,21 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Closest electrical vehicle replacement class match.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Recommended Model:</span>
-                                <span class="metric-row-value text-blue">${ev.recommended_ev}</span>
+                                <span class="metric-row-value text-blue">${ev.recommended_ev || 'Conceptual'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Battery Capacity:</span>
-                                <span class="metric-row-value">${ev.battery_capacity_kwh} kWh</span>
+                                <span class="metric-row-value">${ev.battery_capacity_kwh || 0} kWh</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Estimated Range:</span>
-                                <span class="metric-row-value">${ev.estimated_range_km} km</span>
+                                <span class="metric-row-value">${ev.estimated_range_km || 0} km</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Compatibility Score:</span>
-                                <span class="metric-row-value text-success">${(ev.compatibility_score * 100).toFixed(0)}%</span>
+                                <span class="metric-row-value text-success">${((ev.compatibility_score || 0) * 100).toFixed(0)}%</span>
                             </div>
-                            <p class="text-explanation mt-3">${ev.reason || ready.reason}</p>
+                            <p class="text-explanation mt-3">${ev.reason || ready.reason || 'No specific asset analyzed.'}</p>
                         </div>
 
                         <!-- Financial savings projections -->
@@ -237,19 +237,19 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Projected returns computed over active service life.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Total Annual Savings:</span>
-                                <span class="metric-row-value text-success">$${roi.total_annual_savings_usd.toLocaleString()}</span>
+                                <span class="metric-row-value text-success">$${(roi.total_annual_savings_usd || 0).toLocaleString()}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Annual Fuel Savings:</span>
-                                <span class="metric-row-value">$${roi.annual_fuel_savings_usd.toLocaleString()}</span>
+                                <span class="metric-row-value">$${(roi.annual_fuel_savings_usd || 0).toLocaleString()}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Payback Period:</span>
-                                <span class="metric-row-value">${roi.estimated_payback_years} Years</span>
+                                <span class="metric-row-value">${roi.estimated_payback_years || 0} Years</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">10-Year ROI:</span>
-                                <span class="metric-row-value">${roi.roi_percent_over_10_years}%</span>
+                                <span class="metric-row-value">${roi.roi_percent_over_10_years || 0}%</span>
                             </div>
                         </div>
                     </div>
@@ -269,13 +269,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Optimal buying window recommended by Carbon Agent.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Purchase Window:</span>
-                                <span class="metric-row-value text-orange">${proc.recommended_purchase_window}</span>
+                                <span class="metric-row-value text-orange">${proc.recommended_purchase_window || 'N/A'}</span>
                             </div>
                             <div class="metric-row flex-col mt-2">
                                 <span class="metric-row-label">Action Priority Rating:</span>
-                                <span class="metric-row-value text-blue" style="text-align: left; margin-top: 4px;">${proc.priority.toUpperCase()}</span>
+                                <span class="metric-row-value text-blue" style="text-align: left; margin-top: 4px;">${(proc.priority || 'N/A').toUpperCase()}</span>
                             </div>
-                            <p class="text-explanation mt-3">${proc.reason}</p>
+                            <p class="text-explanation mt-3">${proc.reason || 'No specific asset analyzed.'}</p>
                         </div>
                     </div>
 
@@ -317,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     labels: ['ICE Vehicle (Fuel)', 'EV Match (Electricity)'],
                     datasets: [{
                         label: 'Annual Cost ($)',
-                        data: [roi.estimated_annual_fuel_cost_usd, roi.estimated_annual_electricity_cost_usd],
+                        data: [roi.estimated_annual_fuel_cost_usd || 0, roi.estimated_annual_electricity_cost_usd || 0],
                         backgroundColor: ['#f97316', '#10b981'],
                         borderWidth: 0,
                         borderRadius: 6
@@ -362,9 +362,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 maintBadge.className = "badge status-success";
             }
 
-            const risk = data.tool_outputs.maintenance_risk_analyzer || { vehicle_id: "N/A", risk_score: 0, risk_level: "N/A", dominant_risk_factor: "N/A", recommended_action: "Tool not run" };
-            const schedule = data.tool_outputs.maintenance_schedule_optimizer || [];
-            const planner = data.tool_outputs.charging_availability_planner || { vehicle_id: "N/A", recommended_station: "N/A", station_city: "N/A", charging_time: "N/A", recommended_charger_class: "N/A", charging_feasible_in_window: false };
+            const risk = data.tool_outputs.maintenance_risk_analyzer || {};
+            const schedule = Array.isArray(data.tool_outputs.maintenance_schedule_optimizer) 
+                                ? data.tool_outputs.maintenance_schedule_optimizer 
+                                : [];
+            const planner = data.tool_outputs.charging_availability_planner || {};
 
             maintContent.innerHTML = `
                 <div class="ai-report fade-in">
@@ -383,21 +385,21 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Telemetry indicators calculated for active high-risk vehicle.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Vehicle ID:</span>
-                                <span class="metric-row-value text-orange">${risk.vehicle_id}</span>
+                                <span class="metric-row-value text-orange">${risk.vehicle_id || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Risk Severity Score:</span>
-                                <span class="metric-row-value text-danger">${risk.risk_score}/100</span>
+                                <span class="metric-row-value text-danger">${risk.risk_score || 0}/100</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Risk Level:</span>
-                                <span class="metric-row-value text-danger">${risk.risk_level}</span>
+                                <span class="metric-row-value text-danger">${risk.risk_level || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Primary Factor:</span>
-                                <span class="metric-row-value">${risk.dominant_risk_factor || 'Battery health degradation'}</span>
+                                <span class="metric-row-value">${risk.dominant_risk_factor || 'Conceptual Analysis'}</span>
                             </div>
-                            <p class="text-explanation mt-3">${risk.recommended_action}</p>
+                            <p class="text-explanation mt-3">${risk.recommended_action || 'No specific asset analyzed.'}</p>
                         </div>
 
                         <!-- Workshop Booking Plan -->
@@ -438,19 +440,19 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="description-small mb-3">Optimized charger reservation for vehicle post-service release.</p>
                             <div class="metric-row">
                                 <span class="metric-row-label">Vehicle ID:</span>
-                                <span class="metric-row-value">${planner.vehicle_id}</span>
+                                <span class="metric-row-value">${planner.vehicle_id || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Target Charging Depot:</span>
-                                <span class="metric-row-value">${planner.recommended_station}</span>
+                                <span class="metric-row-value">${planner.recommended_station || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Depot Location:</span>
-                                <span class="metric-row-value">${planner.station_city}</span>
+                                <span class="metric-row-value">${planner.station_city || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
-                                <span class="metric-row-label">Recommended Plug-In:</span>
-                                <span class="metric-row-value text-success">${planner.charging_time}</span>
+                                <span class="metric-row-label">Reservation Time:</span>
+                                <span class="metric-row-value text-success">${planner.reserved_time_slot || 'N/A'}</span>
                             </div>
                             <div class="metric-row">
                                 <span class="metric-row-label">Charger Class:</span>

@@ -32,8 +32,9 @@ class APMQueryPlan(BaseModel):
     tools: List[str] = Field(description="List of tool keys to run. Choose from: fetch_battery_health, predict_battery_health, fetch_thermal_events, fetch_charging_patterns, aggregate_apm_statistics")
     requires_llm: bool = Field(description="True if LLM reasoning is required to synthesize the final answer")
     analysis_mode: str = Field(description="Brief description of the analysis mode")
+    generic_description: str = Field(default="", description="Extracted generic vehicle/batch description if no specific ID is provided")
     confidence: float = Field(description="Confidence score between 0.0 and 1.0 representing how confident we are in this plan")
-    extracted_ev_id: Optional[str] = Field(description="Extracted EV ID (e.g. EV-9005) from the query if mentioned")
+    extracted_ev_id: Optional[str] = Field(description="Extracted EV ID from the query. MUST be null if the query does not contain an explicit EV ID like EV-1234.")
     aggregation_metric: Optional[str] = Field(description="Metric parameter to pass to aggregate_apm_statistics if query is statistical or hybrid. One of: battery_health, temperature, charging_cycles, all")
 
 class APMReasoningOutput(BaseModel):
@@ -50,67 +51,7 @@ def generate_llm_response(prompt_messages: list, response_model: Any = None) -> 
     """
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key or api_key.startswith("dummy"):
-        logger.info("Using fallback/mock response (GROQ_API_KEY is missing or dummy).")
-        
-        if response_model == APMQueryPlan:
-            user_msg = ""
-            for msg in prompt_messages:
-                if isinstance(msg, HumanMessage):
-                    user_msg = msg.content
-                    break
-            
-            query_type = "asset"
-            requires_dataset = True
-            tools = ["fetch_battery_health", "fetch_thermal_events", "fetch_charging_patterns"]
-            extracted_ev_id = None
-            aggregation_metric = "all"
-            
-            # Heuristics parsing for fallback
-            msg_lower = user_msg.lower()
-            ev_match = re.search(r"\b(EV-\d+)\b", user_msg, re.IGNORECASE)
-            if ev_match:
-                extracted_ev_id = ev_match.group(0).upper()
-                
-            if "average" in msg_lower or "fleet" in msg_lower or "statistics" in msg_lower or "distribution" in msg_lower or "percent" in msg_lower or "most common" in msg_lower:
-                query_type = "statistical"
-                tools = ["aggregate_apm_statistics"]
-                if "temperature" in msg_lower or "thermal" in msg_lower:
-                    aggregation_metric = "temperature"
-                elif "charge" in msg_lower or "charging" in msg_lower or "cycles" in msg_lower:
-                    aggregation_metric = "charging_cycles"
-                else:
-                    aggregation_metric = "battery_health"
-            elif "why" in msg_lower or "explain" in msg_lower or "decrease" in msg_lower or "lifespan" in msg_lower or "runaway" in msg_lower:
-                query_type = "conceptual"
-                requires_dataset = False
-                tools = []
-                
-            if "and compare" in msg_lower or "than normal" in msg_lower or "versus" in msg_lower or "vs" in msg_lower:
-                query_type = "hybrid"
-                tools = ["fetch_battery_health", "fetch_thermal_events", "fetch_charging_patterns", "aggregate_apm_statistics"]
-                
-            return APMQueryPlan(
-                query_type=query_type,
-                requires_dataset=requires_dataset,
-                tools=tools,
-                requires_llm=True,
-                analysis_mode=f"{query_type}_analysis",
-                confidence=0.95,
-                extracted_ev_id=extracted_ev_id,
-                aggregation_metric=aggregation_metric
-            )
-            
-        elif response_model == APMReasoningOutput:
-            return APMReasoningOutput(
-                summary="Battery performance is within expected nominal operational limits.",
-                explanation="Normal aging processes such as solid electrolyte interphase (SEI) growth are the primary drivers of health decrease over time, which can be accelerated by frequent fast charging.",
-                recommendations=[
-                    "Maintain state of charge (SOC) between 20% and 80% to minimize mechanical stress.",
-                    "Optimize thermal management systems to avoid charging at temperature extremes."
-                ],
-                reasoning="Telemetry analysis indicates temperature and charge profiles are within typical variance.",
-                maintenance_triggers=["Predictive Trigger: Schedule servicing if SOH drops below 80%."]
-            )
+        raise ValueError("GROQ_API_KEY is missing or invalid. LLM execution cannot proceed.")
             
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
     if response_model:
@@ -126,7 +67,7 @@ def planner_node(state: APMState) -> dict:
     
     # If user_query is absent or empty, default to standard asset lookup behavior
     if not user_query or not user_query.strip():
-        ev_id = state.get("ev_id") or "EV-9000"
+        ev_id = state.get("ev_id") 
         if state.get("avg_temperature_c") is not None:
             tools = ["predict_battery_health"]
         else:
@@ -179,7 +120,7 @@ def planner_node(state: APMState) -> dict:
     
     final_ev_id = plan.extracted_ev_id or extracted_ev_id
     if plan.query_type in ("asset", "hybrid") and not final_ev_id:
-        final_ev_id = state.get("ev_id") or "EV-9000"
+        final_ev_id = state.get("ev_id") 
         
     state_updates = {
         "detected_intent": plan.query_type,
@@ -201,7 +142,7 @@ def tool_executor_node(state: APMState) -> dict:
     """Executes the plan tools dynamically from the registry and stores results namespaced."""
     tools_to_run = state.get("analysis_plan") or []
     tool_outputs = {}
-    ev_id = state.get("ev_id") or "EV-9000"
+    ev_id = state.get("ev_id") 
     
     agg_metric = state.get("analysis_mode") or "all"
     if " | " in agg_metric:
@@ -230,7 +171,10 @@ def tool_executor_node(state: APMState) -> dict:
             elif tool_name == "aggregate_apm_statistics":
                 result = tool_callable.invoke({"metric": agg_metric})
             else:
-                result = tool_callable.invoke({"ev_id": ev_id})
+                if not ev_id:
+                    result = {"message": f"Tool {tool_name} skipped. No specific ev_id provided. Answer conceptually based on user query description."}
+                else:
+                    result = tool_callable.invoke({"ev_id": ev_id})
                 
             tool_outputs[tool_name] = result
         except Exception as e:
@@ -244,7 +188,7 @@ def llm_reasoning_node(state: APMState) -> dict:
     user_query = state.get("user_query") or state.get("query") or "No query provided."
     detected_intent = state.get("detected_intent") or "asset"
     tool_outputs = state.get("tool_outputs") or {}
-    ev_id = state.get("ev_id") or "EV-9000"
+    ev_id = state.get("ev_id") 
     
     system_prompt = (
         "You are an expert AI for Industrial EV Supply Chain & Asset Intelligence. Your role is to act as an EV battery domain expert.\n"
