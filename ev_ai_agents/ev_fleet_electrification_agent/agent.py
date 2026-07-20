@@ -154,9 +154,10 @@ def planner_node(state: AgentState) -> dict:
         "Confidence must be a float between 0.0 and 1.0."
     )
     
+    query_snippet = user_query[:300] + "..." if len(user_query) > 300 else user_query
     messages = [
         SystemMessage(content=system_prompt),
-        HumanMessage(content=f"Context: {mode_context}\nGenerate a query plan for user query: '{user_query}'")
+        HumanMessage(content=f"Context: {mode_context}\nGenerate a query plan for user query: '{query_snippet}'")
     ]
     
     response = generate_llm_response(messages, FleetQueryPlan)
