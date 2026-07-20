@@ -106,7 +106,7 @@ def tool_executor_node(state: SupplyChainState) -> dict:
     final_supplier_id = state.get("supplier_id")
     
     for tool_name in tools_to_run:
-        tool_callable = next((t for t in supply_chain_tools if t.name == tool_name), None)
+        tool_callable = _TOOL_REGISTRY.get(tool_name)
         if not tool_callable:
             tool_outputs[tool_name] = {"error": f"Tool {tool_name} not found"}
             continue
