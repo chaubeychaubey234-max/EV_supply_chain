@@ -16,14 +16,22 @@ def fetch_inspection_data(batch_id: str) -> dict:
     if row.empty:
         return {"error": f"No record found for batch {batch_id}."}
         
+    total_cells = len(row)
+    scrap_cells = len(row[row['QC_Grade'] == 'Scrap'])
+    scrap_rate = (scrap_cells / total_cells) * 100.0 if total_cells > 0 else 0.0
+    
+    # Collect defect types and inspector comments
+    defect_types = row[row['Defect_Type'] != 'None']['Defect_Type'].unique().tolist()
+    
     return {
-        "batch_id": str(row['Batch_ID'].values[0]),
-        "internal_resistance_mOhm": round(float(row['Internal_Resistance_mOhm'].values[0]), 2),
-        "capacity_mAh": round(float(row['Capacity_mAh'].values[0]), 1),
-        "retention_50_cycle_pct": round(float(row['Retention_50Cycle_Pct'].values[0]), 2),
-        "qc_grade": str(row['QC_Grade'].values[0]),
-        "defect_type": str(row['Defect_Type'].values[0]),
-        "inspector_comment": str(row['Inspector_Comment'].values[0])
+        "batch_id": str(batch_id),
+        "total_inspected": total_cells,
+        "scrap_rate_pct": round(scrap_rate, 2),
+        "avg_resistance_mOhm": round(row['Internal_Resistance_mOhm'].mean(), 2),
+        "avg_capacity_mAh": round(row['Capacity_mAh'].mean(), 1),
+        "avg_retention_50_cycle_pct": round(row['Retention_50Cycle_Pct'].mean(), 2),
+        "avg_electrolyte_volume_ml": round(row['Electrolyte_Volume_ml'].mean(), 2) if 'Electrolyte_Volume_ml' in row.columns else 0.0,
+        "defect_types": ", ".join(defect_types) if defect_types else "None",
     }
 
 @tool

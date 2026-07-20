@@ -280,14 +280,12 @@ def response_builder_node(state: QMSState) -> dict:
         }
     elif "fetch_inspection_data" in tool_outputs and "error" not in tool_outputs["fetch_inspection_data"]:
         insp = tool_outputs["fetch_inspection_data"]
-        mat = tool_outputs.get("fetch_material_data", {})
-        scrap_rate = 100.0 if insp.get("qc_grade") == "Scrap" else 0.0
         batch_metrics = {
-            "total_inspected": 1,
-            "defect_rate_pct": scrap_rate,
-            "avg_resistance_mohm": insp.get("internal_resistance_mOhm", 0.0),
-            "avg_capacity_mah": insp.get("capacity_mAh", 0.0),
-            "avg_electrolyte_ml": mat.get("electrolyte_volume_ml", 0.0)
+            "total_inspected": insp.get("total_inspected", 1),
+            "defect_rate_pct": insp.get("scrap_rate_pct", 0.0),
+            "avg_resistance_mohm": insp.get("avg_resistance_mOhm", 0.0),
+            "avg_capacity_mah": insp.get("avg_capacity_mAh", 0.0),
+            "avg_electrolyte_ml": insp.get("avg_electrolyte_volume_ml", 0.0)
         }
     else:
         batch_metrics = {
