@@ -98,9 +98,11 @@ def track_scope_emissions() -> dict:
         total_mt = round(scope1_mt + scope3_mt, 2)
         
         return {
-            "scope1_emissions": scope1_mt,
-            "scope3_emissions": scope3_mt,
-            "total_emissions": total_mt
+            "scope1_emissions_mt": scope1_mt,
+            "scope3_emissions_mt": scope3_mt,
+            "total_emissions_mt": total_mt,
+            "top_routes": df_logistics.head(10).to_dict(orient='records'),
+            "emission_factors": df_factors.to_dict(orient='records')
         }
     except Exception as e:
         raise ToolError(f"Error tracking scope emissions: {str(e)}")

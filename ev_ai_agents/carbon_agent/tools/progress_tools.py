@@ -66,7 +66,8 @@ def track_net_zero_progress() -> dict:
             "target_emissions": round(target_emissions, 2),
             "progress_percentage": progress_percentage,
             "emissions_gap": round(emissions_gap, 2),
-            "status": status
+            "status": status,
+            "co2_history": df.to_dict(orient='records')
         }
     except Exception as e:
         raise ToolError(f"Error tracking net zero progress: {str(e)}")

@@ -49,6 +49,8 @@ class SupplyChainQueryPlan(BaseModel):
     tools: List[str] = Field(description="List of tool keys to run.")
     requires_llm: bool = Field(description="True if LLM reasoning is required")
     generic_description: str = Field(default="", description="Extracted generic vehicle/batch description if no specific ID is provided")
+    supplier_id: Optional[str] = Field(default=None, description="Extracted supplier ID, e.g. SUP-001")
+    batch_id: Optional[str] = Field(default=None, description="Extracted batch ID, e.g. BATCH-801")
     confidence: float = Field(description="Confidence score between 0.0 and 1.0")
 
 class SupplyChainReasoningOutput(BaseModel):
@@ -83,24 +85,26 @@ def planner_node(state: SupplyChainState) -> dict:
     
     plan = generate_llm_response(messages, SupplyChainQueryPlan)
     
-    sup_match = re.search(r"\b(SUP-\d+)\b", user_query, re.IGNORECASE)
-    supplier_id = sup_match.group(0).upper() if sup_match else None
-    
-    bat_match = re.search(r"\b(BATCH-\d+)\b", user_query, re.IGNORECASE)
-    batch_id = bat_match.group(0).upper() if bat_match else None
-    
     return {
         "detected_intent": plan.query_type,
         "analysis_mode": f"{plan.query_type}_analysis",
         "analysis_plan": plan.tools,
         "confidence": plan.confidence,
-        "supplier_id": supplier_id,
-        "batch_id": batch_id,
+        "supplier_id": plan.supplier_id,
+        "batch_id": plan.batch_id,
+        "requires_dataset": plan.requires_dataset,
         "tool_outputs": {}
     }
 
 def tool_executor_node(state: SupplyChainState) -> dict:
     tools_to_run = state.get("analysis_plan", [])
+    
+    # FOR UI: Always ensure core dashboard datasets are fetched regardless of LLM plan
+    if "get_supplier_profile" not in tools_to_run: tools_to_run.append("get_supplier_profile")
+    if "calculate_supplier_risk_score" not in tools_to_run: tools_to_run.append("calculate_supplier_risk_score")
+    if "trace_material_batch" not in tools_to_run: tools_to_run.append("trace_material_batch")
+    if "assess_battery_quality" not in tools_to_run: tools_to_run.append("assess_battery_quality")
+    
     tool_outputs = {}
     
     final_supplier_id = state.get("supplier_id")

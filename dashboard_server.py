@@ -298,28 +298,28 @@ def get_supply_chain(query: str = Query("Audit supplier SUP-001 and review ESG m
     from ev_ai_agents.ev_supply_chain_agent.agent import supply_chain_app
     
     # Invoke REAL agent!
-    res = supply_chain_app.invoke({"user_query": query})
-    tool_outs = res.get("tool_outputs", {})
+    unified_report = "No report generated."
+    tool_outs = {}
+    try:
+        res = supply_chain_app.invoke({"user_query": query})
+        unified_report = res.get("reasoning_output", {}).get("unified_report", "No report generated.")
+        tool_outs = res.get("tool_outputs", {})
+    except Exception as e:
+        logger.error(f"Supply Chain Agent failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Supply Chain agent execution failed: {str(e)}")
     
     supplier_info = tool_outs.get("get_supplier_profile", {})
-    risk_info = tool_outs.get("detect_geopolitical_risk", {})
-    quality_info = tool_outs.get("analyze_batch_quality", {})
+    risk_info = tool_outs.get("calculate_supplier_risk_score", {})
+    quality_info = tool_outs.get("assess_battery_quality", {})
     
-    batch_id = str(supplier_info.get('batch_id', ''))
-    
-    nodes = [
-        {"id": "Mine", "label": f"{risk_info.get('country', 'Mine Site')} Raw Mineral Extraction", "status": "Audited"},
-        {"id": "Refining", "label": f"{supplier_info.get('supplier_name', 'Supplier')} Chemical Refining Hub", "status": "On Track"},
-        {"id": "CellManufacturing", "label": f"Cell Batch {batch_id}" if batch_id else "Cell Batch Unknown", "status": "QC Inspected"},
-        {"id": "Vehicle", "label": f"Deployed on Fleet Vehicle {supplier_info.get('vehicle_id', 'VIN-EV-20240001')}", "status": "In Operation"}
-    ]
+    nodes = tool_outs.get("trace_material_batch", {}).get("traceability_nodes", [])
     
     return {
         "query": query,
         "supplier_details": supplier_info,
         "mineral_risk": risk_info,
         "battery_quality": quality_info,
-        "unified_report": res.get("reasoning_output", {}).get("unified_report", "No report generated."),
+        "unified_report": unified_report,
         "traceability_nodes": nodes,
         "risk_rating": risk_info.get('risk_level', 'Conceptual') if risk_info else 'Conceptual'
     }
@@ -330,27 +330,33 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
     from ev_ai_agents.carbon_agent.agent import carbon_app
     
     # Invoke REAL agent!
-    res = carbon_app.invoke({"user_query": query})
-    tool_outs = res.get("tool_outputs", {})
+    unified_report = "No report generated."
+    ai_status = "Unknown"
+    ai_reduction = 0.0
+    tool_outs = {}
     
-    net_zero = tool_outs.get("track_net_zero_progress", {})
-    co2_history = net_zero.get("co2_history", []) if net_zero else []
-    
-    scope_emissions = tool_outs.get("track_scope_emissions", {})
-    routes = scope_emissions.get("top_routes", []) if scope_emissions else []
-    emission_factors = scope_emissions.get("emission_factors", []) if scope_emissions else []
-    
-    latest = co2_history[-1] if co2_history else {"total_emissions": 12600, "target_emissions": 13000, "electrification_rate": 55.0}
-    status = net_zero.get("status", "On Track" if latest["total_emissions"] <= latest["target_emissions"] else "At Risk")
-    reduction_pct = 100 - (latest["total_emissions"] / co2_history[0]["total_emissions"] * 100) if len(co2_history) > 1 else 42.2
+    try:
+        res = carbon_app.invoke({"user_query": query})
+        reasoning = res.get("reasoning_output", {})
+        unified_report = reasoning.get("unified_report", "No report generated.")
+        ai_status = reasoning.get("status", "Unknown")
+        ai_reduction = reasoning.get("carbon_reduction_summary_pct", 0.0)
+        tool_outs = res.get("tool_outputs", {})
+    except Exception as e:
+        logger.error(f"Carbon Agent failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Carbon agent execution failed: {str(e)}")
+
+    co2_history = tool_outs.get("track_net_zero_progress", {}).get("co2_history", [])
+    routes = tool_outs.get("track_scope_emissions", {}).get("top_routes", [])
+    emission_factors = tool_outs.get("track_scope_emissions", {}).get("emission_factors", [])
 
     return {
-        "status": res.get("reasoning_output", {}).get("status", status),
+        "status": ai_status,
         "co2_history": co2_history,
         "top_routes": routes,
         "emission_factors": emission_factors,
-        "carbon_reduction_summary_pct": res.get("reasoning_output", {}).get("carbon_reduction_summary_pct", round(reduction_pct, 1)),
-        "unified_report": res.get("reasoning_output", {}).get("unified_report", "No report generated.")
+        "carbon_reduction_summary_pct": ai_reduction,
+        "unified_report": unified_report
     }
 
 # 7. Central Supervisor Orchestrator Chatbot Agent
