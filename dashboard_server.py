@@ -333,6 +333,21 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
     res = carbon_app.invoke({"user_query": query})
     tool_outs = res.get("tool_outputs", {})
     
+    # Ensure graph data is ALWAYS available for the UI, even if the agent skips these tools conceptually
+    if "track_net_zero_progress" not in tool_outs:
+        from ev_ai_agents.carbon_agent.tools.progress_tools import track_net_zero_progress
+        try:
+            tool_outs["track_net_zero_progress"] = track_net_zero_progress.invoke({})
+        except:
+            pass
+
+    if "track_scope_emissions" not in tool_outs:
+        from ev_ai_agents.carbon_agent.tools.emissions_tools import track_scope_emissions
+        try:
+            tool_outs["track_scope_emissions"] = track_scope_emissions.invoke({})
+        except:
+            pass
+            
     net_zero = tool_outs.get("track_net_zero_progress", {})
     co2_history = net_zero.get("co2_history", []) if net_zero else []
     
