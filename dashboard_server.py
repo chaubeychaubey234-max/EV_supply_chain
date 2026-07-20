@@ -298,7 +298,13 @@ def get_supply_chain(query: str = Query("Audit supplier SUP-001 and review ESG m
     from ev_ai_agents.ev_supply_chain_agent.agent import supply_chain_app
     
     # Invoke REAL agent!
-    res = supply_chain_app.invoke({"user_query": query})
+    try:
+        res = supply_chain_app.invoke({"user_query": query})
+    except Exception as e:
+        logger.error(f"Error calling Supply Chain agent: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Supply Chain agent execution failed: {str(e)}")
+        
     tool_outs = res.get("tool_outputs", {})
     
     supplier_info = tool_outs.get("get_supplier_profile", {})
@@ -330,7 +336,13 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
     from ev_ai_agents.carbon_agent.agent import carbon_app
     
     # Invoke REAL agent!
-    res = carbon_app.invoke({"user_query": query})
+    try:
+        res = carbon_app.invoke({"user_query": query})
+    except Exception as e:
+        logger.error(f"Error calling Carbon agent: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Carbon agent execution failed: {str(e)}")
+        
     tool_outs = res.get("tool_outputs", {})
     
     # Ensure graph data is ALWAYS available for the UI, even if the agent skips these tools conceptually
