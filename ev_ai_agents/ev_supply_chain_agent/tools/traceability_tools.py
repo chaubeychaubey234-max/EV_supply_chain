@@ -101,11 +101,11 @@ def trace_material_batch(batch_id: str) -> dict:
             "traceability_status": "Complete",
             "total_cells": len(batch["cell_ids"]),
             "traceability_nodes": [
-                {"id": "supplier", "label": f"{batch['supplier_id']} ({batch['origin_country']})", "group": "supplier"},
-                {"id": "refinery", "label": "Refining Facility", "group": "refinery"},
-                {"id": "cell", "label": f"Cell Batch {batch_id.upper()}", "group": "cell"},
-                {"id": "pack", "label": "Battery Pack Asm", "group": "pack"},
-                {"id": "vehicle", "label": "Vehicle Mfg", "group": "vehicle"}
+                {"id": "supplier", "label": f"{batch['supplier_id']} ({batch['origin_country']})", "group": "supplier", "status": "Audited"},
+                {"id": "refinery", "label": "Refining Facility", "group": "refinery", "status": "On Track"},
+                {"id": "cell", "label": f"Cell Batch {batch_id.upper()}", "group": "cell", "status": "QC Inspected"},
+                {"id": "pack", "label": "Battery Pack Asm", "group": "pack", "status": "Assembled"},
+                {"id": "vehicle", "label": "Vehicle Mfg", "group": "vehicle", "status": "In Operation"}
             ]
         }
     except ToolError:

@@ -306,7 +306,7 @@ def get_supply_chain(query: str = Query("Audit supplier SUP-001 and review ESG m
         tool_outs = res.get("tool_outputs", {})
     except Exception as e:
         logger.error(f"Supply Chain Agent failed: {e}")
-        unified_report = f"Agent execution failed due to API limits or misconfiguration: {str(e)}"
+        raise HTTPException(status_code=500, detail=f"Supply Chain agent execution failed: {str(e)}")
     
     supplier_info = tool_outs.get("get_supplier_profile", {})
     risk_info = tool_outs.get("calculate_supplier_risk_score", {})
@@ -344,7 +344,7 @@ def get_carbon_tracker(query: str = Query("What is our net zero target progress?
         tool_outs = res.get("tool_outputs", {})
     except Exception as e:
         logger.error(f"Carbon Agent failed: {e}")
-        unified_report = f"Agent execution failed due to API limits or misconfiguration: {str(e)}"
+        raise HTTPException(status_code=500, detail=f"Carbon agent execution failed: {str(e)}")
 
     co2_history = tool_outs.get("track_net_zero_progress", {}).get("co2_history", [])
     routes = tool_outs.get("track_scope_emissions", {}).get("top_routes", [])
