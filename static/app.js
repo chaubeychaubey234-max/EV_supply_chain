@@ -542,19 +542,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (runApmBtn) {
         runApmBtn.addEventListener("click", async () => {
+            const nlQuery = document.getElementById("apm-nl-query")?.value?.trim();
             const evId = document.getElementById("apm-ev-select").value;
             const avgTemp = document.getElementById("apm-avg-temp")?.value;
             const maxTemp = document.getElementById("apm-max-temp")?.value;
             const fcRatio = document.getElementById("apm-fc-ratio")?.value;
             const deepCycles = document.getElementById("apm-deep-cycles")?.value;
             const chargeDur = document.getElementById("apm-charge-dur")?.value;
-            
-            let queryUrl = `/api/agents/ev_apm?ev_id=${evId}`;
-            if (avgTemp) queryUrl += `&avg_temp=${avgTemp}`;
-            if (maxTemp) queryUrl += `&max_temp=${maxTemp}`;
-            if (fcRatio) queryUrl += `&fc_ratio=${fcRatio}`;
-            if (deepCycles) queryUrl += `&deep_cycles=${deepCycles}`;
-            if (chargeDur) queryUrl += `&charge_dur=${chargeDur}`;
+
+            let queryUrl;
+            // NL query is the primary path — if filled, send directly to agent planner
+            if (nlQuery) {
+                queryUrl = `/api/agents/ev_apm?user_query=${encodeURIComponent(nlQuery)}`;
+            } else {
+                // Advanced override: ID or raw telemetry
+                queryUrl = `/api/agents/ev_apm?ev_id=${evId}`;
+                if (avgTemp) queryUrl += `&avg_temp=${avgTemp}`;
+                if (maxTemp) queryUrl += `&max_temp=${maxTemp}`;
+                if (fcRatio) queryUrl += `&fc_ratio=${fcRatio}`;
+                if (deepCycles) queryUrl += `&deep_cycles=${deepCycles}`;
+                if (chargeDur) queryUrl += `&charge_dur=${chargeDur}`;
+            }
 
             renderLoading(apmContent, apmBadge, "Checking SOH degradation cycles and thermal telemetry logs...");
 
@@ -733,17 +741,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (runQmsBtn) {
         runQmsBtn.addEventListener("click", async () => {
+            const nlQuery = document.getElementById("qms-nl-query")?.value?.trim();
             const batch = document.getElementById("qms-batch-select").value;
             const elecVol = document.getElementById("qms-elec-vol")?.value;
             const intRes = document.getElementById("qms-int-res")?.value;
             const cellCap = document.getElementById("qms-cell-cap")?.value;
             const ambTemp = document.getElementById("qms-amb-temp")?.value;
 
-            let queryUrl = `/api/agents/ev_qms?batch_id=${batch}`;
-            if (elecVol) queryUrl += `&elec_vol=${elecVol}`;
-            if (intRes) queryUrl += `&int_res=${intRes}`;
-            if (cellCap) queryUrl += `&cell_cap=${cellCap}`;
-            if (ambTemp) queryUrl += `&amb_temp=${ambTemp}`;
+            let queryUrl;
+            // NL query is the primary path
+            if (nlQuery) {
+                queryUrl = `/api/agents/ev_qms?user_query=${encodeURIComponent(nlQuery)}`;
+            } else {
+                queryUrl = `/api/agents/ev_qms?batch_id=${batch}`;
+                if (elecVol) queryUrl += `&elec_vol=${elecVol}`;
+                if (intRes) queryUrl += `&int_res=${intRes}`;
+                if (cellCap) queryUrl += `&cell_cap=${cellCap}`;
+                if (ambTemp) queryUrl += `&amb_temp=${ambTemp}`;
+            }
 
             renderLoading(qmsContent, qmsBadge, "Evaluating electrolyte filling anomalies and internal resistance drifts...");
 

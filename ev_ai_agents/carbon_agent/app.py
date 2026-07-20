@@ -144,15 +144,18 @@ if not os.path.exists(map_file_path):
         st.warning(f"Could not pre-generate geospatial map: {e}")
 
 # Fetch KPI emissions data from tools
+scope_data = None
+progress_data = None
+electrification_data = None
 try:
     scope_data = track_scope_emissions.invoke({})
     progress_data = track_net_zero_progress.invoke({})
     electrification_data = recommend_electrification.invoke({})
 except Exception as e:
-    # Use fallback mock structures for KPIs if tools error out
-    scope_data = {"scope1_emissions": 3400.0, "scope3_emissions": 11500.0, "total_emissions": 14900.0}
-    progress_data = {"progress_percentage": 91.9, "emissions_gap": 500.0, "status": "At Risk"}
-    electrification_data = {"expected_co2_reduction": 1400.0}
+    # Never substitute fabricated numbers — show an honest error instead
+    st.error(f"⚠️ Failed to load live emissions data: {e}. Check that carbon agent datasets are accessible.")
+    st.stop()
+
 
 # ---------------------------------------------------------------------------
 # Header Section
