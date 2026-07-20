@@ -121,26 +121,26 @@ def get_meta_batches():
 @app.get("/api/agents/fleet_electrification")
 def get_fleet_electrification(
     query: str = Query("Evaluate my delivery fleet for electrification and estimate annual savings.", description="User query"),
-    vehicle_id: str = Query("VH_15592", description="Target vehicle ID to focus analysis")
+    vehicle_id: Optional[str] = Query(None, description="Target vehicle ID to focus analysis (optional)")
 ):
-    mapped_id = map_vehicle_id(vehicle_id)
-    logger.info(f"Fleet Electrification: mapped {vehicle_id} -> {mapped_id}")
+    target_id = map_vehicle_id(vehicle_id) if vehicle_id and vehicle_id.strip() else None
+    logger.info(f"Fleet Electrification: target vehicle_id -> {target_id}")
     
     if run_fleet_agent:
         try:
-            res = run_fleet_agent(query, mapped_id)
-            # Verify if the tool outputs actually succeeded or contained errors
-            readiness_tool_data = res.get("tool_outputs", {}).get("readiness_score_tool", {})
-            if "error" in readiness_tool_data:
-                logger.warning(f"Tool execution returned error: {readiness_tool_data['error']}")
-                # We can enrich the recommendations list to inform the user
-                res["recommendations"].insert(0, f"Tool Notice: The backend analysis for {vehicle_id} (mapped to {mapped_id}) encountered a tool warning: {readiness_tool_data['error']}. Check if dataset configurations are aligned.")
-            
-            # Map the response vehicle_id back to user expectation
-            if "tool_outputs" in res:
-                for tk, t_out in res["tool_outputs"].items():
-                    if isinstance(t_out, dict) and t_out.get("vehicle_id") == mapped_id:
-                        t_out["vehicle_id"] = vehicle_id
+            res = run_fleet_agent(query, target_id)
+            if target_id:
+                # Verify if the tool outputs actually succeeded or contained errors
+                readiness_tool_data = res.get("tool_outputs", {}).get("readiness_score_tool", {})
+                if "error" in readiness_tool_data:
+                    logger.warning(f"Tool execution returned error: {readiness_tool_data['error']}")
+                    res["recommendations"].insert(0, f"Tool Notice: The backend analysis for {vehicle_id} (mapped to {target_id}) encountered a tool warning: {readiness_tool_data['error']}. Check if dataset configurations are aligned.")
+                
+                # Map the response vehicle_id back to user expectation
+                if "tool_outputs" in res:
+                    for tk, t_out in res["tool_outputs"].items():
+                        if isinstance(t_out, dict) and t_out.get("vehicle_id") == target_id:
+                            t_out["vehicle_id"] = vehicle_id
             return res
         except Exception as e:
             logger.error(f"Error calling real fleet electrification agent: {e}")
@@ -455,4 +455,4 @@ if os.path.exists(STATIC_DIR):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("dashboard_server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("dashboard_server:app", host="127.0.0.1", port=8001, reload=True)

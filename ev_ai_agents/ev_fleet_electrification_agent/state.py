@@ -39,7 +39,7 @@ class AgentState:
     reasoning_output: dict[str, Any] = field(default_factory=dict)
     planner_response: Optional[Any] = None  # Stores the LLMResponse[FleetQueryPlan]
     reasoner_response: Optional[Any] = None # Stores the LLMResponse[FleetReasoningOutput]
-    vehicle_id: str = "VEH-002"  # Preserve vehicle ID passed down to tools
+    vehicle_id: Optional[str] = None  # Optional vehicle ID passed down to tools (None for fleet-level mode)
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 

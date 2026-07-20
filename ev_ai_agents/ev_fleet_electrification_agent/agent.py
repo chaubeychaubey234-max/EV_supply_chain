@@ -21,7 +21,7 @@ if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
 # Existing tool imports
-from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool      import fetch_vehicle_data, analyze_fleet_csv
+from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool      import fetch_vehicle_data, analyze_fleet_csv, aggregate_fleet_statistics
 from ev_ai_agents.ev_fleet_electrification_agent.tools.readiness_score_tool  import calculate_readiness_score
 from ev_ai_agents.ev_fleet_electrification_agent.tools.ev_matching_tool      import recommend_ev_replacement
 from ev_ai_agents.ev_fleet_electrification_agent.tools.roi_tool              import calculate_roi
@@ -43,13 +43,14 @@ log = logging.getLogger(__name__)
 
 # Centralized Tool Registry
 _TOOL_REGISTRY: dict[str, Any] = {
-    "fleet_data_tool":       fetch_vehicle_data,
-    "analyze_fleet_csv":     analyze_fleet_csv,
-    "readiness_score_tool":  calculate_readiness_score,
-    "ev_matching_tool":      recommend_ev_replacement,
-    "roi_tool":              calculate_roi,
-    "route_analysis_tool":   analyze_vehicle_route,
-    "procurement_tool":      recommend_procurement,
+    "fleet_data_tool":            fetch_vehicle_data,
+    "analyze_fleet_csv":          analyze_fleet_csv,
+    "aggregate_fleet_statistics": aggregate_fleet_statistics,
+    "readiness_score_tool":       calculate_readiness_score,
+    "ev_matching_tool":           recommend_ev_replacement,
+    "roi_tool":                   calculate_roi,
+    "route_analysis_tool":        analyze_vehicle_route,
+    "procurement_tool":           recommend_procurement,
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -57,9 +58,9 @@ _TOOL_REGISTRY: dict[str, Any] = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 class FleetQueryPlan(BaseModel):
-    query_type: str = Field(description="Query type: conceptual, statistical, asset, or hybrid")
+    query_type: str = Field(description="Query type: asset, fleet, conceptual, statistical, or hybrid")
     requires_dataset: bool = Field(description="True if dataset access is required")
-    tools: List[str] = Field(description="List of tool keys to run. Choose from: fleet_data_tool, readiness_score_tool, ev_matching_tool, roi_tool, procurement_tool, route_analysis_tool, analyze_fleet_csv")
+    tools: List[str] = Field(description="List of tool keys to run. Choose from: aggregate_fleet_statistics, fleet_data_tool, readiness_score_tool, ev_matching_tool, roi_tool, procurement_tool, route_analysis_tool, analyze_fleet_csv")
     requires_llm: bool = Field(description="True if LLM reasoning is required to synthesize the final answer")
     generic_description: str = Field(default="", description="Extracted generic vehicle/batch description if no specific ID is provided")
     confidence: float = Field(description="Confidence score between 0.0 and 1.0 representing plan confidence")
@@ -129,27 +130,33 @@ def generate_llm_response(prompt_messages: list, response_model: Any = None) -> 
 def planner_node(state: AgentState) -> dict:
     """Planner node: Requests an execution plan from the LLM and stores the LLMResponse."""
     user_query = state.user_query
+    vehicle_id = state.vehicle_id
+    
+    mode_context = f"Target Vehicle ID: '{vehicle_id}' (Asset Mode)" if vehicle_id else "No Vehicle ID provided (Fleet Mode / General Electrification)"
     
     system_prompt = (
         "You are the Query Planner for a Fleet Electrification & Procurement Intelligence system.\n"
         "Analyze the user's natural language query and decide on an execution plan.\n"
         "Available tool capabilities in the registry:\n"
+        "- 'aggregate_fleet_statistics': Aggregates fleet-wide metrics, readiness distribution, distance patterns, charging feasibility, savings potential, and carbon reduction impact across the fleet.\n"
         "- 'fleet_data_tool': Retrieve specifications and basic data for a specific vehicle_id.\n"
         "- 'readiness_score_tool': Calculate an electrification readiness score (0-100) for a vehicle.\n"
         "- 'ev_matching_tool': Recommends EV replacement models based on existing vehicle specs.\n"
-        "- 'roi_tool': Calculates financial return on investment and estimated payback years.\n"
-        "- 'procurement_tool': Recommends purchase/lease strategy and schedule.\n"
+        "- 'roi_tool': Calculates financial return on investment and estimated payback years for a vehicle.\n"
+        "- 'procurement_tool': Recommends purchase/lease strategy and schedule for a vehicle.\n"
         "- 'route_analysis_tool': Performs route and range safety analysis for daily vehicle routes.\n"
         "- 'analyze_fleet_csv': Batch/bulk csv upload processing tool.\n"
         "\n"
-        "Classify the query into one of: 'conceptual', 'statistical', 'asset', or 'hybrid'.\n"
-        "Determine which tools are required to fulfill the user's query.\n"
+        "Rules:\n"
+        "1. If Target Vehicle ID is None or omitted, set query_type to 'fleet' or 'conceptual' and include 'aggregate_fleet_statistics' in tools.\n"
+        "2. If Target Vehicle ID is provided, set query_type to 'asset' or 'hybrid' and select vehicle-specific tools.\n"
+        "Classify query_type into one of: 'asset', 'fleet', 'conceptual', 'statistical', or 'hybrid'.\n"
         "Confidence must be a float between 0.0 and 1.0."
     )
     
     messages = [
         SystemMessage(content=system_prompt),
-        HumanMessage(content=f"Generate a query plan for user query: '{user_query}'")
+        HumanMessage(content=f"Context: {mode_context}\nGenerate a query plan for user query: '{user_query}'")
     ]
     
     response = generate_llm_response(messages, FleetQueryPlan)
@@ -163,139 +170,158 @@ def planner_node(state: AgentState) -> dict:
         updates["detected_intent"] = plan.query_type
         updates["analysis_plan"] = plan.tools
         updates["confidence"] = plan.confidence
-        updates["analysis_mode"] = plan.query_type
+        if vehicle_id:
+            updates["analysis_mode"] = "asset"
+        elif plan.query_type in ["fleet", "conceptual", "statistical"]:
+            updates["analysis_mode"] = plan.query_type
+        else:
+            updates["analysis_mode"] = "fleet"
+    else:
+        # Fallback when LLM planner is unconfigured or failed
+        if vehicle_id:
+            updates["analysis_mode"] = "asset"
+            updates["analysis_plan"] = ["fleet_data_tool", "readiness_score_tool", "ev_matching_tool", "roi_tool", "procurement_tool"]
+        else:
+            updates["analysis_mode"] = "fleet"
+            updates["analysis_plan"] = ["aggregate_fleet_statistics"]
+        updates["detected_intent"] = updates["analysis_mode"]
+        updates["confidence"] = 1.0
         
     return updates
 
 def tool_executor_node(state: AgentState) -> dict:
     """Tool Executor node: Executes the planned tools if planning was successful."""
     planner_res: Optional[LLMResponse] = state.planner_response
-    if planner_res is None or not planner_res.success:
-        log.info("Tool Executor: Skipping tool execution because planning was unavailable (success=False).")
-        return {"tool_outputs": {}, "selected_tools": []}
-        
-    plan: Optional[FleetQueryPlan] = planner_res.data
-    tools_to_run = plan.tools if plan else []
-    tool_outputs: dict[str, Any] = {}
     vehicle_id = state.vehicle_id 
+    tool_outputs: dict[str, Any] = {}
     
-    # Load vehicle details from clean dataset or registry to satisfy parameter demands of readiness and ev matching tools
-    import pandas as pd
-    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    FLEET_OPS_PATH = os.path.join(_BASE_DIR, "datasets", "fleet_operations_clean.csv")
-    REGISTRY_PATH = os.path.join(_BASE_DIR, "..", "..", "datasets", "fleet_registry.csv")
-    
-    vehicle_record = {}
-    found = False
-    
-    log.info(f"Selected vehicle: {vehicle_id}")
-    
-    # 1. Try loading from fleet_operations_clean.csv
-    if os.path.exists(FLEET_OPS_PATH):
-        try:
-            df = pd.read_csv(FLEET_OPS_PATH)
-            row = df[df['vehicle_id'] == vehicle_id]
-            if not row.empty:
-                vehicle_record = row.iloc[0].to_dict()
-                found = True
-                log.info(f"Dataset row found in fleet_operations_clean.csv")
-        except Exception as e:
-            log.warning(f"Error loading from fleet_operations_clean.csv: {e}")
-            
-    # 2. Try loading from fleet_registry.csv if not found
-    if not found and os.path.exists(REGISTRY_PATH):
-        try:
-            df = pd.read_csv(REGISTRY_PATH)
-            row = df[df['vehicle_id'] == vehicle_id]
-            if not row.empty:
-                vehicle_record = row.iloc[0].to_dict()
-                found = True
-                log.info(f"Dataset row found in fleet_registry.csv")
-        except Exception as e:
-            log.warning(f"Error loading from fleet_registry.csv: {e}")
-            
-    if found:
-        log.info(f"Fleet attributes resolved: {vehicle_record}")
+    # Determine tools to run
+    if planner_res and planner_res.success and planner_res.data:
+        tools_to_run = list(planner_res.data.tools)
     else:
-        log.warning(f"Vehicle {vehicle_id} not found in any dataset. Using default fallback parameter values.")
+        tools_to_run = []
+        
+    if not vehicle_id:
+        # Fleet Mode: Ensure aggregate_fleet_statistics is included
+        if not tools_to_run or "aggregate_fleet_statistics" not in tools_to_run:
+            tools_to_run.append("aggregate_fleet_statistics")
+    else:
+        # Asset Mode: Ensure asset tools are present if tools_to_run was empty
+        if not tools_to_run:
+            tools_to_run = ["fleet_data_tool", "readiness_score_tool", "ev_matching_tool", "roi_tool", "procurement_tool"]
+            
+    log.info(f"Tool Executor Mode: {'Asset Mode (' + vehicle_id + ')' if vehicle_id else 'Fleet Mode'}")
+    log.info(f"Selected tools to run: {tools_to_run}")
 
-    # Resolve parameters based on dataset attributes
-    daily_distance = float(vehicle_record.get("daily_distance_km", 0.0))
-    
-    charging_window = float(vehicle_record.get("charging_window_hours", 
-                            vehicle_record.get("available_charging_window_hours", 8.0)))
-    
-    idle_minutes = float(vehicle_record.get("idle_time_minutes",
-                         vehicle_record.get("avg_idle_minutes", 45.0)))
-                         
-    stops = int(vehicle_record.get("stops_per_day", 10))
-    
-    route_type = str(vehicle_record.get("usage_pattern", 
-                     vehicle_record.get("route_type", "mixed"))).lower()
-                     
-    consistency = float(vehicle_record.get("route_consistency_score", 0.85))
-    
-    vehicle_age = float(vehicle_record.get("vehicle_age_years", 3.0))
-    
-    vtype = str(vehicle_record.get("vehicle_type", "")).lower()
-    if "heavy" in vtype or "truck" in vtype:
-        def_eff = 3.5
-    elif "van" in vtype or "delivery" in vtype:
-        def_eff = 9.5
-    elif "bus" in vtype:
-        def_eff = 4.8
-    else:
-        def_eff = 12.0
-    fuel_efficiency = float(vehicle_record.get("fuel_efficiency_kmpl", def_eff))
-    
-    operating_hours = float(vehicle_record.get("operating_hours_per_day", 24.0 - charging_window))
-    
-    utilization = float(vehicle_record.get("utilization_rate", 0.75))
-    
-    payload = float(vehicle_record.get("payload_requirement_kg", 
-                    vehicle_record.get("payload_capacity_kg", 
-                    vehicle_record.get("payload_kg", 1000.0))))
-            
-    for tool_name in tools_to_run:
-        tool_callable = _TOOL_REGISTRY.get(tool_name)
-        if not tool_callable:
-            log.error(f"Tool '{tool_name}' not found in registry.")
-            tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available in registry."}
-            continue
-            
-        try:
-            # Resolve parameters based on tool requirements
-            if tool_name == "readiness_score_tool":
-                params = {
-                    "daily_distance_km": daily_distance,
-                    "available_charging_window_hours": charging_window,
-                    "avg_idle_minutes": idle_minutes,
-                    "stops_per_day": stops,
-                    "route_type": route_type,
-                    "route_consistency_score": consistency,
-                    "vehicle_age_years": vehicle_age,
-                    "fuel_efficiency_kmpl": fuel_efficiency,
-                    "operating_hours_per_day": operating_hours,
-                    "utilization_rate": utilization,
-                    "payload_kg": payload
-                }
-            elif tool_name == "ev_matching_tool":
-                params = {
-                    "daily_distance_km": daily_distance,
-                    "available_charging_window_hours": charging_window,
-                    "payload_kg": payload
-                }
-            else:
-                params = {"vehicle_id": vehicle_id}
+    if vehicle_id:
+        # Asset Mode: Fetch vehicle data using tool (NO direct CSV reads in agent.py)
+        fetch_tool = _TOOL_REGISTRY.get("fleet_data_tool")
+        vehicle_record = {}
+        if fetch_tool:
+            try:
+                res = fetch_tool.invoke({"vehicle_id": vehicle_id})
+                if isinstance(res, dict) and "error" not in res:
+                    vehicle_record = res
+            except Exception as e:
+                log.warning(f"Error fetching vehicle data for {vehicle_id}: {e}")
                 
-            log.info(f"Tool inputs resolved for {tool_name}: {params}")
-            result = tool_callable.invoke(params)
-            log.info(f"Tool outputs returned for {tool_name}: {result}")
-            tool_outputs[tool_name] = result
-        except Exception as e:
-            log.exception(f"Error executing tool {tool_name}")
-            tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
-            
+        # Resolve parameters based on tool dataset response
+        daily_distance = float(vehicle_record.get("daily_distance_km", 0.0))
+        charging_window = float(vehicle_record.get("charging_window_hours", 
+                                vehicle_record.get("available_charging_window_hours", 8.0)))
+        idle_minutes = float(vehicle_record.get("idle_time_minutes",
+                             vehicle_record.get("avg_idle_minutes", 45.0)))
+        stops = int(vehicle_record.get("stops_per_day", 10))
+        route_type = str(vehicle_record.get("usage_pattern", 
+                         vehicle_record.get("route_type", "mixed"))).lower()
+        consistency = float(vehicle_record.get("route_consistency_score", 0.85))
+        vehicle_age = float(vehicle_record.get("vehicle_age_years", 3.0))
+        
+        vtype = str(vehicle_record.get("vehicle_type", "")).lower()
+        if "heavy" in vtype or "truck" in vtype:
+            def_eff = 3.5
+        elif "van" in vtype or "delivery" in vtype:
+            def_eff = 9.5
+        elif "bus" in vtype:
+            def_eff = 4.8
+        else:
+            def_eff = 12.0
+        fuel_efficiency = float(vehicle_record.get("fuel_efficiency_kmpl", def_eff))
+        operating_hours = float(vehicle_record.get("operating_hours_per_day", 24.0 - charging_window))
+        utilization = float(vehicle_record.get("utilization_rate", 0.75))
+        payload = float(vehicle_record.get("payload_requirement_kg", 
+                        vehicle_record.get("payload_capacity_kg", 
+                        vehicle_record.get("payload_kg", 1000.0))))
+                
+        for tool_name in tools_to_run:
+            tool_callable = _TOOL_REGISTRY.get(tool_name)
+            if not tool_callable:
+                log.error(f"Tool '{tool_name}' not found in registry.")
+                tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available in registry."}
+                continue
+                
+            try:
+                if tool_name == "readiness_score_tool":
+                    params = {
+                        "daily_distance_km": daily_distance,
+                        "available_charging_window_hours": charging_window,
+                        "avg_idle_minutes": idle_minutes,
+                        "stops_per_day": stops,
+                        "route_type": route_type,
+                        "route_consistency_score": consistency,
+                        "vehicle_age_years": vehicle_age,
+                        "fuel_efficiency_kmpl": fuel_efficiency,
+                        "operating_hours_per_day": operating_hours,
+                        "utilization_rate": utilization,
+                        "payload_kg": payload
+                    }
+                elif tool_name == "ev_matching_tool":
+                    params = {
+                        "daily_distance_km": daily_distance,
+                        "available_charging_window_hours": charging_window,
+                        "payload_kg": payload
+                    }
+                elif tool_name == "aggregate_fleet_statistics":
+                    params = {}
+                else:
+                    params = {"vehicle_id": vehicle_id}
+                    
+                log.info(f"Tool inputs resolved for {tool_name}: {params}")
+                result = tool_callable.invoke(params)
+                log.info(f"Tool outputs returned for {tool_name}: {result}")
+                tool_outputs[tool_name] = result
+            except Exception as e:
+                log.exception(f"Error executing tool {tool_name}")
+                tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
+    else:
+        # Fleet Mode: Filter tools to fleet-level tools only (aggregate_fleet_statistics, analyze_fleet_csv)
+        fleet_tools = [t for t in tools_to_run if t in ["aggregate_fleet_statistics", "analyze_fleet_csv"]]
+        if "aggregate_fleet_statistics" not in fleet_tools:
+            fleet_tools.append("aggregate_fleet_statistics")
+        tools_to_run = fleet_tools
+        
+        for tool_name in fleet_tools:
+            tool_callable = _TOOL_REGISTRY.get(tool_name)
+            if not tool_callable:
+                log.error(f"Tool '{tool_name}' not found in registry.")
+                tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available in registry."}
+                continue
+                
+            try:
+                if tool_name == "aggregate_fleet_statistics":
+                    params = {}
+                elif tool_name == "analyze_fleet_csv":
+                    params = {"csv_path": ""}
+                else:
+                    params = {}
+                log.info(f"Tool inputs resolved for {tool_name}: {params}")
+                result = tool_callable.invoke(params)
+                log.info(f"Tool outputs returned for {tool_name}: {result}")
+                tool_outputs[tool_name] = result
+            except Exception as e:
+                log.exception(f"Error executing tool {tool_name}")
+                tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
+                
     return {"tool_outputs": tool_outputs, "selected_tools": tools_to_run}
 
 def llm_reasoning_node(state: AgentState) -> dict:
@@ -309,7 +335,9 @@ def llm_reasoning_node(state: AgentState) -> dict:
         
     user_query = state.user_query
     detected_intent = state.detected_intent
+    analysis_mode = state.analysis_mode
     tool_outputs = state.tool_outputs
+    vehicle_id = state.vehicle_id
     
     log.info(f"LLM reasoning input (Query): {user_query}")
     log.info(f"LLM reasoning input (Tool Outputs): {tool_outputs}")
@@ -317,13 +345,14 @@ def llm_reasoning_node(state: AgentState) -> dict:
     system_prompt = (
         "You are an expert consultant in fleet electrification and EV procurement.\n"
         "Your job is to interpret tool outputs and explain them clearly, justify recommendations, and suggest next steps.\n"
-        "Strict Rule: You must NEVER perform calculations or invent numerical values. All metrics, scores, and costs must come directly from tool outputs.\n"
-        "Strict Rule: If tool outputs are missing or empty, state that the analysis is conceptual only."
+        "Strict Rule: You must NEVER perform calculations or invent numerical values. All metrics, scores, financial savings, carbon reduction, and costs must come directly from tool outputs.\n"
+        "Strict Rule: If analyzing a specific vehicle (Asset Mode), focus on that vehicle's readiness score, EV match, ROI, and procurement window.\n"
+        "Strict Rule: If analyzing the overall fleet (Fleet Mode), discuss fleet-wide readiness distribution, average daily distances, charging feasibility, total savings, and carbon reduction impact based on the aggregate statistics tool outputs."
     )
     
     user_prompt = (
         f"User Query: {user_query}\n"
-        f"Intent/Mode: {detected_intent}\n\n"
+        f"Mode: {analysis_mode} ({'Asset: ' + vehicle_id if vehicle_id else 'Fleet-wide Analysis'})\n\n"
         f"Tool Outputs:\n"
     )
     for t_name, t_out in tool_outputs.items():
@@ -422,12 +451,13 @@ fleet_app = workflow.compile()
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_agent(user_query: str, vehicle_id: str ) -> dict[str, Any]:
+def run_agent(user_query: str, vehicle_id: Optional[str] = None) -> dict[str, Any]:
     """Execute the Fleet Electrification Readiness Agent using LangGraph.
 
     Args:
         user_query: Natural-language question from the user.
-        vehicle_id: Fleet vehicle identifier to evaluate (default ``"VEH-002"``).
+        vehicle_id: Optional fleet vehicle identifier. When provided, asset-specific analysis is performed.
+                    When omitted (None), generic fleet-planning workflow is executed using aggregate statistics.
 
     Returns:
         Structured response dictionary matching Supervisor expectations.
@@ -450,21 +480,15 @@ def run_agent(user_query: str, vehicle_id: str ) -> dict[str, Any]:
             "next_steps":      [],
         }
 
-    if not isinstance(vehicle_id, str) or not vehicle_id.strip():
-        log.error("Invalid vehicle_id: must be a non-empty string.")
-        return {
-            "status":          "error",
-            "selected_tools":  [],
-            "tool_outputs":    {},
-            "summary":         "Invalid vehicle_id. Please provide a valid fleet identifier.",
-            "recommendations": [],
-            "next_steps":      [],
-        }
-        
+    # Normalize vehicle_id
+    clean_vid: Optional[str] = None
+    if isinstance(vehicle_id, str) and vehicle_id.strip():
+        clean_vid = vehicle_id.strip()
+
     # 2. Invoke StateGraph workflow
     state = AgentState(
         user_query=user_query.strip(),
-        vehicle_id=vehicle_id.strip(),
+        vehicle_id=clean_vid,
         execution_status="pending"
     )
     
@@ -496,38 +520,26 @@ def run_agent(user_query: str, vehicle_id: str ) -> dict[str, Any]:
 if __name__ == "__main__":
     import json
 
-    TEST_QUERY      = "Evaluate my delivery fleet for electrification and estimate annual savings."
-    TEST_VEHICLE_ID 
-
     print("=" * 60)
-    print("Fleet Electrification Agent — Test Run")
+    print("Fleet Electrification Agent — Test Run (Fleet Mode)")
     print("=" * 60)
-    print(f"Query     : {TEST_QUERY}")
-    print(f"Vehicle ID: {TEST_VEHICLE_ID}")
-    print()
-
-    response = run_agent(TEST_QUERY, vehicle_id=TEST_VEHICLE_ID)
-
-    print()
-    print("=" * 60)
-    print("FINAL RESPONSE")
-    print("=" * 60)
-    print(f"Status         : {response['status']}")
-    print(f"Selected Tools : {response['selected_tools']}")
-    print()
-    print(f"Summary:")
-    print(f"  {response['summary']}")
-    print()
-
+    res_fleet = run_agent("Evaluate my delivery fleet for electrification and estimate annual savings.")
+    print(f"Status         : {res_fleet['status']}")
+    print(f"Selected Tools : {res_fleet['selected_tools']}")
+    print(f"Summary        : {res_fleet['summary']}")
     print("Recommendations:")
-    for i, rec in enumerate(response["recommendations"], 1):
+    for i, rec in enumerate(res_fleet.get("recommendations", []), 1):
         print(f"  {i}. {rec}")
-    print()
 
-    print("Next Steps:")
-    for i, ns in enumerate(response["next_steps"], 1):
-        print(f"  {i}. {ns}")
     print()
+    print("=" * 60)
+    print("Fleet Electrification Agent — Test Run (Asset Mode)")
+    print("=" * 60)
+    res_asset = run_agent("Evaluate VH_15592 for electrification", vehicle_id="VH_15592")
+    print(f"Status         : {res_asset['status']}")
+    print(f"Selected Tools : {res_asset['selected_tools']}")
+    print(f"Summary        : {res_asset['summary']}")
+    print("Recommendations:")
+    for i, rec in enumerate(res_asset.get("recommendations", []), 1):
+        print(f"  {i}. {rec}")
 
-    print("Tool Outputs (JSON):")
-    print(json.dumps(response["tool_outputs"], indent=2, default=str))
