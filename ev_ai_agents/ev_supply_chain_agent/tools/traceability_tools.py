@@ -56,12 +56,12 @@ _PACK_TO_VEHICLE = _build_pack_to_vehicle()
 
 
 @tool
-def trace_material_batch(batch_id: str) -> dict:
+def trace_material_batch(batch_id: str = "", supplier_id: str = "") -> dict:
     """Trace a raw material batch through the full EV supply chain.
 
-    Given a batch ID (e.g. 'BAT-2024-001'), returns the complete trace
-    path from raw material extraction through cell production, pack
-    assembly, and vehicle integration.
+    Given a batch ID (e.g. 'BAT-2024-001') or a supplier ID (e.g. 'SUP-001'), 
+    returns the complete trace path from raw material extraction through cell 
+    production, pack assembly, and vehicle integration.
 
     The trace path follows: Supplier → Cell → Pack → Vehicle.
 
@@ -69,8 +69,17 @@ def trace_material_batch(batch_id: str) -> dict:
     or investigate quality issues back to their origin.
     """
     try:
-        if not batch_id or not isinstance(batch_id, str):
-            raise ToolError("batch_id must be a non-empty string")
+        if not batch_id and not supplier_id:
+            raise ToolError("Must provide either batch_id or supplier_id")
+
+        if not batch_id and supplier_id:
+            # Find the first batch for this supplier
+            for bid, batch_info in _BATCH_DB.items():
+                if batch_info["supplier_id"] == supplier_id.upper():
+                    batch_id = bid
+                    break
+            if not batch_id:
+                raise ToolError(f"No batches found for supplier '{supplier_id}'")
 
         batch = _BATCH_DB.get(batch_id.upper())
         if batch is None:

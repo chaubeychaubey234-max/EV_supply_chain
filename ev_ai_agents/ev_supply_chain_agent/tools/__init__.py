@@ -21,7 +21,7 @@ from .risk_tools import (
     calculate_supplier_risk_score,
     detect_geopolitical_risk,
     detect_supplier_concentration,
-    detect_quality_deviation,
+    assess_battery_quality,
 )
 
 from .traceability_tools import (
@@ -39,7 +39,7 @@ __all__ = [
     "calculate_supplier_risk_score",
     "detect_geopolitical_risk",
     "detect_supplier_concentration",
-    "detect_quality_deviation",
+    "assess_battery_quality",
     "trace_material_batch",
     "map_cell_to_pack",
     "map_pack_to_vehicle",

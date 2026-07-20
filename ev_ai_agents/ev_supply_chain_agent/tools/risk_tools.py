@@ -65,13 +65,10 @@ def _get_geo_risk(country: str) -> dict:
 
 
 @tool
-def calculate_supplier_risk_score(supplier_data: dict) -> dict:
+def calculate_supplier_risk_score(supplier_id: str) -> dict:
     """Calculate a composite risk score (0-100) for a supplier.
 
-    Expects a dict with keys:
-      - country (str): Supplier's country of operation
-      - tier (int): Supply-chain tier (1 = direct OEM supplier)
-      - materials_supplied (list[str]): e.g. ['lithium', 'cobalt']
+    Expects a supplier_id (str) like 'SUP-001'.
 
     The score blends three components:
       1. Geographic risk – derived from critical_minerals_risk.csv
@@ -82,13 +79,19 @@ def calculate_supplier_risk_score(supplier_data: dict) -> dict:
     for procurement decisions.
     """
     try:
-        if not isinstance(supplier_data, dict):
-            raise ToolError("supplier_data must be a dictionary")
+        if not isinstance(supplier_id, str):
+            raise ToolError("supplier_id must be a string")
 
-        country = supplier_data.get("country", "Unknown")
-        tier = supplier_data.get("tier", 1)
-        materials = supplier_data.get("materials_supplied", [])
-        supplier_id = supplier_data.get("supplier_id", "")
+        supplier_id = supplier_id.upper()
+        # Find supplier data
+        sc_rows = _supply_chain_df[_supply_chain_df["supplier_id"] == supplier_id]
+        if sc_rows.empty:
+            raise ToolError(f"Supplier {supplier_id} not found in dataset.")
+            
+        row = sc_rows.iloc[0]
+        country = row["country"]
+        tier = int(row["supplier_tier"])
+        materials = sc_rows["material"].unique().tolist()
 
         # --- Geographic risk component (0-40) from critical_minerals_risk.csv ---
         geo_info = _get_geo_risk(country)
@@ -243,10 +246,10 @@ def detect_supplier_concentration(suppliers_list: list) -> dict:
 
 
 @tool
-def detect_quality_deviation(inspection_data: dict) -> dict:
+def assess_battery_quality(supplier_id: str = "", batch_id: str = "") -> dict:
     """Detect quality deviations using actual battery_quality.csv data.
 
-    Expects a dict with optional keys:
+    Expects either:
       - batch_id (str): The batch being inspected
       - supplier_id (str): Supplier under inspection
 
@@ -257,11 +260,6 @@ def detect_quality_deviation(inspection_data: dict) -> dict:
     quality performance.
     """
     try:
-        if not isinstance(inspection_data, dict):
-            raise ToolError("inspection_data must be a dictionary")
-
-        batch_id = inspection_data.get("batch_id", "")
-        supplier_id = inspection_data.get("supplier_id", "")
 
         # Look up actual data from battery_quality.csv
         if batch_id:

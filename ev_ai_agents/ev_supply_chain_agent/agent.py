@@ -23,7 +23,7 @@ from ev_ai_agents.ev_supply_chain_agent.tools.risk_tools import (
     calculate_supplier_risk_score,
     detect_geopolitical_risk,
     detect_supplier_concentration,
-    detect_quality_deviation
+    assess_battery_quality
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +40,7 @@ _TOOL_REGISTRY = {
     "calculate_supplier_risk_score": calculate_supplier_risk_score,
     "detect_geopolitical_risk": detect_geopolitical_risk,
     "detect_supplier_concentration": detect_supplier_concentration,
-    "detect_quality_deviation": detect_quality_deviation
+    "assess_battery_quality": assess_battery_quality
 }
 
 class SupplyChainQueryPlan(BaseModel):
@@ -50,7 +50,8 @@ class SupplyChainQueryPlan(BaseModel):
     requires_llm: bool = Field(description="True if LLM reasoning is required")
     generic_description: str = Field(default="", description="Extracted generic vehicle/batch description if no specific ID is provided")
     supplier_id: Optional[str] = Field(default=None, description="Extracted supplier ID, e.g. SUP-001")
-    batch_id: Optional[str] = Field(default=None, description="Extracted batch ID, e.g. BATCH-801")
+    batch_id: Optional[str] = Field(default=None, description="Extracted batch ID, e.g. BAT-2024-001")
+    country: Optional[str] = Field(default=None, description="Extracted country name, if any")
     confidence: float = Field(description="Confidence score between 0.0 and 1.0")
 
 class SupplyChainReasoningOutput(BaseModel):
@@ -74,8 +75,19 @@ def planner_node(state: SupplyChainState) -> dict:
         "You are the Query Planner for an EV Supply Chain Intelligence system.\n"
         "Classify the query into one of: 'conceptual', 'statistical', 'asset', or 'hybrid'.\n"
         "Select the appropriate tools to answer the user's query from the registry.\n"
-        "If it is an asset query, run 'get_supplier_profile', 'trace_material_batch', 'detect_geopolitical_risk'.\n"
-        "For statistical or concentration risk, run 'detect_supplier_concentration'.\n"
+        "\n"
+        "Available tool capabilities to schedule in the plan:\n"
+        "- 'get_supplier_profile': Get supplier details\n"
+        "- 'calculate_supplier_risk_score': Get supplier composite risk\n"
+        "- 'trace_material_batch': Trace material origin and flow\n"
+        "- 'assess_battery_quality': Evaluate defect rates from manufacturing\n"
+        "- 'detect_geopolitical_risk': Check mineral sourcing risk\n"
+        "\n"
+        "CRITICAL EXTRACTION RULES:\n"
+        "You MUST accurately extract the following parameters into the schema if they exist in the user's query:\n"
+        "- supplier_id: Any string matching SUP-### (e.g. SUP-001)\n"
+        "- batch_id: Any string matching BAT-####-### (e.g. BAT-2024-001)\n"
+        "- country: Any country name mentioned (e.g. China, DRC)\n"
     )
     
     messages = [
@@ -92,6 +104,7 @@ def planner_node(state: SupplyChainState) -> dict:
         "confidence": plan.confidence,
         "supplier_id": plan.supplier_id,
         "batch_id": plan.batch_id,
+        "country": plan.country,
         "requires_dataset": plan.requires_dataset,
         "tool_outputs": {}
     }
@@ -132,9 +145,12 @@ def tool_executor_node(state: SupplyChainState) -> dict:
                     args["material"] = state.get("user_query", "")
                     
             if missing_required:
-                result = {"message": f"Tool {tool_name} skipped. No specific supplier_id provided. Answer conceptually based on user query description."}
-            else:
-                result = tool_callable.invoke(args) if args else tool_callable.invoke({})
+                logger.warning(f"Tool {tool_name} skipped due to missing required arguments (e.g. supplier_id).")
+                # Return placeholder JSON instead of None or crashing
+                tool_outputs[tool_name] = {"error": "Missing required parameter", "status": "N/A", "risk_level": "Conceptual"}
+                continue
+                
+            result = tool_callable.invoke(args) if args else tool_callable.invoke({})
                 
             tool_outputs[tool_name] = result
         except Exception as e:

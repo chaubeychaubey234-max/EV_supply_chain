@@ -8,5 +8,6 @@ class SupplyChainState(TypedDict, total=False):
     confidence: float
     supplier_id: str
     batch_id: str
+    country: str
     tool_outputs: dict[str, Any]
     reasoning_output: dict[str, Any]
