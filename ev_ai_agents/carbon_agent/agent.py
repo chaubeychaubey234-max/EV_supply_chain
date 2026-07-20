@@ -124,6 +124,11 @@ def llm_reasoning_node(state: CarbonState) -> dict:
     system_prompt = (
         "You are an expert Net Zero Carbon Intelligence Agent.\n"
         "Your task is to interpret tool outputs and user queries to provide comprehensive carbon impact analysis and sustainability recommendations.\n"
+        "CRITICAL FORMATTING INSTRUCTIONS FOR UNIFIED REPORT:\n"
+        "1. DO NOT over-summarize. Expose the raw data and tool outputs clearly for better interpretability.\n"
+        "2. Present business metrics using Markdown Tables rather than plain text.\n"
+        "3. When analyzing routes, you MUST include full route details in the table (Vehicle Type, Origin-Destination, Distance, Annual Trips).\n"
+        "4. If there are multiple CO2 reduction values (e.g., from different calculation methods or scopes), explicitly explain the mathematical difference between them.\n"
     )
     
     user_prompt = f"User Query: {user_query}\nIntent: {detected_intent}\n\nTool Outputs:\n"
