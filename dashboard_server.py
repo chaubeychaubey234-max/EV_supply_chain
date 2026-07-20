@@ -2,6 +2,10 @@ import os
 import sys
 import json
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 import pandas as pd
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, Query, HTTPException
@@ -76,28 +80,8 @@ FLEET_OPS_CSV = os.path.join(PROJECT_ROOT, "ev_ai_agents", "ev_fleet_electrifica
 
 
 def map_vehicle_id(vid: str) -> str:
-    """Maps VH_xxxx style IDs to the registered VEH-00x IDs in the hardcoded tool profiles."""
-    cleaned = vid.strip().upper()
-    if cleaned in ["VEH-001", "VEH-002", "VEH-003", "VEH-004", "VEH-005"]:
-        return cleaned
-    
-    mapping = {
-        "VH_15592": "VEH-002",
-        "VH_10116": "VEH-004",
-        "VH_98912": "VEH-001",
-        "VH_01074": "VEH-003",
-        "VH_37500": "VEH-005"
-    }
-    if cleaned in mapping:
-        return mapping[cleaned]
-        
-    try:
-        # Sum of characters or numeric value
-        num = sum(ord(c) for c in cleaned)
-        idx = (num % 5) + 1
-        return f"VEH-00{idx}"
-    except Exception:
-        return "VEH-002"
+    """Returns the vehicle ID directly to query the cleaned dataset rows."""
+    return vid.strip()
 
 # ----------------------------------------------------------------------
 # API Endpoints

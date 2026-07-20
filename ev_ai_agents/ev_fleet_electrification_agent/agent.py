@@ -16,9 +16,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 # Resolve project root so imports work
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))                   # …/ev_fleet_electrification_agent/
-_FEAT_DIR  = os.path.dirname(_AGENT_DIR)                                   # …/fleet_electrification_readiness/
-_FEATS_DIR = os.path.dirname(_FEAT_DIR)                                    # …/features/
-_ROOT_DIR  = os.path.dirname(_FEATS_DIR)                                   # project root
+_ROOT_DIR = os.path.dirname(os.path.dirname(_AGENT_DIR))                  # project root
 if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
@@ -30,7 +28,10 @@ from ev_ai_agents.ev_fleet_electrification_agent.tools.roi_tool              imp
 from ev_ai_agents.ev_fleet_electrification_agent.tools.route_analysis_tool   import analyze_vehicle_route
 from ev_ai_agents.ev_fleet_electrification_agent.tools.procurement_tool      import recommend_procurement
 
-from .state import AgentState
+from dotenv import load_dotenv
+load_dotenv()
+
+from ev_ai_agents.ev_fleet_electrification_agent.state import AgentState
 
 # Logging
 logging.basicConfig(
@@ -177,6 +178,83 @@ def tool_executor_node(state: AgentState) -> dict:
     tool_outputs: dict[str, Any] = {}
     vehicle_id = state.vehicle_id or "VEH-002"
     
+    # Load vehicle details from clean dataset or registry to satisfy parameter demands of readiness and ev matching tools
+    import pandas as pd
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    FLEET_OPS_PATH = os.path.join(_BASE_DIR, "datasets", "fleet_operations_clean.csv")
+    REGISTRY_PATH = os.path.join(_BASE_DIR, "..", "..", "datasets", "fleet_registry.csv")
+    
+    vehicle_record = {}
+    found = False
+    
+    log.info(f"Selected vehicle: {vehicle_id}")
+    
+    # 1. Try loading from fleet_operations_clean.csv
+    if os.path.exists(FLEET_OPS_PATH):
+        try:
+            df = pd.read_csv(FLEET_OPS_PATH)
+            row = df[df['vehicle_id'] == vehicle_id]
+            if not row.empty:
+                vehicle_record = row.iloc[0].to_dict()
+                found = True
+                log.info(f"Dataset row found in fleet_operations_clean.csv")
+        except Exception as e:
+            log.warning(f"Error loading from fleet_operations_clean.csv: {e}")
+            
+    # 2. Try loading from fleet_registry.csv if not found
+    if not found and os.path.exists(REGISTRY_PATH):
+        try:
+            df = pd.read_csv(REGISTRY_PATH)
+            row = df[df['vehicle_id'] == vehicle_id]
+            if not row.empty:
+                vehicle_record = row.iloc[0].to_dict()
+                found = True
+                log.info(f"Dataset row found in fleet_registry.csv")
+        except Exception as e:
+            log.warning(f"Error loading from fleet_registry.csv: {e}")
+            
+    if found:
+        log.info(f"Fleet attributes resolved: {vehicle_record}")
+    else:
+        log.warning(f"Vehicle {vehicle_id} not found in any dataset. Using default fallback parameter values.")
+
+    # Resolve parameters based on dataset attributes
+    daily_distance = float(vehicle_record.get("daily_distance_km", 0.0))
+    
+    charging_window = float(vehicle_record.get("charging_window_hours", 
+                            vehicle_record.get("available_charging_window_hours", 8.0)))
+    
+    idle_minutes = float(vehicle_record.get("idle_time_minutes",
+                         vehicle_record.get("avg_idle_minutes", 45.0)))
+                         
+    stops = int(vehicle_record.get("stops_per_day", 10))
+    
+    route_type = str(vehicle_record.get("usage_pattern", 
+                     vehicle_record.get("route_type", "mixed"))).lower()
+                     
+    consistency = float(vehicle_record.get("route_consistency_score", 0.85))
+    
+    vehicle_age = float(vehicle_record.get("vehicle_age_years", 3.0))
+    
+    vtype = str(vehicle_record.get("vehicle_type", "")).lower()
+    if "heavy" in vtype or "truck" in vtype:
+        def_eff = 3.5
+    elif "van" in vtype or "delivery" in vtype:
+        def_eff = 9.5
+    elif "bus" in vtype:
+        def_eff = 4.8
+    else:
+        def_eff = 12.0
+    fuel_efficiency = float(vehicle_record.get("fuel_efficiency_kmpl", def_eff))
+    
+    operating_hours = float(vehicle_record.get("operating_hours_per_day", 24.0 - charging_window))
+    
+    utilization = float(vehicle_record.get("utilization_rate", 0.75))
+    
+    payload = float(vehicle_record.get("payload_requirement_kg", 
+                    vehicle_record.get("payload_capacity_kg", 
+                    vehicle_record.get("payload_kg", 1000.0))))
+            
     for tool_name in tools_to_run:
         tool_callable = _TOOL_REGISTRY.get(tool_name)
         if not tool_callable:
@@ -185,8 +263,33 @@ def tool_executor_node(state: AgentState) -> dict:
             continue
             
         try:
-            log.info(f"Executing tool: {tool_name} for vehicle: {vehicle_id}")
-            result = tool_callable.invoke({"vehicle_id": vehicle_id})
+            # Resolve parameters based on tool requirements
+            if tool_name == "readiness_score_tool":
+                params = {
+                    "daily_distance_km": daily_distance,
+                    "available_charging_window_hours": charging_window,
+                    "avg_idle_minutes": idle_minutes,
+                    "stops_per_day": stops,
+                    "route_type": route_type,
+                    "route_consistency_score": consistency,
+                    "vehicle_age_years": vehicle_age,
+                    "fuel_efficiency_kmpl": fuel_efficiency,
+                    "operating_hours_per_day": operating_hours,
+                    "utilization_rate": utilization,
+                    "payload_kg": payload
+                }
+            elif tool_name == "ev_matching_tool":
+                params = {
+                    "daily_distance_km": daily_distance,
+                    "available_charging_window_hours": charging_window,
+                    "payload_kg": payload
+                }
+            else:
+                params = {"vehicle_id": vehicle_id}
+                
+            log.info(f"Tool inputs resolved for {tool_name}: {params}")
+            result = tool_callable.invoke(params)
+            log.info(f"Tool outputs returned for {tool_name}: {result}")
             tool_outputs[tool_name] = result
         except Exception as e:
             log.exception(f"Error executing tool {tool_name}")
@@ -206,6 +309,9 @@ def llm_reasoning_node(state: AgentState) -> dict:
     user_query = state.user_query
     detected_intent = state.detected_intent
     tool_outputs = state.tool_outputs
+    
+    log.info(f"LLM reasoning input (Query): {user_query}")
+    log.info(f"LLM reasoning input (Tool Outputs): {tool_outputs}")
     
     system_prompt = (
         "You are an expert consultant in fleet electrification and EV procurement.\n"
@@ -369,6 +475,7 @@ def run_agent(user_query: str, vehicle_id: str = "VEH-002") -> dict[str, Any]:
             final_res = getattr(res, "final_response", {})
             
         log.info("Agent completed with status: %s", final_res.get("status"))
+        log.info("Final response: %s", final_res)
         return final_res
     except Exception as e:
         log.exception("Workflow failed during execution")

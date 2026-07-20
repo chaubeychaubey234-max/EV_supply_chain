@@ -15,15 +15,15 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 # Setup pathing
-_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-_MOO_DIR = os.path.dirname(_THIS_DIR)
-_FEAT_DIR = os.path.dirname(_MOO_DIR)
-_ROOT_DIR = os.path.dirname(_FEAT_DIR)
-
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))                  # …/ev_maintenance_operations_agent/
+_ROOT_DIR = os.path.dirname(os.path.dirname(_THIS_DIR))                 # project root
 if _ROOT_DIR not in sys.path:
     sys.path.insert(0, _ROOT_DIR)
 
 # Import state
+from dotenv import load_dotenv
+load_dotenv()
+
 from ev_ai_agents.ev_maintenance_operations_agent.state import AgentState
 
 # Import tools
@@ -33,6 +33,7 @@ from ev_ai_agents.ev_maintenance_operations_agent.tools.maintenance_risk_analyze
 )
 from ev_ai_agents.ev_maintenance_operations_agent.tools.maintenance_schedule_optimizer import optimize_maintenance_schedule
 from ev_ai_agents.ev_maintenance_operations_agent.tools.charging_availability_planner import plan_charging_availability
+from ev_ai_agents.ev_maintenance_operations_agent.tools.maintenance_statistical_tool import calculate_maintenance_statistics
 from ev_ai_agents.ev_maintenance_operations_agent.tools.utils import (
     load_maintenance_history,
     load_fleet_operations
@@ -47,6 +48,7 @@ _TOOL_REGISTRY: dict[str, Any] = {
     "maintenance_risk_analyzer":       analyze_maintenance_risk,
     "maintenance_schedule_optimizer":  optimize_maintenance_schedule,
     "charging_availability_planner":   plan_charging_availability,
+    "maintenance_statistical_tool":    calculate_maintenance_statistics,
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -56,7 +58,7 @@ _TOOL_REGISTRY: dict[str, Any] = {
 class MaintenanceQueryPlan(BaseModel):
     query_type: str = Field(description="Query type: conceptual, statistical, asset, or hybrid")
     requires_dataset: bool = Field(description="True if dataset access is required")
-    tools: List[str] = Field(description="List of tool keys to run. Choose from: maintenance_risk_analyzer, maintenance_schedule_optimizer, charging_availability_planner")
+    tools: List[str] = Field(description="List of tool keys to run. Choose from: maintenance_risk_analyzer, maintenance_schedule_optimizer, charging_availability_planner, maintenance_statistical_tool")
     requires_llm: bool = Field(description="True if LLM reasoning is required to synthesize the final answer")
     confidence: float = Field(description="Confidence score between 0.0 and 1.0 representing plan confidence")
 
@@ -134,6 +136,13 @@ def planner_node(state: AgentState) -> dict:
         "- 'maintenance_risk_analyzer': Predict risk level, issue, and corrective action for a specific EV.\n"
         "- 'maintenance_schedule_optimizer': Generate and optimize maintenance dates/slots for fleet EVs.\n"
         "- 'charging_availability_planner': Schedule and confirm charging station slots after servicing.\n"
+        "- 'maintenance_statistical_tool': Compute fleet-wide statistics (average battery health, overdue counts, workshop workload, charging station uptime).\n"
+        "\n"
+        "Rules for tool selection:\n"
+        "1. For conceptual queries (e.g. general questions like 'Why is predictive maintenance important?'), do NOT select any database-dependent tools. Select empty tools list [].\n"
+        "2. For statistical queries (e.g. 'fleet maintenance statistics', 'average battery health', 'number of overdue vehicles', 'workshop utilization', 'charging uptime'), select 'maintenance_statistical_tool'.\n"
+        "3. For asset-specific queries (e.g. risk details of an EV, or charging slots for a specific vehicle), select 'maintenance_risk_analyzer' or 'charging_availability_planner' respectively.\n"
+        "4. For scheduling queries, select 'maintenance_schedule_optimizer'.\n"
         "\n"
         "Classify the query into one of: 'conceptual', 'statistical', 'asset', or 'hybrid'.\n"
         "Determine which tools are required to fulfill the user's query.\n"
@@ -157,7 +166,10 @@ def planner_node(state: AgentState) -> dict:
         updates["analysis_plan"] = plan.tools
         updates["confidence"] = plan.confidence
         updates["analysis_mode"] = plan.query_type
+        updates["selected_tools"] = plan.tools
         
+    logger.info("--- STATE after node 'planner' ---")
+    logger.info(f"Current State: user_query='{user_query}' detected_intent='{updates.get('detected_intent')}' selected_tools={updates.get('selected_tools')}")
     return updates
 
 def tool_executor_node(state: AgentState) -> dict:
@@ -196,7 +208,20 @@ def tool_executor_node(state: AgentState) -> dict:
                 if state.vehicle_record:
                     record = state.vehicle_record
                 else:
-                    active_id = vehicle_id if vehicle_id and vehicle_id.startswith("EV_") else "EV_2001"
+                    if vehicle_id and vehicle_id.startswith("EV_"):
+                        active_id = vehicle_id
+                    else:
+                        # Fetch the highest risk vehicle ID dynamically from the history database
+                        try:
+                            df_hist = load_maintenance_history()
+                            critical_rows = df_hist.sort_values("vehicle_risk_score", ascending=False)
+                            if not critical_rows.empty:
+                                active_id = str(critical_rows.iloc[0]["vehicle_id"])
+                            else:
+                                active_id = "EV_2000"
+                        except Exception:
+                            active_id = "EV_2000"
+                    logger.info(f"Resolved active EV ID for risk analyzer: {active_id}")
                     record = _fetch_record_from_csv(active_id)
                 res = tool_callable.invoke({"vehicle_record": record})
                 tool_outputs[tool_name] = res
@@ -221,8 +246,20 @@ def tool_executor_node(state: AgentState) -> dict:
                 tool_outputs[tool_name] = res
                 
             elif tool_name == "charging_availability_planner":
-                active_id = vehicle_id if vehicle_id and vehicle_id.startswith("VH_") else "VH_15592"
+                if vehicle_id and vehicle_id.startswith("VH_"):
+                    active_id = vehicle_id
+                else:
+                    # Fetch the first vehicle ID dynamically from fleet operations maintenance CSV
+                    try:
+                        df_fleet = load_fleet_operations()
+                        if not df_fleet.empty:
+                            active_id = str(df_fleet.iloc[0]["vehicle_id"])
+                        else:
+                            active_id = "VH_15592"
+                    except Exception:
+                        active_id = "VH_15592"
                 
+                logger.info(f"Resolved active VH ID for charging availability planner: {active_id}")
                 # Fetch depot details
                 depot_location = "Delhi"
                 shift_end_time = "18:00"
@@ -242,10 +279,17 @@ def tool_executor_node(state: AgentState) -> dict:
                 })
                 tool_outputs[tool_name] = res
                 
+            elif tool_name == "maintenance_statistical_tool":
+                res = tool_callable.invoke({})
+                tool_outputs[tool_name] = res
+                
         except Exception as e:
             logger.exception(f"Error executing tool '{tool_name}'")
             tool_outputs[tool_name] = {"error": f"Tool execution failed: {str(e)}"}
             
+    logger.info("--- STATE after node 'tool_executor' ---")
+    logger.info(f"Selected Tools: {tools_to_run}")
+    logger.info(f"Tool Outputs Keys: {list(tool_outputs.keys())}")
     return {"tool_outputs": tool_outputs, "selected_tools": tools_to_run}
 
 def llm_reasoning_node(state: AgentState) -> dict:
@@ -289,6 +333,8 @@ def llm_reasoning_node(state: AgentState) -> dict:
     if response.success and response.data:
         updates["reasoning_output"] = response.data.model_dump()
         
+    logger.info("--- STATE after node 'llm_reasoning' ---")
+    logger.info(f"Reasoning Output: {updates.get('reasoning_output')}")
     return updates
 
 def response_builder_node(state: AgentState) -> dict:
@@ -315,6 +361,8 @@ def response_builder_node(state: AgentState) -> dict:
             "recommendations": ["Add the GROQ_API_KEY to enable AI reasoning."],
             "next_steps": ["Configure GROQ_API_KEY in the environment."]
         }
+        logger.info("--- STATE after node 'response_builder' (error path) ---")
+        logger.info(f"Final Response: {final_response}")
         return {
             "final_response": final_response,
             "execution_status": "error"
@@ -341,6 +389,9 @@ def response_builder_node(state: AgentState) -> dict:
     if failed:
         final_response["status"] = "partial"
         
+    logger.info("--- STATE after node 'response_builder' (success path) ---")
+    logger.info(f"Final Response Keys: {list(final_response.keys())}")
+    logger.info(f"Final Response: {final_response}")
     return {
         "final_response": final_response,
         "execution_status": final_response["status"]

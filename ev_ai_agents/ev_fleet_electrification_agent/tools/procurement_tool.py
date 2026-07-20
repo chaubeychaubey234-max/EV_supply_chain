@@ -167,26 +167,112 @@ def recommend_procurement(vehicle_id: str) -> dict:
                     string matching a registered vehicle.
 
     Returns:
-        A dictionary containing:
-            - vehicle_id (str): Echo of the requested identifier.
-            - recommendation (str): The procurement decision statement.
-            - priority (str): Relative acquisition priority.
-              One of: "high", "medium", "low".
-            - confidence (str): Confidence in the recommendation.
-              One of: "high", "medium", "low".
-            - recommended_purchase_window (str): Suggested calendar quarter
-              and year for EV acquisition (e.g., "Q1 2025").
-            - reason (str): Comprehensive justification citing readiness score,
-              ROI figures, operational fit, and any preconditions for procurement.
-
-    Raises:
-        ValueError: If vehicle_id is not a string, is empty, is whitespace-only,
-                    or does not match any registered vehicle.
-
-    Example:
-        >>> result = recommend_procurement.invoke({"vehicle_id": "VEH-005"})
-        >>> result["priority"]
-        'high'
+        A dictionary containing consolidated procurement decision attributes.
     """
     clean_id = _validate_vehicle_id(vehicle_id)
-    return _lookup_procurement_recommendation(clean_id)
+    
+    # 1. Load vehicle data
+    from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool import fetch_vehicle_data
+    vehicle_record = fetch_vehicle_data.invoke({"vehicle_id": clean_id})
+    if "error" in vehicle_record:
+        # Fallback to hardcoded profiles for backward compatibility
+        record = _PROCUREMENT_RECOMMENDATIONS.get(clean_id)
+        if record:
+            return record
+        raise ValueError(f"No vehicle or procurement recommendation found for vehicle_id='{clean_id}'.")
+        
+    # 2. Extract values for readiness score tool
+    daily_distance = float(vehicle_record.get("daily_distance_km", 0.0))
+    charging_window = float(vehicle_record.get("charging_window_hours", 
+                            vehicle_record.get("available_charging_window_hours", 8.0)))
+    idle_minutes = float(vehicle_record.get("idle_time_minutes",
+                         vehicle_record.get("avg_idle_minutes", 45.0)))
+    stops = int(vehicle_record.get("stops_per_day", 10))
+    route_type = str(vehicle_record.get("usage_pattern", 
+                     vehicle_record.get("route_type", "mixed"))).lower()
+    consistency = float(vehicle_record.get("route_consistency_score", 0.85))
+    vehicle_age = float(vehicle_record.get("vehicle_age_years", 3.0))
+    
+    vtype = str(vehicle_record.get("vehicle_type", "")).lower()
+    if "heavy" in vtype or "truck" in vtype:
+        def_eff = 3.5
+    elif "van" in vtype or "delivery" in vtype:
+        def_eff = 9.5
+    elif "bus" in vtype:
+        def_eff = 4.8
+    else:
+        def_eff = 12.0
+    fuel_efficiency = float(vehicle_record.get("fuel_efficiency_kmpl", def_eff))
+    operating_hours = float(vehicle_record.get("operating_hours_per_day", 24.0 - charging_window))
+    utilization = float(vehicle_record.get("utilization_rate", 0.75))
+    payload = float(vehicle_record.get("payload_requirement_kg", 
+                    vehicle_record.get("payload_capacity_kg", 
+                    vehicle_record.get("payload_kg", 1000.0))))
+                    
+    # 3. Calculate readiness score
+    from ev_ai_agents.ev_fleet_electrification_agent.tools.readiness_score_tool import calculate_readiness_score
+    readiness = calculate_readiness_score.invoke({
+        "daily_distance_km": daily_distance,
+        "available_charging_window_hours": charging_window,
+        "avg_idle_minutes": idle_minutes,
+        "stops_per_day": stops,
+        "route_type": route_type,
+        "route_consistency_score": consistency,
+        "vehicle_age_years": vehicle_age,
+        "fuel_efficiency_kmpl": fuel_efficiency,
+        "operating_hours_per_day": operating_hours,
+        "utilization_rate": utilization,
+        "payload_kg": payload
+    })
+    
+    readiness_score = int(readiness.get("readiness_score", 50))
+    classification = readiness.get("classification", "Conditionally Ready")
+    
+    # 4. Calculate ROI details
+    from ev_ai_agents.ev_fleet_electrification_agent.tools.roi_tool import calculate_roi
+    roi = calculate_roi.invoke({"vehicle_id": clean_id})
+    payback_years = float(roi.get("estimated_payback_years", 8.0))
+    total_savings = float(roi.get("total_annual_savings_usd", 8000.0))
+    roi_pct = float(roi.get("roi_percent_over_10_years", 25.0))
+    
+    # Get recommended EV
+    from ev_ai_agents.ev_fleet_electrification_agent.tools.ev_matching_tool import recommend_ev_replacement
+    ev_match = recommend_ev_replacement.invoke({
+        "daily_distance_km": daily_distance,
+        "available_charging_window_hours": charging_window,
+        "payload_kg": payload
+    })
+    recommended_ev = ev_match.get("recommended_ev", "Standard EV")
+    
+    # 5. Apply procurement decision rules
+    if readiness_score >= 85 and payback_years <= 9.0:
+        priority = "high"
+        confidence = "high"
+        recommended_purchase_window = "Q1 2025"
+        recommendation = "Immediate procurement approved. Highest priority conversion."
+    elif readiness_score >= 70 or (9.0 < payback_years <= 10.0):
+        priority = "medium"
+        confidence = "high"
+        recommended_purchase_window = "Q2 2025"
+        recommendation = "Proceed with EV conversion. Depot charging infrastructure must be confirmed first."
+    else:
+        priority = "low"
+        confidence = "medium"
+        recommended_purchase_window = "Q4 2025"
+        recommendation = "Further operational and route assessment required before procurement approval."
+        
+    reason = (
+        f"{clean_id} achieves a readiness score of {readiness_score} ({classification}) with daily distance of {daily_distance:.1f} km. "
+        f"The available charging window of {charging_window:.1f}h is estimated to be sufficient for the recommended EV replacement ({recommended_ev}). "
+        f"Financially, the transition is expected to save USD {total_savings:,.0f} annually with an estimated payback period of {payback_years:.1f} years, "
+        f"yielding a 10-year ROI of {roi_pct:.1f}%. Therefore, immediate transition priority is rated as {priority}."
+    )
+    
+    return {
+        "vehicle_id": clean_id,
+        "recommendation": recommendation,
+        "priority": priority,
+        "confidence": confidence,
+        "recommended_purchase_window": recommended_purchase_window,
+        "reason": reason
+    }

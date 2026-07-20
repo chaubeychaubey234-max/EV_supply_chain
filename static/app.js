@@ -179,10 +179,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 fleetBadge.className = "badge status-success";
             }
 
-            const ready = data.tool_outputs.readiness_score_tool;
-            const ev = data.tool_outputs.ev_matching_tool;
-            const roi = data.tool_outputs.roi_tool;
-            const proc = data.tool_outputs.procurement_tool;
+            const ready = data.tool_outputs.readiness_score_tool || { readiness_score: 0, classification: "N/A", reason: "Tool not run" };
+            const ev = data.tool_outputs.ev_matching_tool || { recommended_ev: "N/A", battery_capacity_kwh: 0, estimated_range_km: 0, compatibility_score: 0, reason: "Tool not run" };
+            const roi = data.tool_outputs.roi_tool || { total_annual_savings_usd: 0, annual_fuel_savings_usd: 0, estimated_payback_years: 0, roi_percent_over_10_years: 0, estimated_annual_fuel_cost_usd: 0, estimated_annual_electricity_cost_usd: 0 };
+            const proc = data.tool_outputs.procurement_tool || { recommended_purchase_window: "N/A", priority: "N/A", reason: "Tool not run" };
 
             fleetContent.innerHTML = `
                 <div class="ai-report fade-in">
@@ -362,9 +362,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 maintBadge.className = "badge status-success";
             }
 
-            const risk = data.tool_outputs.maintenance_risk_analyzer;
-            const schedule = data.tool_outputs.maintenance_schedule_optimizer;
-            const planner = data.tool_outputs.charging_availability_planner;
+            const risk = data.tool_outputs.maintenance_risk_analyzer || { vehicle_id: "N/A", risk_score: 0, risk_level: "N/A", dominant_risk_factor: "N/A", recommended_action: "Tool not run" };
+            const schedule = data.tool_outputs.maintenance_schedule_optimizer || [];
+            const planner = data.tool_outputs.charging_availability_planner || { vehicle_id: "N/A", recommended_station: "N/A", station_city: "N/A", charging_time: "N/A", recommended_charger_class: "N/A", charging_feasible_in_window: false };
 
             maintContent.innerHTML = `
                 <div class="ai-report fade-in">

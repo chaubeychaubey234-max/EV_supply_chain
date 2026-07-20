@@ -127,33 +127,113 @@ def calculate_roi(vehicle_id: str) -> dict:
                     string matching a registered vehicle.
 
     Returns:
-        A dictionary containing:
-            - vehicle_id (str): Echo of the requested identifier.
-            - estimated_annual_fuel_cost_usd (float): Current annual diesel or
-              CNG fuel expenditure in USD.
-            - estimated_annual_electricity_cost_usd (float): Projected annual
-              electricity cost for the EV equivalent in USD.
-            - annual_fuel_savings_usd (float): Difference between fuel and
-              electricity cost per year in USD.
-            - annual_maintenance_savings_usd (float): Estimated annual reduction
-              in maintenance expenditure from ICE to EV in USD.
-            - total_annual_savings_usd (float): Combined fuel and maintenance
-              savings per year in USD.
-            - ev_purchase_price_usd (float): Purchase price of the recommended
-              EV model in USD.
-            - estimated_payback_years (float): Years until cumulative savings
-              recover the EV purchase investment.
-            - roi_percent_over_10_years (float): Percentage return on investment
-              over a 10-year operating horizon.
-
-    Raises:
-        ValueError: If vehicle_id is not a string, is empty, is whitespace-only,
-                    or does not match any registered vehicle.
-
-    Example:
-        >>> result = calculate_roi.invoke({"vehicle_id": "VEH-001"})
-        >>> result["estimated_payback_years"]
-        6.4
+        A dictionary containing ROI attributes.
     """
     clean_id = _validate_vehicle_id(vehicle_id)
-    return _lookup_roi_profile(clean_id)
+    
+    # 1. Load vehicle data
+    from ev_ai_agents.ev_fleet_electrification_agent.tools.fleet_data_tool import fetch_vehicle_data
+    vehicle_record = fetch_vehicle_data.invoke({"vehicle_id": clean_id})
+    if "error" in vehicle_record:
+        # Fallback to hardcoded profiles for backward compatibility
+        profile = _ROI_PROFILES.get(clean_id)
+        if profile:
+            return profile
+        raise ValueError(f"No vehicle or ROI profile found for vehicle_id='{clean_id}'.")
+        
+    # 2. Extract values with fallbacks
+    daily_distance = float(vehicle_record.get("daily_distance_km", 0.0))
+    charging_window = float(vehicle_record.get("charging_window_hours", 
+                            vehicle_record.get("available_charging_window_hours", 8.0)))
+    payload = float(vehicle_record.get("payload_requirement_kg", 
+                    vehicle_record.get("payload_capacity_kg", 
+                    vehicle_record.get("payload_kg", 1000.0))))
+                    
+    # Fuel efficiency
+    vtype = str(vehicle_record.get("vehicle_type", "")).lower()
+    if "heavy" in vtype or "truck" in vtype:
+        def_eff = 3.5
+    elif "van" in vtype or "delivery" in vtype:
+        def_eff = 9.5
+    elif "bus" in vtype:
+        def_eff = 4.8
+    else:
+        def_eff = 12.0
+    fuel_efficiency = float(vehicle_record.get("fuel_efficiency_kmpl", def_eff))
+    if fuel_efficiency <= 0:
+        fuel_efficiency = def_eff
+        
+    # Fuel Type & Price
+    fuel_type = str(vehicle_record.get("fuel_type", "diesel")).lower()
+    fuel_price = 1.20 if "cng" in fuel_type else 1.50
+    
+    # 3. Calculate current ICE annual fuel cost
+    annual_operating_days = 250
+    estimated_annual_fuel_cost = (daily_distance / fuel_efficiency) * fuel_price * annual_operating_days
+    estimated_annual_fuel_cost = round(estimated_annual_fuel_cost, 2)
+    
+    # 4. Get recommended EV details
+    from ev_ai_agents.ev_fleet_electrification_agent.tools.ev_matching_tool import recommend_ev_replacement
+    ev_match = recommend_ev_replacement.invoke({
+        "daily_distance_km": daily_distance,
+        "available_charging_window_hours": charging_window,
+        "payload_kg": payload
+    })
+    
+    if "error" not in ev_match:
+        ev_model = ev_match.get("recommended_ev")
+        ev_price = float(ev_match.get("purchase_price_usd", 64990.0))
+        # Determine energy efficiency based on vehicle type
+        if "heavy" in vtype or "truck" in vtype:
+            efficiency = 1.50
+        elif "medium" in vtype or "bus" in vtype:
+            efficiency = 0.80
+        elif "pickup" in vtype:
+            efficiency = 0.245
+        else:
+            efficiency = 0.25
+            
+        electricity_price = 0.12
+        estimated_annual_electricity_cost = daily_distance * efficiency * electricity_price * annual_operating_days
+        estimated_annual_electricity_cost = round(estimated_annual_electricity_cost, 2)
+    else:
+        # Fallbacks
+        ev_model = "Standard EV"
+        ev_price = 64990.0
+        estimated_annual_electricity_cost = 1313.0
+        
+    # 5. Maintenance savings
+    if "heavy" in vtype or "truck" in vtype:
+        maint_savings = 8000.0
+    elif "medium" in vtype:
+        maint_savings = 6500.0
+    elif "bus" in vtype:
+        maint_savings = 5000.0
+    elif "van" in vtype or "delivery" in vtype:
+        maint_savings = 2500.0
+    elif "pickup" in vtype:
+        maint_savings = 1800.0
+    else:
+        maint_savings = 2000.0
+        
+    annual_fuel_savings = estimated_annual_fuel_cost - estimated_annual_electricity_cost
+    total_annual_savings = annual_fuel_savings + maint_savings
+    
+    if total_annual_savings > 0:
+        payback_years = round(ev_price / total_annual_savings, 1)
+        roi_10_years = round(((total_annual_savings * 10 - ev_price) / ev_price) * 100, 1)
+    else:
+        payback_years = 99.0
+        roi_10_years = 0.0
+        
+    return {
+        "vehicle_id": clean_id,
+        "estimated_annual_fuel_cost_usd": float(round(estimated_annual_fuel_cost, 0)),
+        "estimated_annual_electricity_cost_usd": float(round(estimated_annual_electricity_cost, 0)),
+        "annual_fuel_savings_usd": float(round(annual_fuel_savings, 0)),
+        "annual_maintenance_savings_usd": float(round(maint_savings, 0)),
+        "total_annual_savings_usd": float(round(total_annual_savings, 0)),
+        "ev_purchase_price_usd": float(round(ev_price, 0)),
+        "estimated_payback_years": float(payback_years),
+        "roi_percent_over_10_years": float(roi_10_years)
+    }

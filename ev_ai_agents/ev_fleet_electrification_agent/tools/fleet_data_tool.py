@@ -3,22 +3,33 @@ import os
 from langchain_core.tools import tool
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FLEET_OPS_PATH = os.path.join(_BASE_DIR, "..", "datasets", "fleet_operations_clean.csv")
 REGISTRY_PATH = os.path.join(_BASE_DIR, "..", "..", "datasets", "fleet_registry.csv")
 
 @tool
 def fetch_vehicle_data(vehicle_id: str) -> dict:
     """Retrieve complete asset and telemetry data for a fleet vehicle from the registry."""
-    if not os.path.exists(REGISTRY_PATH):
-        return {"error": "Fleet registry dataset not found"}
-        
-    df = pd.read_csv(REGISTRY_PATH)
-    row = df[df['vehicle_id'] == vehicle_id]
-    
-    if row.empty:
-        return {"error": f"No vehicle found with ID {vehicle_id}."}
-        
-    # Convert row to dict
-    return row.iloc[0].to_dict()
+    # 1. Try loading from fleet_operations_clean.csv
+    if os.path.exists(FLEET_OPS_PATH):
+        try:
+            df = pd.read_csv(FLEET_OPS_PATH)
+            row = df[df['vehicle_id'] == vehicle_id]
+            if not row.empty:
+                return row.iloc[0].to_dict()
+        except Exception:
+            pass
+            
+    # 2. Try loading from fleet_registry.csv
+    if os.path.exists(REGISTRY_PATH):
+        try:
+            df = pd.read_csv(REGISTRY_PATH)
+            row = df[df['vehicle_id'] == vehicle_id]
+            if not row.empty:
+                return row.iloc[0].to_dict()
+        except Exception:
+            pass
+            
+    return {"error": f"No vehicle found with ID {vehicle_id}."}
 
 @tool
 def analyze_fleet_csv(csv_path: str) -> dict:
