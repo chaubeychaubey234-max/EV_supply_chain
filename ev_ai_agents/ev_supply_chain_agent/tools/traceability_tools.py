@@ -100,6 +100,13 @@ def trace_material_batch(batch_id: str) -> dict:
             "trace_paths": trace_paths,
             "traceability_status": "Complete",
             "total_cells": len(batch["cell_ids"]),
+            "traceability_nodes": [
+                {"id": "supplier", "label": f"{batch['supplier_id']} ({batch['origin_country']})", "group": "supplier"},
+                {"id": "refinery", "label": "Refining Facility", "group": "refinery"},
+                {"id": "cell", "label": f"Cell Batch {batch_id.upper()}", "group": "cell"},
+                {"id": "pack", "label": "Battery Pack Asm", "group": "pack"},
+                {"id": "vehicle", "label": "Vehicle Mfg", "group": "vehicle"}
+            ]
         }
     except ToolError:
         raise

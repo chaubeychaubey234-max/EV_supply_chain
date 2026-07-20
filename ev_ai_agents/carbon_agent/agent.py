@@ -70,7 +70,8 @@ def planner_node(state: CarbonState) -> dict:
         "- 'track_net_zero_progress': Track overall progress towards net zero goals.\n"
         "\n"
         "Classify the query into one of: 'conceptual', 'statistical', 'asset', or 'hybrid'.\n"
-        "Select the appropriate tools to answer the user's query."
+        "Select the appropriate tools to answer the user's query.\n"
+        "CRITICAL: If the query is related to the main Carbon Tracker dashboard or Net Zero progress, you MUST include 'track_net_zero_progress' and 'track_scope_emissions' in the plan."
     )
     
     messages = [
@@ -90,6 +91,11 @@ def planner_node(state: CarbonState) -> dict:
 
 def tool_executor_node(state: CarbonState) -> dict:
     tools_to_run = state.get("analysis_plan", [])
+    
+    # FOR UI: Always ensure core dashboard datasets are fetched regardless of LLM plan
+    if "track_net_zero_progress" not in tools_to_run: tools_to_run.append("track_net_zero_progress")
+    if "track_scope_emissions" not in tools_to_run: tools_to_run.append("track_scope_emissions")
+    
     tool_outputs = {}
     
     for tool_name in tools_to_run:

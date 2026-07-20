@@ -297,54 +297,22 @@ def get_ev_qms(
 def get_supply_chain(query: str = Query("Audit supplier SUP-001 and review ESG mineral risk.", description="User query")):
     from ev_ai_agents.ev_supply_chain_agent.agent import supply_chain_app
     
-    df_sc = load_csv_safe(SUPPLY_CHAIN_CSV)
-    df_mr = load_csv_safe(MINERAL_RISK_CSV)
-    df_bq = load_csv_safe(BATTERY_QUALITY_CSV)
-
-    query_lower = query.lower()
-    
-    supplier_id = None
-    if "sup-001" in query_lower: supplier_id = "SUP-001"
-    elif "sup-002" in query_lower: supplier_id = "SUP-002"
-    elif "sup-003" in query_lower: supplier_id = "SUP-003"
-    
-    supplier_info = {}
-    risk_info = {}
-    quality_info = {}
-    nodes = []
-
-    if supplier_id and df_sc is not None:
-        row_sc = df_sc[df_sc['supplier_id'].astype(str).str.strip().str.upper() == supplier_id.upper()]
-        if not row_sc.empty:
-            supplier_info = row_sc.iloc[0].to_dict()
-            material = str(supplier_info.get('material', ''))
-            batch_id = str(supplier_info.get('batch_id', ''))
-            
-            if df_mr is not None:
-                row_mr = df_mr[df_mr['material'].astype(str).str.strip().str.lower() == material.lower()]
-                if not row_mr.empty:
-                    risk_info = row_mr.iloc[0].to_dict()
-
-            if df_bq is not None:
-                row_bq = df_bq[df_bq['batch_id'].astype(str).str.strip().str.upper() == batch_id.upper()]
-                if not row_bq.empty:
-                    quality_info = row_bq.iloc[0].to_dict()
-                
-            nodes = [
-                {"id": "Mine", "label": f"{risk_info.get('country', 'Mine Site')} Raw Mineral Extraction", "status": "Audited"},
-                {"id": "Refining", "label": f"{supplier_info.get('supplier_name', 'Supplier')} Chemical Refining Hub", "status": "On Track"},
-                {"id": "CellManufacturing", "label": f"Cell Batch {batch_id}", "status": "QC Inspected"},
-                {"id": "Vehicle", "label": f"Deployed on Fleet Vehicle {supplier_info.get('vehicle_id', 'VIN-EV-20240001')}", "status": "In Operation"}
-            ]
-
     # Invoke REAL agent!
     unified_report = "No report generated."
+    tool_outs = {}
     try:
         res = supply_chain_app.invoke({"user_query": query})
         unified_report = res.get("reasoning_output", {}).get("unified_report", "No report generated.")
+        tool_outs = res.get("tool_outputs", {})
     except Exception as e:
         logger.error(f"Supply Chain Agent failed: {e}")
         unified_report = f"Agent execution failed due to API limits or misconfiguration: {str(e)}"
+    
+    supplier_info = tool_outs.get("get_supplier_profile", {})
+    risk_info = tool_outs.get("calculate_supplier_risk_score", {})
+    quality_info = tool_outs.get("assess_battery_quality", {})
+    
+    nodes = tool_outs.get("trace_material_batch", {}).get("traceability_nodes", [])
     
     return {
         "query": query,
@@ -361,33 +329,26 @@ def get_supply_chain(query: str = Query("Audit supplier SUP-001 and review ESG m
 def get_carbon_tracker(query: str = Query("What is our net zero target progress?", description="User query")):
     from ev_ai_agents.carbon_agent.agent import carbon_app
     
-    df_co2 = load_csv_safe(CO2_CSV)
-    df_log = load_csv_safe(LOGISTICS_CSV)
-    df_ef = load_csv_safe(EMISSION_FACTORS_CSV)
-
-    co2_history = df_co2.to_dict(orient='records') if df_co2 is not None else []
-    routes = df_log.head(10).to_dict(orient='records') if df_log is not None else []
-    emission_factors = df_ef.to_dict(orient='records') if df_ef is not None else []
-
-    latest = co2_history[-1] if co2_history else {"total_emissions": 12600, "target_emissions": 13000, "electrification_rate": 55.0}
-    status = "On Track" if latest["total_emissions"] <= latest["target_emissions"] else "At Risk"
-    
-    reduction_pct = 100 - (latest["total_emissions"] / co2_history[0]["total_emissions"] * 100) if len(co2_history) > 1 else 42.2
-
     # Invoke REAL agent!
     unified_report = "No report generated."
-    ai_status = status
-    ai_reduction = round(reduction_pct, 1)
+    ai_status = "Unknown"
+    ai_reduction = 0.0
+    tool_outs = {}
     
     try:
         res = carbon_app.invoke({"user_query": query})
         reasoning = res.get("reasoning_output", {})
         unified_report = reasoning.get("unified_report", "No report generated.")
-        ai_status = reasoning.get("status", status)
-        ai_reduction = reasoning.get("carbon_reduction_summary_pct", ai_reduction)
+        ai_status = reasoning.get("status", "Unknown")
+        ai_reduction = reasoning.get("carbon_reduction_summary_pct", 0.0)
+        tool_outs = res.get("tool_outputs", {})
     except Exception as e:
         logger.error(f"Carbon Agent failed: {e}")
         unified_report = f"Agent execution failed due to API limits or misconfiguration: {str(e)}"
+
+    co2_history = tool_outs.get("track_net_zero_progress", {}).get("co2_history", [])
+    routes = tool_outs.get("track_scope_emissions", {}).get("top_routes", [])
+    emission_factors = tool_outs.get("track_scope_emissions", {}).get("emission_factors", [])
 
     return {
         "status": ai_status,
