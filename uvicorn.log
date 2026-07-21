@@ -1,9 +1,11 @@
 INFO:     Will watch for changes in these directories: ['/Users/alex-ankush/Desktop/EV/EV_supply_chain']
 INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [2941] using StatReload
-INFO:     Started server process [2944]
+INFO:     Started reloader process [3113] using StatReload
+INFO:     Started server process [3120]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-13:24:25  INFO      HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
-13:24:25  ERROR     LLM Reasoning failed: Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kxzt2y38fjf95barxdsx1kk3` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99474, Requested 606. Please try again in 1m9.12s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}
-INFO:     127.0.0.1:49927 - "GET /api/agents/ev_apm?user_query=What+causes+battery+degradation+in+EVs%3f HTTP/1.1" 200 OK
+13:35:56  INFO      Executing tool: fetch_material_data
+13:35:56  INFO      Executing tool: fetch_process_data
+13:35:56  INFO      Executing tool: fetch_inspection_data
+13:36:00  INFO      HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:50004 - "GET /api/agents/ev_qms?user_query=What+defects+were+found%3F&batch_id=BTH-0001 HTTP/1.1" 200 OK
