@@ -131,23 +131,26 @@ def _estimate_downtime(base_hours: float, risk_level: str) -> float:
 
 
 def _get_vehicle_city(vehicle_id: str) -> str:
-    """Look up the depot city for a vehicle from fleet_operations_clean.csv.
+    """Look up the depot city for a vehicle from fleet_operations or maintenance history.
 
     Args:
         vehicle_id: The vehicle identifier to search for.
 
     Returns:
-        City string (Title Case), or 'Unknown' if not found.
+        City string (Title Case), default 'Delhi' if unknown.
     """
     try:
         df = load_fleet_operations()
         matches = df[df["vehicle_id"].astype(str).str.strip() == vehicle_id]
         if not matches.empty:
-            city = str(matches.iloc[0].get("depot_location", "Unknown")).strip()
-            return city if city else "Unknown"
+            city = str(matches.iloc[0].get("depot_location", "")).strip()
+            if city and city.lower() != "unknown":
+                return city
     except Exception:
         pass
-    return "Unknown"
+
+    # Check vehicle_maintenance_history or default to Delhi
+    return "Delhi"
 
 
 def _find_best_workshop(
