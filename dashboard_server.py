@@ -182,7 +182,7 @@ def get_ev_apm(
         if user_query and user_query.strip():
             res = apm_app.invoke({"user_query": user_query})
         else:
-            # Legacy: structured field path
+            # Advanced override: ID or raw telemetry
             input_data = {}
             if ev_id:
                 input_data["ev_id"] = ev_id
@@ -197,6 +197,28 @@ def get_ev_apm(
         battery = res.get("battery_analysis", {})
         safety = res.get("safety_analysis", {})
         telemetry = res.get("telemetry_data", {})
+
+        # Pull LLM reasoning output directly
+        reasoning = res.get("reasoning_output") or {}
+        llm_summary = reasoning.get("summary", "")
+        llm_explanation = reasoning.get("explanation", "")
+        llm_recommendations = reasoning.get("recommendations", [])
+        llm_triggers = reasoning.get("maintenance_triggers", [])
+
+        # Compose the AI response text shown in the summary box
+        ai_text = llm_summary
+        if llm_explanation:
+            ai_text += "\n\n" + llm_explanation
+
+        # Fallback if LLM didn't run
+        if not ai_text.strip():
+            soh = battery.get("state_of_health_percentage", battery.get("state_of_health_pct", 0))
+            deg = battery.get("degradation_rate_per_month", 0)
+            ai_text = (
+                f"Fleet analysis: avg SoH {soh}%, avg degradation {deg}%/month. "
+                f"Avg operating temp {safety.get('average_operating_temperature_celsius', 0)}°C, "
+                f"{safety.get('thermal_runaway_warnings', 0)} thermal risk EVs identified."
+            )
 
         return {
             "ev_id": ev_id or battery.get("ev_id", "QUERY_RESULT"),
@@ -217,9 +239,9 @@ def get_ev_apm(
                 "deep_discharge_cycles": telemetry.get("deep_discharge_cycles_last_month", telemetry.get("deep_discharge_cycles", 0)),
                 "avg_charge_duration_hours": telemetry.get("average_charge_duration_hours", telemetry.get("avg_charge_duration_hours", 0))
             },
-            "maintenance_triggers": res.get("maintenance_triggers", []),
-            "recommendations": res.get("recommendations", []),
-            "summary": res.get("messages", ["APM Agent executed successfully."])[-1] if res.get("messages") else "APM Agent executed successfully."
+            "maintenance_triggers": llm_triggers or res.get("maintenance_triggers", []),
+            "recommendations": llm_recommendations or res.get("recommendations", []),
+            "summary": ai_text
         }
     except Exception as e:
         logger.error(f"Error calling APM agent: {e}")
@@ -239,82 +261,80 @@ def get_ev_qms(
         # Natural language query is the primary path
         if user_query and user_query.strip():
             res = qms_app.invoke({"user_query": user_query})
-            batch_metrics = res.get("batch_metrics") or {}
-            # Fallback: read directly from tool_outputs if batch_metrics is empty
-            if not batch_metrics:
-                tool_outs = res.get("tool_outputs", {})
-                insp = tool_outs.get("fetch_inspection_data", {})
-                if insp and "error" not in insp:
-                    batch_metrics = {
-                        "total_inspected": insp.get("total_inspected", 0),
-                        "defect_rate_pct": insp.get("scrap_rate_pct", 0.0),
-                        "avg_resistance_mohm": insp.get("avg_resistance_mOhm", 0.0),
-                        "avg_capacity_mah": insp.get("avg_capacity_mAh", 0.0),
-                        "avg_electrolyte_ml": insp.get("avg_electrolyte_volume_ml", 0.0),
-                    }
-            return {
-                "batch_id": batch_id or "QUERY_RESULT",
-                "cell_metrics": {
-                    "total_cells_inspected": batch_metrics.get("total_inspected", 0),
-                    "scrap_defect_rate_pct": batch_metrics.get("defect_rate_pct", 0.0),
-                    "average_internal_resistance_mOhm": batch_metrics.get("avg_resistance_mohm", 0.0),
-                    "average_cell_capacity_mAh": batch_metrics.get("avg_capacity_mah", 0.0),
-                    "average_electrolyte_volume_ml": batch_metrics.get("avg_electrolyte_ml", 0.0)
-                },
-                "quality_distributions": {"grades": {}, "defect_categories": {}, "scrap_rate_by_line_pct": {}},
-                "quality_drift_analysis": res.get("process_drift", ""),
-                "root_cause_analysis": res.get("root_cause", ""),
-                "alerts": res.get("corrective_actions", []),
-                "recommendations": res.get("recommendations", []),
-                "summary": res.get("messages", ["QMS Agent executed."])[-1] if res.get("messages") else "QMS Agent executed."
-            }
+        else:
+            input_data = {}
+            if batch_id:
+                input_data["batch_id"] = batch_id
+            if elec_vol is not None:
+                input_data["electrolyte_volume_ml"] = elec_vol
+                input_data["internal_resistance_mohm"] = int_res
+                input_data["capacity_mah"] = cell_cap
+                input_data["ambient_temp_c"] = amb_temp
+            res = qms_app.invoke(input_data)
 
-        input_data = {}
-        if batch_id:
-            input_data["batch_id"] = batch_id
-        if elec_vol is not None:
-            input_data["electrolyte_volume_ml"] = elec_vol
-            input_data["internal_resistance_mohm"] = int_res
-            input_data["capacity_mah"] = cell_cap
-            input_data["ambient_temp_c"] = amb_temp
+        # Pull LLM reasoning output directly
+        reasoning = res.get("reasoning_output") or {}
+        llm_summary = reasoning.get("summary", "")
+        llm_explanation = reasoning.get("explanation", "")
+        llm_recommendations = reasoning.get("recommendations", [])
 
-        res = qms_app.invoke(input_data)
-        
+        ai_text = llm_summary
+        if llm_explanation:
+            ai_text += "\n\n" + llm_explanation
+
+        # Batch/factory metrics
         batch_metrics = res.get("batch_metrics") or {}
         # Fallback: read directly from tool_outputs if batch_metrics is empty
         if not batch_metrics:
-            tool_outs_inner = res.get("tool_outputs", {})
-            insp_inner = tool_outs_inner.get("fetch_inspection_data", {})
-            if insp_inner and "error" not in insp_inner:
+            tool_outs = res.get("tool_outputs", {})
+            insp = tool_outs.get("fetch_inspection_data", {})
+            if insp and "error" not in insp:
                 batch_metrics = {
-                    "total_inspected": insp_inner.get("total_inspected", 0),
-                    "defect_rate_pct": insp_inner.get("scrap_rate_pct", 0.0),
-                    "avg_resistance_mohm": insp_inner.get("avg_resistance_mOhm", 0.0),
-                    "avg_capacity_mah": insp_inner.get("avg_capacity_mAh", 0.0),
-                    "avg_electrolyte_ml": insp_inner.get("avg_electrolyte_volume_ml", 0.0),
+                    "total_inspected": insp.get("total_inspected", 0),
+                    "defect_rate_pct": insp.get("scrap_rate_pct", 0.0),
+                    "avg_resistance_mohm": insp.get("avg_resistance_mOhm", 0.0),
+                    "avg_capacity_mah": insp.get("avg_capacity_mAh", 0.0),
+                    "avg_electrolyte_ml": insp.get("avg_electrolyte_volume_ml", 0.0),
                 }
-        
+
+        # Quality distributions — pull from inspection_data or tool_outputs
+        insp_data = res.get("inspection_data") or {}
+        tool_outs2 = res.get("tool_outputs") or {}
+        agg_stats = tool_outs2.get("aggregate_qms_statistics") or insp_data
+        grades_dist = agg_stats.get("grades_distribution", {})
+        defect_cats = agg_stats.get("defect_categories", {})
+        line_stats = agg_stats.get("scrap_rate_by_line_pct", {})
+
+        # Fallback summary if LLM didn't run
+        if not ai_text.strip():
+            total = batch_metrics.get("total_inspected", 0)
+            rate = batch_metrics.get("defect_rate_pct", 0)
+            ai_text = f"Factory analysis: {total} cells inspected, {rate}% scrap defect rate. Avg capacity {batch_metrics.get('avg_capacity_mah', 0)} mAh, avg resistance {batch_metrics.get('avg_resistance_mohm', 0)} mΩ."
+
         return {
-            "batch_id": input_data.get("batch_id", "RAW_INPUT"),
+            "batch_id": batch_id or "QUERY_RESULT",
             "cell_metrics": {
                 "total_cells_inspected": batch_metrics.get("total_inspected", 0),
                 "scrap_defect_rate_pct": batch_metrics.get("defect_rate_pct", 0.0),
-                "average_internal_resistance_mOhm": int_res if int_res is not None else batch_metrics.get("avg_resistance_mohm", 0.0),
-                "average_cell_capacity_mAh": cell_cap if cell_cap is not None else batch_metrics.get("avg_capacity_mah", 0.0),
-                "average_electrolyte_volume_ml": elec_vol if elec_vol is not None else batch_metrics.get("avg_electrolyte_ml", 0.0)
+                "average_internal_resistance_mOhm": batch_metrics.get("avg_resistance_mohm", 0.0),
+                "average_cell_capacity_mAh": batch_metrics.get("avg_capacity_mah", 0.0),
+                "average_electrolyte_volume_ml": batch_metrics.get("avg_electrolyte_ml", 0.0)
             },
             "quality_distributions": {
-                "grades": {"Grade A": 0, "Grade B": 0, "Scrap": 0},
-                "defect_categories": {},
-                "scrap_rate_by_line_pct": {}
+                "grades": grades_dist,
+                "defect_categories": defect_cats,
+                "scrap_rate_by_line_pct": line_stats
             },
-            "quality_drift_analysis": res.get("process_drift", "QMS Agent executed. Analysis completed."),
-            "root_cause_analysis": res.get("root_cause", "N/A"),
-            "alerts": res.get("corrective_actions", [])
+            "quality_drift_analysis": res.get("process_drift", ""),
+            "root_cause_analysis": res.get("root_cause", ""),
+            "alerts": llm_recommendations or res.get("corrective_actions", []),
+            "recommendations": llm_recommendations or res.get("recommendations", []),
+            "summary": ai_text
         }
     except Exception as e:
         logger.error(f"Error calling QMS agent: {e}")
         raise HTTPException(status_code=500, detail=f"QMS agent execution failed: {str(e)}")
+
 
 # 5. EV Supply Chain & Manufacturing Logistics Agent
 @app.get("/api/agents/supply_chain")

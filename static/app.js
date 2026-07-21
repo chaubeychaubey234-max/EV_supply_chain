@@ -587,7 +587,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <i class="fa-solid fa-robot"></i>
                             <strong>AI Agent Battery Summary</strong>
                         </div>
-                        <p class="report-summary-text">${data.summary}</p>
+                        <p class="report-summary-text">${(data.summary || '').replace(/\n/g, '<br>')}</p>
                     </div>
 
                     <div class="report-grid">
@@ -783,7 +783,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <i class="fa-solid fa-robot"></i>
                             <strong>AI Process Drift Report</strong>
                         </div>
-                        <p class="report-summary-text">${data.quality_drift_analysis}</p>
+                        <p class="report-summary-text">${(data.summary || '').replace(/\n/g, '<br>')}</p>
                     </div>
 
                     <div class="report-grid">
