@@ -218,9 +218,12 @@ def llm_reasoning_node(state: APMState) -> dict:
         HumanMessage(content=user_prompt)
     ]
     
-    reasoning_result = generate_llm_response(messages, APMReasoningOutput)
-    
-    return {"reasoning_output": reasoning_result.model_dump()}
+    try:
+        reasoning_result = generate_llm_response(messages, APMReasoningOutput)
+        return {"reasoning_output": reasoning_result.model_dump()}
+    except Exception as e:
+        logger.error(f"LLM Reasoning failed: {e}")
+        return {"reasoning_output": {}}
 
 def response_builder_node(state: APMState) -> dict:
     """Builds the final backward-compatible response based on tools outputs and LLM reasoning."""
