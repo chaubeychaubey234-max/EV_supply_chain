@@ -69,7 +69,7 @@ def generate_llm_response(prompt_messages: list, response_model: Any = None) -> 
     return llm.invoke(prompt_messages)
 
 def planner_node(state: SupplyChainState) -> dict:
-    user_query = state.get("user_query", "")
+    user_query = state.get("user_query") or state.get("query", "")
     
     system_prompt = (
         "You are the Query Planner for an EV Supply Chain Intelligence system.\n"

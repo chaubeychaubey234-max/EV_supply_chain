@@ -144,10 +144,10 @@ def test_supply_chain_agent():
     print("="*50)
     
     test_cases = [
-        {"name": "Supplier Audit", "state": {"query": "Audit supplier SUP-001 and review ESG mineral risk."}},
-        {"name": "Material Traceability", "state": {"query": "Trace battery batch BAT-2024-001."}},
-        {"name": "Geopolitical Risk", "state": {"query": "Analyze geopolitical risk for lithium originating from China."}},
-        {"name": "Empty Query", "state": {"query": ""}}
+        {"name": "Supplier Audit", "state": {"user_query": "Audit supplier SUP-001 and review ESG mineral risk."}},
+        {"name": "Material Traceability", "state": {"user_query": "Trace battery batch BAT-2024-001."}},
+        {"name": "Geopolitical Risk", "state": {"user_query": "Analyze geopolitical risk for lithium originating from China."}},
+        {"name": "Empty Query", "state": {"user_query": ""}}
     ]
     
     for case in test_cases:
