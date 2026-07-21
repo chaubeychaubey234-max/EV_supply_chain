@@ -1,7 +1,8 @@
 import os
 import logging
 import re
-from typing import List, Optional, Any, Dict
+import json
+from typing import List, Optional, Any
 from langgraph.graph import StateGraph, END
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -12,11 +13,9 @@ from .tools.battery_tools import fetch_battery_health, predict_battery_health, a
 from .tools.thermal_tools import fetch_thermal_events
 from .tools.charging_tools import fetch_charging_patterns
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ev_apm_agent")
 
-# Define centralized Tool Registry
 _TOOL_REGISTRY = {
     "fetch_battery_health": fetch_battery_health,
     "predict_battery_health": predict_battery_health,
@@ -26,39 +25,45 @@ _TOOL_REGISTRY = {
 }
 
 class APMReasoningOutput(BaseModel):
-    summary: str = Field(description="Summary of the battery health status.")
-    explanation: str = Field(description="Detailed explanation of the analysis or concept.")
-    recommendations: List[str] = Field(description="List of actionable recommendations.")
-    reasoning: str = Field(description="Reasoning process for the conclusions.")
-    maintenance_triggers: List[str] = Field(description="List of predictive maintenance triggers.")
+    summary: str = Field(description="Concise answer to the user's question, grounded in fleet data where relevant.")
+    explanation: str = Field(description="Detailed explanation with domain insights. Reference specific numbers from the context when relevant.")
+    recommendations: List[str] = Field(description="Actionable recommendations for fleet operators or engineers.")
+    reasoning: str = Field(description="Step-by-step reasoning that led to the conclusions.")
+    maintenance_triggers: List[str] = Field(description="Specific maintenance triggers or warnings to flag.")
 
-# Isolated LLM execution helper
 def generate_llm_response(prompt_messages: list, response_model: Any = None) -> Any:
-    """Helper to run the ChatGroq model with optional structured output."""
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key or api_key.startswith("dummy"):
-        raise ValueError("GROQ_API_KEY is missing or invalid. LLM execution cannot proceed.")
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
+        raise ValueError("GROQ_API_KEY is missing or invalid.")
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.3)
     if response_model:
-        structured_llm = llm.with_structured_output(response_model)
-        return structured_llm.invoke(prompt_messages)
+        return llm.with_structured_output(response_model).invoke(prompt_messages)
     return llm.invoke(prompt_messages)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HEURISTIC PLANNER — no LLM needed to route. LLM is only used for reasoning.
+# CONTEXT LOADER — always runs, loads fleet-wide stats as RAG grounding
+# ─────────────────────────────────────────────────────────────────────────────
+def _load_fleet_context() -> dict:
+    """Load full fleet aggregate stats to use as LLM context for any query."""
+    try:
+        return aggregate_apm_statistics.invoke({"metric": "all"})
+    except Exception:
+        return {}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PLANNER — heuristic routing, never depends on LLM
 # ─────────────────────────────────────────────────────────────────────────────
 def planner_node(state: APMState) -> dict:
     """
-    Classifies the query using pure heuristics and builds the execution plan.
-    Rules (in priority order):
-      1. If raw telemetry params are provided → predict_battery_health
-      2. If a specific EV-XXXX id is in the query or state → fetch asset tools
-      3. Otherwise (any general/conceptual/statistical query) → aggregate_apm_statistics
-         so the LLM always has real fleet data as context to answer with.
+    Route by heuristic priority:
+      1. Live telemetry params provided → predict_battery_health
+      2. Specific EV-XXXX in query/state → fetch that asset's records
+      3. Everything else → no extra tools needed; fleet context always loaded in reasoning
     """
     user_query = (state.get("user_query") or state.get("query") or "").strip()
 
-    # ── Rule 1: live telemetry prediction ──────────────────────────────────
+    # Rule 1: live telemetry prediction
     if state.get("avg_temperature_c") is not None:
         return {
             "user_query": user_query,
@@ -69,11 +74,9 @@ def planner_node(state: APMState) -> dict:
             "tool_outputs": {}
         }
 
-    # ── Rule 2: specific EV ID in query or state ────────────────────────────
+    # Rule 2: specific EV ID
     ev_match = re.search(r"\b(EV-\d+)\b", user_query, re.IGNORECASE)
-    ev_id_from_query = ev_match.group(0).upper() if ev_match else None
-    ev_id = ev_id_from_query or state.get("ev_id")
-
+    ev_id = (ev_match.group(0).upper() if ev_match else None) or state.get("ev_id")
     if ev_id:
         return {
             "user_query": user_query,
@@ -85,41 +88,28 @@ def planner_node(state: APMState) -> dict:
             "tool_outputs": {}
         }
 
-    # ── Rule 3: general / statistical / conceptual — use fleet aggregation ──
-    # Determine aggregation scope from keywords
-    q_lower = user_query.lower()
-    if any(k in q_lower for k in ["temp", "thermal", "heat", "cooling", "runaway"]):
-        agg_metric = "temperature"
-    elif any(k in q_lower for k in ["charg", "fast charge", "discharge", "cycle"]):
-        agg_metric = "charging_cycles"
-    elif any(k in q_lower for k in ["health", "soh", "degradat", "rul", "life"]):
-        agg_metric = "battery_health"
-    else:
-        agg_metric = "all"
-
+    # Rule 3: general query — no extra per-asset tools needed; fleet context covers it
     return {
         "user_query": user_query,
-        "detected_intent": "statistical",
-        "analysis_mode": agg_metric,
-        "analysis_plan": ["aggregate_apm_statistics"],
-        "confidence": 0.9,
+        "detected_intent": "general",
+        "analysis_mode": "fleet_context_rag",
+        "analysis_plan": [],   # no extra tools — fleet context always injected in reasoning
+        "confidence": 1.0,
         "tool_outputs": {}
     }
 
 
 def tool_executor_node(state: APMState) -> dict:
-    """Executes the plan tools dynamically from the registry."""
+    """Executes any asset-specific or prediction tools from the plan."""
     tools_to_run = state.get("analysis_plan") or []
     tool_outputs = {}
     ev_id = state.get("ev_id")
-    agg_metric = state.get("analysis_mode") or "all"
 
     for tool_name in tools_to_run:
         tool_callable = _TOOL_REGISTRY.get(tool_name)
         if not tool_callable:
-            tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not available."}
+            tool_outputs[tool_name] = {"error": f"Tool '{tool_name}' not found."}
             continue
-
         try:
             logger.info(f"Executing tool: {tool_name}")
             if tool_name == "predict_battery_health":
@@ -130,10 +120,7 @@ def tool_executor_node(state: APMState) -> dict:
                     "avg_charge_duration_hours": state.get("avg_charge_duration_hours", 4.0),
                     "max_temperature_c": state.get("max_temperature_c", 45.0)
                 })
-            elif tool_name == "aggregate_apm_statistics":
-                result = tool_callable.invoke({"metric": agg_metric})
             else:
-                # asset-specific tools — ev_id is guaranteed to exist (Rule 2 above)
                 result = tool_callable.invoke({"ev_id": ev_id})
             tool_outputs[tool_name] = result
         except Exception as e:
@@ -144,104 +131,123 @@ def tool_executor_node(state: APMState) -> dict:
 
 
 def llm_reasoning_node(state: APMState) -> dict:
-    """Uses LLM to reason over tool outputs and answer the user query."""
+    """
+    Always loads fleet-wide context as RAG grounding, then answers the user's
+    question using that data + any per-asset tool outputs.
+    Works for ANY query — conceptual, statistical, operational, or comparative.
+    """
     user_query = state.get("user_query") or "No query provided."
-    detected_intent = state.get("detected_intent") or "statistical"
+    detected_intent = state.get("detected_intent") or "general"
     tool_outputs = state.get("tool_outputs") or {}
     ev_id = state.get("ev_id")
 
-    system_prompt = (
-        "You are an expert AI for Industrial EV Battery Asset Performance Management.\n"
-        "You have access to real fleet statistics and individual EV telemetry fetched directly from the company's dataset.\n"
-        "Your role: Interpret the tool outputs below and answer the user's question clearly and completely.\n"
-        "Rules:\n"
-        "- Use the tool output numbers directly — do NOT recalculate them.\n"
-        "- If data is aggregated fleet data, frame your answer around fleet-wide insights.\n"
-        "- If data is for a specific EV, give a focused per-asset analysis.\n"
-        "- For conceptual questions (no tool ran), answer using your EV domain expertise.\n"
-        "- Always give actionable recommendations and maintenance triggers.\n"
-        "- Be specific, cite the actual numbers from the tool outputs."
-    )
+    # Always load fleet context as background knowledge
+    fleet_context = _load_fleet_context()
 
-    user_prompt = f"User Question: {user_query}\nAnalysis Mode: {detected_intent}\n"
-    if ev_id:
-        user_prompt += f"EV Analyzed: {ev_id}\n"
-    user_prompt += "\nDataset Tool Outputs:\n"
-    for tool_name, output in tool_outputs.items():
-        user_prompt += f"\n[{tool_name}]\n{output}\n"
-    user_prompt += "\nBased on the data above, provide: summary, explanation, recommendations, reasoning, and maintenance_triggers."
+    system_prompt = """You are VoltGrid's EV Battery Intelligence Agent — an expert in EV battery asset performance management, degradation science, thermal management, and predictive maintenance.
+
+You have access to LIVE DATA from your company's fleet dataset (loaded below as FLEET CONTEXT). You must use this data to ground all your answers — whether the question is conceptual, statistical, operational, or analytical.
+
+**Your behavior rules:**
+1. **Always use fleet context** — When answering any question, reference relevant numbers from the Fleet Context to make your answer grounded and specific to this company's fleet.
+2. **Conceptual questions** — Explain the concept AND relate it to the actual fleet data (e.g., "Thermal runaway occurs when... In our fleet, we currently have X EVs at high thermal risk with max recorded temp of Y°C").
+3. **Statistical questions** — Answer directly from the Fleet Context data. Do not hedge — the numbers are real.
+4. **Specific EV questions** — Use the Per-Asset Tool Outputs to give a focused analysis of that EV, and compare to fleet averages from the Fleet Context.
+5. **Operational/advisory questions** — Use fleet data to back your recommendations with real numbers.
+6. Never say "I don't have access to data" — you always have the Fleet Context.
+7. Be specific, cite actual numbers, be concise but complete."""
+
+    # Build fleet context block
+    fleet_ctx_str = json.dumps(fleet_context, indent=2) if fleet_context else "Fleet context unavailable."
+
+    # Build per-asset outputs block
+    asset_outputs_str = ""
+    if tool_outputs:
+        asset_outputs_str = "\n\nPER-ASSET TOOL OUTPUTS (specific EV data):\n"
+        for tool_name, output in tool_outputs.items():
+            asset_outputs_str += f"\n[{tool_name}]\n{json.dumps(output, indent=2)}\n"
+
+    user_prompt = f"""USER QUESTION: {user_query}
+QUERY MODE: {detected_intent}
+{f"SPECIFIC EV: {ev_id}" if ev_id else ""}
+
+FLEET CONTEXT (live aggregate data from company's fleet dataset):
+{fleet_ctx_str}
+{asset_outputs_str}
+
+Answer the user's question completely. Ground your answer in the fleet data above. Be specific — use real numbers."""
 
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
 
     try:
-        reasoning_result = generate_llm_response(messages, APMReasoningOutput)
-        return {"reasoning_output": reasoning_result.model_dump()}
+        result = generate_llm_response(messages, APMReasoningOutput)
+        return {"reasoning_output": result.model_dump()}
     except Exception as e:
         logger.error(f"LLM Reasoning failed: {e}")
-        return {"reasoning_output": {}}
+        # Fallback: build a data-only summary from fleet context
+        fallback_summary = (
+            f"Fleet stats: {fleet_context.get('total_evs_inspected', 'N/A')} EVs, "
+            f"avg SoH {fleet_context.get('average_state_of_health_pct', 'N/A')}%, "
+            f"avg degradation {fleet_context.get('average_degradation_rate_monthly_pct', 'N/A')}%/month, "
+            f"{fleet_context.get('critical_evs_count', 'N/A')} critical EVs."
+        )
+        return {"reasoning_output": {"summary": fallback_summary, "explanation": "", "recommendations": [], "reasoning": "", "maintenance_triggers": []}}
 
 
 def response_builder_node(state: APMState) -> dict:
-    """Builds the final response from tool outputs and LLM reasoning."""
+    """Builds the final response. Always provides real fleet data for dashboard charts."""
     tool_outputs = state.get("tool_outputs") or {}
     reasoning = state.get("reasoning_output") or {}
-    query_type = state.get("detected_intent") or "statistical"
+    query_type = state.get("detected_intent") or "general"
 
-    # ── Battery analysis ───────────────────────────────────────────────────
+    # Battery analysis: per-asset → prediction → fleet aggregate
     if "predict_battery_health" in tool_outputs and "error" not in tool_outputs["predict_battery_health"]:
         battery_analysis = tool_outputs["predict_battery_health"]
     elif "fetch_battery_health" in tool_outputs and "error" not in tool_outputs["fetch_battery_health"]:
         battery_analysis = tool_outputs["fetch_battery_health"]
-    elif "aggregate_apm_statistics" in tool_outputs and "error" not in tool_outputs["aggregate_apm_statistics"]:
-        stats = tool_outputs["aggregate_apm_statistics"]
-        battery_analysis = {
-            "state_of_health_percentage": stats.get("average_state_of_health_pct", 0.0),
-            "degradation_rate_per_month": stats.get("average_degradation_rate_monthly_pct", 0.0),
-            "remaining_useful_life_months": 0,
-            "status": "Fleet Average Analysis",
-            "source": "fleet_dataset_aggregation"
-        }
     else:
-        battery_analysis = {"status": "No data", "state_of_health_percentage": 0.0, "degradation_rate_per_month": 0.0}
+        # General query: load fleet aggregate for chart population
+        fleet = _load_fleet_context()
+        battery_analysis = {
+            "state_of_health_percentage": fleet.get("average_state_of_health_pct", 0.0),
+            "degradation_rate_per_month": fleet.get("average_degradation_rate_monthly_pct", 0.0),
+            "remaining_useful_life_months": 0,
+            "status": "Fleet Average",
+            "source": "fleet_aggregate"
+        }
 
-    # ── Safety analysis ────────────────────────────────────────────────────
+    # Safety analysis: per-asset → fleet aggregate
     if "fetch_thermal_events" in tool_outputs and "error" not in tool_outputs["fetch_thermal_events"]:
         safety_analysis = tool_outputs["fetch_thermal_events"]
-    elif "aggregate_apm_statistics" in tool_outputs and "error" not in tool_outputs["aggregate_apm_statistics"]:
-        stats = tool_outputs["aggregate_apm_statistics"]
-        safety_analysis = {
-            "max_recorded_temperature_celsius": stats.get("max_operating_temperature_celsius", 0.0),
-            "average_operating_temperature_celsius": stats.get("average_operating_temperature_celsius", 0.0),
-            "thermal_runaway_warnings": stats.get("high_thermal_risk_evs_count", 0),
-            "cooling_system_status": "Fleet Average Analysis"
-        }
     else:
-        safety_analysis = {"max_recorded_temperature_celsius": 0.0, "thermal_runaway_warnings": 0, "cooling_system_status": "OK"}
+        fleet = _load_fleet_context()
+        safety_analysis = {
+            "average_operating_temperature_celsius": fleet.get("average_operating_temperature_celsius", 0.0),
+            "max_recorded_temperature_celsius": fleet.get("max_operating_temperature_celsius", 0.0),
+            "thermal_runaway_warnings": fleet.get("high_thermal_risk_evs_count", 0),
+            "cooling_system_status": "Fleet Average"
+        }
 
-    # ── Telemetry data ─────────────────────────────────────────────────────
+    # Telemetry: per-asset → fleet aggregate
     if "fetch_charging_patterns" in tool_outputs and "error" not in tool_outputs["fetch_charging_patterns"]:
         telemetry_data = tool_outputs["fetch_charging_patterns"]
-    elif "aggregate_apm_statistics" in tool_outputs and "error" not in tool_outputs["aggregate_apm_statistics"]:
-        stats = tool_outputs["aggregate_apm_statistics"]
-        telemetry_data = {
-            "fast_charging_ratio_percentage": stats.get("average_fast_charge_ratio_pct", 0.0),
-            "deep_discharge_cycles_last_month": int(stats.get("average_deep_discharge_cycles_monthly", 0)),
-            "average_charge_duration_hours": stats.get("average_charge_duration_hours", 0.0)
-        }
     else:
-        telemetry_data = {"fast_charging_ratio_percentage": 0.0}
+        fleet = _load_fleet_context()
+        telemetry_data = {
+            "fast_charging_ratio_percentage": fleet.get("average_fast_charge_ratio_pct", 0.0),
+            "deep_discharge_cycles_last_month": int(fleet.get("average_deep_discharge_cycles_monthly", 0)),
+            "average_charge_duration_hours": fleet.get("average_charge_duration_hours", 0.0)
+        }
 
-    # ── Recommendations & triggers ─────────────────────────────────────────
+    # Recommendations & messages
     recs = []
     if reasoning.get("summary"):
-        recs.append(f"Summary: {reasoning['summary']}")
+        recs.append(reasoning["summary"])
     if reasoning.get("explanation"):
-        recs.append(f"Explanation: {reasoning['explanation']}")
-    for r in reasoning.get("recommendations", []):
-        recs.append(r)
+        recs.append(reasoning["explanation"])
+    recs.extend(reasoning.get("recommendations", []))
 
-    triggers = reasoning.get("maintenance_triggers", [])
-    messages = [f"Analysis completed for query type: {query_type}"]
+    messages = [f"Analysis completed ({query_type})"]
     if reasoning.get("summary"):
         messages.append(reasoning["summary"])
 
@@ -250,12 +256,12 @@ def response_builder_node(state: APMState) -> dict:
         "battery_analysis": battery_analysis,
         "safety_analysis": safety_analysis,
         "recommendations": recs,
-        "maintenance_triggers": triggers,
+        "maintenance_triggers": reasoning.get("maintenance_triggers", []),
         "messages": messages
     }
 
 
-# Build the graph
+# Build graph
 workflow = StateGraph(APMState)
 workflow.add_node("planner", planner_node)
 workflow.add_node("tool_executor", tool_executor_node)
