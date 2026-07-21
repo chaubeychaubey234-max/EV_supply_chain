@@ -15,9 +15,13 @@ class QMSState(TypedDict, total=False):
     process_data: dict
     inspection_data: dict
     quality_drift_analysis: str
+    process_drift: str
     root_cause_analysis: str
+    root_cause: str
     alerts: List[str]
+    corrective_actions: List[str]
     messages: List[str]
+    batch_metrics: dict
 
     # Optional internal orchestration fields
     user_query: Optional[str]
