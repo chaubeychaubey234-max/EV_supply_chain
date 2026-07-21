@@ -9,3 +9,8 @@ INFO:     Application startup complete.
 13:35:56  INFO      Executing tool: fetch_inspection_data
 13:36:00  INFO      HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 INFO:     127.0.0.1:50004 - "GET /api/agents/ev_qms?user_query=What+defects+were+found%3F&batch_id=BTH-0001 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3120]
+INFO:     Stopping reloader process [3113]
