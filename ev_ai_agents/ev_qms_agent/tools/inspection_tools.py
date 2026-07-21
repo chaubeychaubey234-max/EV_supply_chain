@@ -20,17 +20,18 @@ def fetch_inspection_data(batch_id: str) -> dict:
     scrap_cells = len(row[row['QC_Grade'] == 'Scrap'])
     scrap_rate = (scrap_cells / total_cells) * 100.0 if total_cells > 0 else 0.0
     
-    # Collect defect types and inspector comments
-    defect_types = row[row['Defect_Type'] != 'None']['Defect_Type'].unique().tolist()
+    # Collect defect types and inspector comments — cast to str to handle NaN floats
+    raw_defects = row['Defect_Type'].dropna().unique().tolist()
+    defect_types = [str(d) for d in raw_defects if str(d) not in ('None', 'nan', '')]
     
     return {
         "batch_id": str(batch_id),
         "total_inspected": total_cells,
         "scrap_rate_pct": round(scrap_rate, 2),
-        "avg_resistance_mOhm": round(row['Internal_Resistance_mOhm'].mean(), 2),
-        "avg_capacity_mAh": round(row['Capacity_mAh'].mean(), 1),
-        "avg_retention_50_cycle_pct": round(row['Retention_50Cycle_Pct'].mean(), 2),
-        "avg_electrolyte_volume_ml": round(row['Electrolyte_Volume_ml'].mean(), 2) if 'Electrolyte_Volume_ml' in row.columns else 0.0,
+        "avg_resistance_mOhm": round(float(row['Internal_Resistance_mOhm'].mean()), 2),
+        "avg_capacity_mAh": round(float(row['Capacity_mAh'].mean()), 1),
+        "avg_retention_50_cycle_pct": round(float(row['Retention_50Cycle_Pct'].mean()), 2),
+        "avg_electrolyte_volume_ml": round(float(row['Electrolyte_Volume_ml'].mean()), 2) if 'Electrolyte_Volume_ml' in row.columns else 0.0,
         "defect_types": ", ".join(defect_types) if defect_types else "None",
     }
 

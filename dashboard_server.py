@@ -207,15 +207,15 @@ def get_ev_apm(
                 "status": battery.get("status", "Unknown")
             },
             "safety_analysis": {
-                "avg_temp_c": avg_temp or 0,
-                "max_temp_c": max_temp or safety.get("max_recorded_temperature_celsius", 0),
-                "cooling_status": safety.get("cooling_system_status", "OK"),
+                "avg_temp_c": safety.get("average_operating_temperature_celsius", safety.get("avg_temp_c", 0)),
+                "max_temp_c": safety.get("max_recorded_temperature_celsius", safety.get("max_temp_c", 0)),
+                "cooling_status": safety.get("cooling_system_status", safety.get("cooling_status", "OK")),
                 "thermal_runaway_warnings": safety.get("thermal_runaway_warnings", 0)
             },
             "telemetry_data": {
-                "fast_charge_ratio_pct": fc_ratio or telemetry.get("fast_charging_ratio_percentage", 0),
-                "deep_discharge_cycles": deep_cycles or 0,
-                "avg_charge_duration_hours": charge_dur or 0
+                "fast_charge_ratio_pct": telemetry.get("fast_charging_ratio_percentage", telemetry.get("fast_charge_ratio_pct", 0)),
+                "deep_discharge_cycles": telemetry.get("deep_discharge_cycles_last_month", telemetry.get("deep_discharge_cycles", 0)),
+                "avg_charge_duration_hours": telemetry.get("average_charge_duration_hours", telemetry.get("avg_charge_duration_hours", 0))
             },
             "maintenance_triggers": res.get("maintenance_triggers", []),
             "recommendations": res.get("recommendations", []),
@@ -239,11 +239,23 @@ def get_ev_qms(
         # Natural language query is the primary path
         if user_query and user_query.strip():
             res = qms_app.invoke({"user_query": user_query})
-            batch_metrics = res.get("batch_metrics", {})
+            batch_metrics = res.get("batch_metrics") or {}
+            # Fallback: read directly from tool_outputs if batch_metrics is empty
+            if not batch_metrics:
+                tool_outs = res.get("tool_outputs", {})
+                insp = tool_outs.get("fetch_inspection_data", {})
+                if insp and "error" not in insp:
+                    batch_metrics = {
+                        "total_inspected": insp.get("total_inspected", 0),
+                        "defect_rate_pct": insp.get("scrap_rate_pct", 0.0),
+                        "avg_resistance_mohm": insp.get("avg_resistance_mOhm", 0.0),
+                        "avg_capacity_mah": insp.get("avg_capacity_mAh", 0.0),
+                        "avg_electrolyte_ml": insp.get("avg_electrolyte_volume_ml", 0.0),
+                    }
             return {
                 "batch_id": batch_id or "QUERY_RESULT",
                 "cell_metrics": {
-                    "total_cells_inspected": batch_metrics.get("total_inspected", 1),
+                    "total_cells_inspected": batch_metrics.get("total_inspected", 0),
                     "scrap_defect_rate_pct": batch_metrics.get("defect_rate_pct", 0.0),
                     "average_internal_resistance_mOhm": batch_metrics.get("avg_resistance_mohm", 0.0),
                     "average_cell_capacity_mAh": batch_metrics.get("avg_capacity_mah", 0.0),
@@ -268,12 +280,24 @@ def get_ev_qms(
 
         res = qms_app.invoke(input_data)
         
-        batch_metrics = res.get("batch_metrics", {})
+        batch_metrics = res.get("batch_metrics") or {}
+        # Fallback: read directly from tool_outputs if batch_metrics is empty
+        if not batch_metrics:
+            tool_outs_inner = res.get("tool_outputs", {})
+            insp_inner = tool_outs_inner.get("fetch_inspection_data", {})
+            if insp_inner and "error" not in insp_inner:
+                batch_metrics = {
+                    "total_inspected": insp_inner.get("total_inspected", 0),
+                    "defect_rate_pct": insp_inner.get("scrap_rate_pct", 0.0),
+                    "avg_resistance_mohm": insp_inner.get("avg_resistance_mOhm", 0.0),
+                    "avg_capacity_mah": insp_inner.get("avg_capacity_mAh", 0.0),
+                    "avg_electrolyte_ml": insp_inner.get("avg_electrolyte_volume_ml", 0.0),
+                }
         
         return {
             "batch_id": input_data.get("batch_id", "RAW_INPUT"),
             "cell_metrics": {
-                "total_cells_inspected": batch_metrics.get("total_inspected", 1),
+                "total_cells_inspected": batch_metrics.get("total_inspected", 0),
                 "scrap_defect_rate_pct": batch_metrics.get("defect_rate_pct", 0.0),
                 "average_internal_resistance_mOhm": int_res if int_res is not None else batch_metrics.get("avg_resistance_mohm", 0.0),
                 "average_cell_capacity_mAh": cell_cap if cell_cap is not None else batch_metrics.get("avg_capacity_mah", 0.0),

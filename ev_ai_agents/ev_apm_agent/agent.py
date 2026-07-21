@@ -116,8 +116,21 @@ def planner_node(state: APMState) -> dict:
         HumanMessage(content=f"Generate a query plan for the user query: '{user_query}'")
     ]
     
-    plan = generate_llm_response(messages, APMQueryPlan)
-    
+    try:
+        plan = generate_llm_response(messages, APMQueryPlan)
+    except Exception as e:
+        logger.error(f"Planner LLM failed: {e}")
+        plan = APMQueryPlan(
+            query_type="asset",
+            requires_dataset=True,
+            tools=["fetch_battery_health", "fetch_thermal_events", "fetch_charging_patterns"],
+            requires_llm=True,
+            analysis_mode="Fallback Asset Analysis",
+            generic_description="",
+            confidence=0.5,
+            extracted_ev_id=extracted_ev_id,
+            aggregation_metric="all"
+        )
     final_ev_id = plan.extracted_ev_id or extracted_ev_id
     if final_ev_id and final_ev_id not in state.get("user_query", ""):
         # LLM hallucinated an ID not in the query

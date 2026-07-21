@@ -115,7 +115,21 @@ def planner_node(state: QMSState) -> dict:
         HumanMessage(content=f"Generate a query plan for the user query: '{user_query}'")
     ]
     
-    plan = generate_llm_response(messages, QMSQueryPlan)
+    try:
+        plan = generate_llm_response(messages, QMSQueryPlan)
+    except Exception as e:
+        logger.error(f"Planner LLM failed: {e}")
+        plan = QMSQueryPlan(
+            query_type="asset",
+            requires_dataset=True,
+            tools=["fetch_material_data", "fetch_process_data", "fetch_inspection_data"],
+            requires_llm=True,
+            analysis_mode="Fallback Asset Analysis",
+            generic_description="",
+            confidence=0.5,
+            extracted_batch_id=extracted_batch_id,
+            aggregation_metric="all"
+        )
     
     final_batch_id = plan.extracted_batch_id or extracted_batch_id
     if final_batch_id and final_batch_id not in state.get("user_query", ""):
