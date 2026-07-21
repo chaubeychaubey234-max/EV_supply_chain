@@ -40,15 +40,21 @@ def generate_llm_response(prompt_messages: list, response_model: Any = None) -> 
         return llm.with_structured_output(response_model).invoke(prompt_messages)
     return llm.invoke(prompt_messages)
 
+# Module-level cache — computed once at startup, reused for every request
+_FLEET_CONTEXT_CACHE: dict = {}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # CONTEXT LOADER — always runs, loads fleet-wide stats as RAG grounding
 # ─────────────────────────────────────────────────────────────────────────────
 def _load_fleet_context() -> dict:
-    """Load full fleet aggregate stats to use as LLM context for any query."""
-    try:
-        return aggregate_apm_statistics.invoke({"metric": "all"})
-    except Exception:
-        return {}
+    """Load fleet aggregate stats, caching the result for the lifetime of the process."""
+    global _FLEET_CONTEXT_CACHE
+    if not _FLEET_CONTEXT_CACHE:
+        try:
+            _FLEET_CONTEXT_CACHE = aggregate_apm_statistics.invoke({"metric": "all"})
+        except Exception:
+            pass
+    return _FLEET_CONTEXT_CACHE
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +136,21 @@ def tool_executor_node(state: APMState) -> dict:
     return {"tool_outputs": tool_outputs}
 
 
+def _compact_context(ctx: dict) -> str:
+    """Convert context dict to a compact single-line string to save tokens."""
+    parts = []
+    for k, v in ctx.items():
+        if isinstance(v, dict):
+            # Inline nested dicts as key:value pairs
+            inner = ", ".join(f"{ik}={iv}" for ik, iv in v.items())
+            parts.append(f"{k}=[{inner}]")
+        elif isinstance(v, list):
+            parts.append(f"{k}=[{', '.join(str(x) for x in v[:5])}]")
+        else:
+            parts.append(f"{k}={v}")
+    return " | ".join(parts)
+
+
 def llm_reasoning_node(state: APMState) -> dict:
     """
     Always loads fleet-wide context as RAG grounding, then answers the user's
@@ -143,39 +164,28 @@ def llm_reasoning_node(state: APMState) -> dict:
 
     # Always load fleet context as background knowledge
     fleet_context = _load_fleet_context()
+    fleet_ctx_str = _compact_context(fleet_context) if fleet_context else "Fleet context unavailable."
 
-    system_prompt = """You are VoltGrid's EV Battery Intelligence Agent — an expert in EV battery asset performance management, degradation science, thermal management, and predictive maintenance.
+    # Build per-asset outputs (compact)
+    asset_lines = []
+    for tool_name, output in tool_outputs.items():
+        asset_lines.append(f"[{tool_name}]: {_compact_context(output) if isinstance(output, dict) else output}")
+    asset_str = "\n".join(asset_lines)
 
-You have access to LIVE DATA from your company's fleet dataset (loaded below as FLEET CONTEXT). You must use this data to ground all your answers — whether the question is conceptual, statistical, operational, or analytical.
+    system_prompt = (
+        "You are VoltGrid's EV Battery Intelligence Agent — expert in EV battery health, degradation, thermal management, and predictive maintenance.\n"
+        "You have live fleet data below. Use it to ground EVERY answer with real numbers from this fleet.\n"
+        "Rules: (1) Always cite actual fleet numbers. (2) For conceptual questions, explain the concept AND reference fleet data. "
+        "(3) For specific EVs, compare to fleet averages. (4) Never say you lack data — you have the Fleet Context."
+    )
 
-**Your behavior rules:**
-1. **Always use fleet context** — When answering any question, reference relevant numbers from the Fleet Context to make your answer grounded and specific to this company's fleet.
-2. **Conceptual questions** — Explain the concept AND relate it to the actual fleet data (e.g., "Thermal runaway occurs when... In our fleet, we currently have X EVs at high thermal risk with max recorded temp of Y°C").
-3. **Statistical questions** — Answer directly from the Fleet Context data. Do not hedge — the numbers are real.
-4. **Specific EV questions** — Use the Per-Asset Tool Outputs to give a focused analysis of that EV, and compare to fleet averages from the Fleet Context.
-5. **Operational/advisory questions** — Use fleet data to back your recommendations with real numbers.
-6. Never say "I don't have access to data" — you always have the Fleet Context.
-7. Be specific, cite actual numbers, be concise but complete."""
-
-    # Build fleet context block
-    fleet_ctx_str = json.dumps(fleet_context, indent=2) if fleet_context else "Fleet context unavailable."
-
-    # Build per-asset outputs block
-    asset_outputs_str = ""
-    if tool_outputs:
-        asset_outputs_str = "\n\nPER-ASSET TOOL OUTPUTS (specific EV data):\n"
-        for tool_name, output in tool_outputs.items():
-            asset_outputs_str += f"\n[{tool_name}]\n{json.dumps(output, indent=2)}\n"
-
-    user_prompt = f"""USER QUESTION: {user_query}
-QUERY MODE: {detected_intent}
-{f"SPECIFIC EV: {ev_id}" if ev_id else ""}
-
-FLEET CONTEXT (live aggregate data from company's fleet dataset):
-{fleet_ctx_str}
-{asset_outputs_str}
-
-Answer the user's question completely. Ground your answer in the fleet data above. Be specific — use real numbers."""
+    user_prompt = (
+        f"Question: {user_query}\n"
+        f"Mode: {detected_intent}{(' | EV: ' + ev_id) if ev_id else ''}\n\n"
+        f"FLEET CONTEXT: {fleet_ctx_str}\n"
+        + (f"\nASSET DATA:\n{asset_str}" if asset_str else "") +
+        "\n\nAnswer fully, cite real numbers, give actionable recommendations."
+    )
 
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
 

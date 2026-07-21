@@ -39,15 +39,21 @@ def generate_llm_response(prompt_messages: list, response_model: Any = None) -> 
         return llm.with_structured_output(response_model).invoke(prompt_messages)
     return llm.invoke(prompt_messages)
 
+# Module-level cache — computed once at startup, reused for every request
+_FACTORY_CONTEXT_CACHE: dict = {}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # CONTEXT LOADER — always runs, loads factory-wide stats as RAG grounding
 # ─────────────────────────────────────────────────────────────────────────────
 def _load_factory_context() -> dict:
-    """Load full factory aggregate stats to use as LLM context for any query."""
-    try:
-        return aggregate_qms_statistics.invoke({"metric": "all"})
-    except Exception:
-        return {}
+    """Load factory aggregate stats, caching the result for the lifetime of the process."""
+    global _FACTORY_CONTEXT_CACHE
+    if not _FACTORY_CONTEXT_CACHE:
+        try:
+            _FACTORY_CONTEXT_CACHE = aggregate_qms_statistics.invoke({"metric": "all"})
+        except Exception:
+            pass
+    return _FACTORY_CONTEXT_CACHE
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +136,20 @@ def tool_executor_node(state: QMSState) -> dict:
     return {"tool_outputs": tool_outputs}
 
 
+def _compact_context(ctx: dict) -> str:
+    """Convert context dict to a compact single-line string to save tokens."""
+    parts = []
+    for k, v in ctx.items():
+        if isinstance(v, dict):
+            inner = ", ".join(f"{ik}={iv}" for ik, iv in v.items())
+            parts.append(f"{k}=[{inner}]")
+        elif isinstance(v, list):
+            parts.append(f"{k}=[{', '.join(str(x) for x in v[:5])}]")
+        else:
+            parts.append(f"{k}={v}")
+    return " | ".join(parts)
+
+
 def llm_reasoning_node(state: QMSState) -> dict:
     """
     Always loads factory-wide context as RAG grounding, then answers the user's
@@ -143,39 +163,28 @@ def llm_reasoning_node(state: QMSState) -> dict:
 
     # Always load factory context as background knowledge
     factory_context = _load_factory_context()
+    factory_ctx_str = _compact_context(factory_context) if factory_context else "Factory context unavailable."
 
-    system_prompt = """You are VoltGrid's EV Battery Manufacturing Quality Intelligence Agent — an expert in EV cell manufacturing, quality management systems, defect root cause analysis, process control, and production line optimization.
+    # Build per-batch outputs (compact)
+    asset_lines = []
+    for tool_name, output in tool_outputs.items():
+        asset_lines.append(f"[{tool_name}]: {_compact_context(output) if isinstance(output, dict) else output}")
+    asset_str = "\n".join(asset_lines)
 
-You have access to LIVE DATA from your company's manufacturing dataset (loaded below as FACTORY CONTEXT). You must use this data to ground all your answers — whether the question is conceptual, statistical, operational, or analytical.
+    system_prompt = (
+        "You are VoltGrid's EV Manufacturing Quality Intelligence Agent — expert in EV cell manufacturing, QMS, defect root cause analysis, and production optimization.\n"
+        "You have live factory data below. Use it to ground EVERY answer with real numbers from this factory.\n"
+        "Rules: (1) Always cite actual factory numbers. (2) For conceptual questions, explain the concept AND reference factory data. "
+        "(3) For specific batches, compare to factory averages. (4) Never say you lack data — you have the Factory Context."
+    )
 
-**Your behavior rules:**
-1. **Always use factory context** — When answering any question, reference relevant numbers from the Factory Context to make your answer grounded and specific to this company's manufacturing operations.
-2. **Conceptual questions** — Explain the concept AND relate it to actual factory data (e.g., "Anode overhang causes short circuits. In our factory, the most common defect is X, appearing in Y% of scrapped cells").
-3. **Statistical questions** — Answer directly from the Factory Context data. Be precise with numbers.
-4. **Specific batch questions** — Use the Per-Batch Tool Outputs for focused analysis, compare to factory averages.
-5. **Operational/advisory questions** — Use factory data to back your recommendations with real numbers.
-6. Never say "I don't have access to data" — you always have the Factory Context.
-7. Be specific, cite actual defect types, production lines, scrap rates, and cell metrics from the data."""
-
-    # Build factory context block
-    factory_ctx_str = json.dumps(factory_context, indent=2) if factory_context else "Factory context unavailable."
-
-    # Build per-batch outputs block
-    asset_outputs_str = ""
-    if tool_outputs:
-        asset_outputs_str = "\n\nPER-BATCH TOOL OUTPUTS (specific batch data):\n"
-        for tool_name, output in tool_outputs.items():
-            asset_outputs_str += f"\n[{tool_name}]\n{json.dumps(output, indent=2)}\n"
-
-    user_prompt = f"""USER QUESTION: {user_query}
-QUERY MODE: {detected_intent}
-{f"SPECIFIC BATCH: {batch_id}" if batch_id else ""}
-
-FACTORY CONTEXT (live aggregate data from company's manufacturing dataset):
-{factory_ctx_str}
-{asset_outputs_str}
-
-Answer the user's question completely. Ground your answer in the factory data above. Be specific — use real numbers, defect types, and production line details."""
+    user_prompt = (
+        f"Question: {user_query}\n"
+        f"Mode: {detected_intent}{(' | Batch: ' + batch_id) if batch_id else ''}\n\n"
+        f"FACTORY CONTEXT: {factory_ctx_str}\n"
+        + (f"\nBATCH DATA:\n{asset_str}" if asset_str else "") +
+        "\n\nAnswer fully, cite real numbers, give actionable corrective actions."
+    )
 
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
 
