@@ -247,18 +247,20 @@ def response_builder_node(state: QMSState) -> dict:
             "avg_electrolyte_ml": factory.get("average_electrolyte_volume_ml", 0.0)
         }
 
-    # Text outputs
-    drift_text = ""
-    if reasoning.get("summary") or reasoning.get("explanation"):
-        drift_text = f"Summary: {reasoning.get('summary', '')}\n\nExplanation: {reasoning.get('explanation', '')}"
+    # Text outputs — NO prefix labels, just clean text
+    # The server reads reasoning_output directly for the summary box
     root_cause_text = reasoning.get("reasoning", "")
     alerts_list = reasoning.get("recommendations", [])
+
+    # drift_text is for quality_drift_analysis field only — clean text no prefix
+    drift_text = reasoning.get("explanation", "") or reasoning.get("summary", "")
 
     messages = [f"Analysis completed ({query_type})"]
     if reasoning.get("summary"):
         messages.append(reasoning["summary"])
 
     return {
+        "reasoning_output": reasoning,   # expose directly so server can read summary/explanation
         "material_data": material_data,
         "process_data": process_data,
         "inspection_data": inspection_data,

@@ -553,11 +553,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const chargeDur = document.getElementById("apm-charge-dur")?.value;
 
             let queryUrl;
-            // NL query is the primary path — if filled, send directly to agent planner
+            // NL query is the primary path — always include ev_id alongside it
             if (nlQuery) {
                 queryUrl = `/api/agents/ev_apm?user_query=${encodeURIComponent(nlQuery)}`;
+                if (evId) queryUrl += `&ev_id=${evId}`; // include selected EV so agent analyzes that specific vehicle
             } else {
-                // Advanced override: ID or raw telemetry
+                // Advanced override: ID or raw telemetry only
                 queryUrl = `/api/agents/ev_apm?ev_id=${evId}`;
                 if (avgTemp) queryUrl += `&avg_temp=${avgTemp}`;
                 if (maxTemp) queryUrl += `&max_temp=${maxTemp}`;
@@ -751,10 +752,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const ambTemp = document.getElementById("qms-amb-temp")?.value;
 
             let queryUrl;
-            // NL query is the primary path
+            // NL query is the primary path — always include batch_id alongside it
             if (nlQuery) {
                 queryUrl = `/api/agents/ev_qms?user_query=${encodeURIComponent(nlQuery)}`;
+                if (batch) queryUrl += `&batch_id=${batch}`; // include selected batch so agent analyzes that specific batch
             } else {
+                // Advanced override: batch ID or raw metrics only
                 queryUrl = `/api/agents/ev_qms?batch_id=${batch}`;
                 if (elecVol) queryUrl += `&elec_vol=${elecVol}`;
                 if (intRes) queryUrl += `&int_res=${intRes}`;

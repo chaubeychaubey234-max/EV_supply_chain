@@ -210,14 +210,15 @@ def response_builder_node(state: APMState) -> dict:
     reasoning = state.get("reasoning_output") or {}
     query_type = state.get("detected_intent") or "general"
 
+    # Load fleet once (cached)
+    fleet = _load_fleet_context()
+
     # Battery analysis: per-asset → prediction → fleet aggregate
     if "predict_battery_health" in tool_outputs and "error" not in tool_outputs["predict_battery_health"]:
         battery_analysis = tool_outputs["predict_battery_health"]
     elif "fetch_battery_health" in tool_outputs and "error" not in tool_outputs["fetch_battery_health"]:
         battery_analysis = tool_outputs["fetch_battery_health"]
     else:
-        # General query: load fleet aggregate for chart population
-        fleet = _load_fleet_context()
         battery_analysis = {
             "state_of_health_percentage": fleet.get("average_state_of_health_pct", 0.0),
             "degradation_rate_per_month": fleet.get("average_degradation_rate_monthly_pct", 0.0),
@@ -230,7 +231,6 @@ def response_builder_node(state: APMState) -> dict:
     if "fetch_thermal_events" in tool_outputs and "error" not in tool_outputs["fetch_thermal_events"]:
         safety_analysis = tool_outputs["fetch_thermal_events"]
     else:
-        fleet = _load_fleet_context()
         safety_analysis = {
             "average_operating_temperature_celsius": fleet.get("average_operating_temperature_celsius", 0.0),
             "max_recorded_temperature_celsius": fleet.get("max_operating_temperature_celsius", 0.0),
@@ -242,26 +242,21 @@ def response_builder_node(state: APMState) -> dict:
     if "fetch_charging_patterns" in tool_outputs and "error" not in tool_outputs["fetch_charging_patterns"]:
         telemetry_data = tool_outputs["fetch_charging_patterns"]
     else:
-        fleet = _load_fleet_context()
         telemetry_data = {
             "fast_charging_ratio_percentage": fleet.get("average_fast_charge_ratio_pct", 0.0),
             "deep_discharge_cycles_last_month": int(fleet.get("average_deep_discharge_cycles_monthly", 0)),
             "average_charge_duration_hours": fleet.get("average_charge_duration_hours", 0.0)
         }
 
-    # Recommendations & messages
-    recs = []
-    if reasoning.get("summary"):
-        recs.append(reasoning["summary"])
-    if reasoning.get("explanation"):
-        recs.append(reasoning["explanation"])
-    recs.extend(reasoning.get("recommendations", []))
+    # Recommendations: only actual action items, not summary/explanation
+    recs = reasoning.get("recommendations", [])
 
     messages = [f"Analysis completed ({query_type})"]
     if reasoning.get("summary"):
         messages.append(reasoning["summary"])
 
     return {
+        "reasoning_output": reasoning,   # expose directly so server can read summary/explanation
         "telemetry_data": telemetry_data,
         "battery_analysis": battery_analysis,
         "safety_analysis": safety_analysis,

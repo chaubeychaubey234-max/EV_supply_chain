@@ -180,7 +180,10 @@ def get_ev_apm(
     try:
         # Natural language query is the primary path — goes through the agent's own planner
         if user_query and user_query.strip():
-            res = apm_app.invoke({"user_query": user_query})
+            input_data = {"user_query": user_query}
+            if ev_id:
+                input_data["ev_id"] = ev_id  # pass selected EV so planner routes to asset analysis
+            res = apm_app.invoke(input_data)
         else:
             # Advanced override: ID or raw telemetry
             input_data = {}
@@ -260,7 +263,10 @@ def get_ev_qms(
     try:
         # Natural language query is the primary path
         if user_query and user_query.strip():
-            res = qms_app.invoke({"user_query": user_query})
+            input_data = {"user_query": user_query}
+            if batch_id:
+                input_data["batch_id"] = batch_id  # pass selected batch so planner routes to batch analysis
+            res = qms_app.invoke(input_data)
         else:
             input_data = {}
             if batch_id:
