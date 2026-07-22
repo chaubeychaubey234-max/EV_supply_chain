@@ -1,4 +1,4 @@
-# EV Fleet Intelligence & Supply Chain AI Platform
+# 🔋 EV Fleet Intelligence & Supply Chain AI Platform
 
 An enterprise-grade, multi-agent AI orchestration platform designed to manage electric vehicle (EV) asset performance, factory manufacturing quality (QMS), fleet electrification transitions, workshop maintenance scheduling, charging infrastructure planning, green logistics carbon footprint, and supply chain risk profiling. 
 
@@ -83,36 +83,16 @@ When API limits or network issues impact LLM availability, each agent automatica
 
 ---
 
-## 📂 Project Structure
-
-```
-├── dashboard_server.py      # FastAPI backend service exposing REST endpoints
-├── static/                  # Interactive HTML/CSS/JS web dashboard
-├── orchestrator/            # Central supervisor graph and routing logic
-│   ├── state.py             # Global state definitions
-│   └── supervisor.py        # LangGraph coordination, validator, and aggregator nodes
-├── ev_ai_agents/            # Expert agent implementations
-│   ├── ev_apm_agent/
-│   ├── ev_qms_agent/
-│   ├── ev_supply_chain_agent/
-│   ├── ev_fleet_electrification_agent/
-│   ├── ev_maintenance_operations_agent/
-│   └── carbon_agent/
-├── verify_agents.py         # Complete agent verification test suite
-└── requirements.txt         # Dependencies
-```
-
----
-
 ## 🚀 Getting Started
 
 ### 📋 Prerequisites
 * Python 3.10+
-* A valid Groq API Key (for LLM reasoning and aggregation)
+* A valid [Groq API Key](https://console.groq.com/keys) (for LLM reasoning and aggregation)
 
 ### 🔧 Setup and Installation
 1. Clone the repository and navigate to the project directory:
    ```bash
+   git clone https://github.com/your-username/EV_supply_chain.git
    cd EV_supply_chain
    ```
 2. Install the required dependencies:
@@ -135,4 +115,37 @@ Once started, the backend API will run on `http://127.0.0.1:8001`. You can acces
 Execute the verification test suite to validate graph execution, parameter routing, and tool schemas across all agents:
 ```bash
 python verify_agents.py
+```
+
+---
+
+## 💡 Example Queries
+
+Try asking the AI Supervisor these complex, cross-domain questions:
+* *"Identify the EV in our fleet with the worst battery degradation. Then, find its original manufacturing batch and trace the Tier-1 supplier of its critical minerals. Are there any ESG risks with that supplier?"*
+* *"What causes battery degradation in EVs? Specifically analyze our fleet for any vehicles with deep discharge cycles above 40 per month and high operating temperatures."*
+* *"What causes anode overhang defects in lithium-ion cells? Cross-reference this with our manufacturing data for Batch BTH-0001 to see if poor retention is a factor."*
+* *"Calculate our total Scope 1 and Scope 3 emissions for the current manufacturing run and global logistics. Are we on track to hit our Net Zero target for this year?"*
+
+---
+
+## 📂 Project Structure
+
+```text
+EV_supply_chain/
+├── dashboard_server.py      # FastAPI backend service exposing REST endpoints
+├── static/                  # Interactive HTML/CSS/JS web dashboard
+├── orchestrator/            # Central supervisor graph and routing logic
+│   ├── state.py             # Global state definitions
+│   └── supervisor.py        # LangGraph coordination, validator, and aggregator nodes
+├── ev_ai_agents/            # Expert agent implementations
+│   ├── ev_apm_agent/        # Battery Health APM
+│   ├── ev_qms_agent/        # Cell Quality QMS
+│   ├── ev_supply_chain_agent/ # Supply Traceability
+│   ├── ev_fleet_electrification_agent/ # Fleet Readiness
+│   ├── ev_maintenance_operations_agent/ # Maintenance Optimizer
+│   └── carbon_agent/        # Carbon Net Zero
+├── datasets/                # Simulated telemetry, factory, and logistics CSV data
+├── verify_agents.py         # Complete agent verification test suite
+└── requirements.txt         # Dependencies
 ```
